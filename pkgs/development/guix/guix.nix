@@ -1,4 +1,4 @@
-{stdenv, fetchurl}:
+{stdenv, fetchurl, lib}:
 stdenv.mkDerivation rec
   { name = "guix-${version}";
     version = "1.0.0";
@@ -31,7 +31,7 @@ stdenv.mkDerivation rec
       ln -s /var/guix/profiles/per-user/root/current-guix/bin/guix-daemon $out/bin/guix-daemon
     '';
 
-    meta = with stdenv.lib; {
+    meta = with lib; {
       description = "The GNU Guix package manager";
       homepage = https://www.gnu.org/software/guix/;
       license = licenses.gpl3Plus;
