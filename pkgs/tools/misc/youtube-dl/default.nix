@@ -1,6 +1,5 @@
-{ lib, fetchurl, buildPythonPackage
-, zip, ffmpeg_4, rtmpdump, phantomjs2, atomicparsley, pycryptodome, pandoc
-, fetchpatch
+{ lib, fetchurl, fetchpatch, buildPythonPackage
+, zip, ffmpeg, rtmpdump, phantomjs2, atomicparsley, pycryptodome, pandoc
 # Pandoc is required to build the package's man page. Release tarballs contain a
 # formatted man page already, though, it will still be installed. We keep the
 # manpage argument in place in case someone wants to use this derivation to
@@ -11,7 +10,7 @@
 , rtmpSupport ? true
 , phantomjsSupport ? false
 , hlsEncryptedSupport ? true
-, makeWrapper }:
+, installShellFiles, makeWrapper }:
 
 buildPythonPackage rec {
 
@@ -19,14 +18,28 @@ buildPythonPackage rec {
   # The websites youtube-dl deals with are a very moving target. That means that
   # downloads break constantly. Because of that, updates should always be backported
   # to the latest stable release.
-  version = "2019.04.30";
+  version = "2021.12.17";
 
   src = fetchurl {
     url = "https://yt-dl.org/downloads/${version}/${pname}-${version}.tar.gz";
-    sha256 = "1s43adnky8ayhjwmgmiqy6rmmygd4c23v36jhy2lzr2jpn8l53z1";
+    sha256 = "sha256-nzuZyLd4RVFltFJfIVBehsf/Vl86wxnhlzPYEBlBNd8=";
   };
 
-  nativeBuildInputs = [ makeWrapper ];
+  patches = [
+    # Fixes throttling on youtube.com. Without the patch downloads are capped at
+    # about 80KiB/s. See, e.g.,
+    #
+    #   https://github.com/ytdl-org/youtube-dl/issues/29326
+    #
+    # The patch comes from PR https://github.com/ytdl-org/youtube-dl/pull/30188
+    (fetchpatch {
+      name = "fix-youtube-dl-speed.patch";
+      url = "https://github.com/ytdl-org/youtube-dl/pull/30188.patch";
+      sha256 = "15liban37ina2y4bnykfdywdy4rbkfff2r6vd0kqn2k7rfkcczyz";
+    })
+  ];
+
+  nativeBuildInputs = [ installShellFiles makeWrapper ];
   buildInputs = [ zip ] ++ lib.optional generateManPage pandoc;
   propagatedBuildInputs = lib.optional hlsEncryptedSupport pycryptodome;
 
@@ -37,22 +50,24 @@ buildPythonPackage rec {
   makeWrapperArgs = let
       packagesToBinPath =
         [ atomicparsley ]
-        ++ lib.optional ffmpegSupport ffmpeg_4
+        ++ lib.optional ffmpegSupport ffmpeg
         ++ lib.optional rtmpSupport rtmpdump
         ++ lib.optional phantomjsSupport phantomjs2;
     in [ ''--prefix PATH : "${lib.makeBinPath packagesToBinPath}"'' ];
 
+  setupPyBuildFlags = [
+    "build_lazy_extractors"
+  ];
+
   postInstall = ''
-    mkdir -p $out/share/zsh/site-functions
-    cp youtube-dl.zsh $out/share/zsh/site-functions/_youtube-dl
+    installShellCompletion youtube-dl.zsh
   '';
 
   # Requires network
   doCheck = false;
 
   meta = with lib; {
-    homepage = https://rg3.github.io/youtube-dl/;
-    repositories.git = https://github.com/rg3/youtube-dl.git;
+    homepage = "https://ytdl-org.github.io/youtube-dl/";
     description = "Command-line tool to download videos from YouTube.com and other sites";
     longDescription = ''
       youtube-dl is a small, Python-based command-line program
@@ -62,6 +77,6 @@ buildPythonPackage rec {
     '';
     license = licenses.publicDomain;
     platforms = with platforms; linux ++ darwin;
-    maintainers = with maintainers; [ bluescreen303 phreedom AndersonTorres fuuzetsu fpletz enzime ];
+    maintainers = with maintainers; [ bluescreen303 AndersonTorres fpletz ma27 ];
   };
 }

@@ -1,29 +1,32 @@
-{ gcc8Stdenv
+{ stdenv
+, lib
 , ctags
+, cmark
 , appstream-glib
 , desktop-file-utils
-, docbook_xsl
-, docbook_xml_dtd_43
 , fetchurl
+, fetchpatch
 , flatpak
-, gnome3
+, gnome
 , libgit2-glib
+, gi-docgen
 , gobject-introspection
+, glade
 , gspell
-, gtk-doc
 , gtk3
 , gtksourceview4
-, hicolor-icon-theme
 , json-glib
 , jsonrpc-glib
 , libdazzle
 , libpeas
+, libportal-gtk3
 , libxml2
 , meson
 , ninja
 , ostree
 , pcre
-, pkgconfig
+, pcre2
+, pkg-config
 , python3
 , sysprof
 , template-glib
@@ -32,34 +35,37 @@
 , webkitgtk
 , wrapGAppsHook
 , dbus
-, xvfb_run
+, xvfb-run
 }:
 
-let
-  # Does not build with GCC 7
-  # https://gitlab.gnome.org/GNOME/gnome-builder/issues/868
-  stdenv = gcc8Stdenv;
-in
 stdenv.mkDerivation rec {
   pname = "gnome-builder";
-  version = "3.32.0";
+  version = "41.3";
+
+  outputs = [ "out" "devdoc" ];
 
   src = fetchurl {
-    url = "mirror://gnome/sources/${pname}/${stdenv.lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
-    sha256 = "00l7sshpndk995aw98mjmsc3mxhxzynlp7il551iwwjjdbc70qp4";
+    url = "mirror://gnome/sources/${pname}/${lib.versions.major version}/${pname}-${version}.tar.xz";
+    sha256 = "4iUPyOnp8gAsRS5ZUNgmhXNNPESAs1Fnq1CKyHAlCeE=";
   };
+
+  patches = [
+    # Fix build with latest libportal
+    # https://gitlab.gnome.org/GNOME/gnome-builder/-/merge_requests/486
+    (fetchpatch {
+      url = "https://gitlab.gnome.org/GNOME/gnome-builder/-/commit/b3bfa0df53a3749c3b73cb6c4bad5cab3fa549a1.patch";
+      sha256 = "B/uCcYavFvOAPhLHZ4MRNENDd6VytILiGYwDZRUSxTE=";
+    })
+  ];
 
   nativeBuildInputs = [
     appstream-glib
     desktop-file-utils
-    docbook_xsl
-    docbook_xml_dtd_43
+    gi-docgen
     gobject-introspection
-    gtk-doc
-    hicolor-icon-theme
-    (meson.override ({ inherit stdenv; }))
+    meson
     ninja
-    pkgconfig
+    pkg-config
     python3
     python3.pkgs.wrapPython
     wrapGAppsHook
@@ -67,11 +73,13 @@ stdenv.mkDerivation rec {
 
   buildInputs = [
     ctags
+    cmark
     flatpak
-    gnome3.devhelp
-    gnome3.glade
+    gnome.devhelp
+    glade
     libgit2-glib
     libpeas
+    libportal-gtk3
     vte
     gspell
     gtk3
@@ -82,6 +90,7 @@ stdenv.mkDerivation rec {
     libxml2
     ostree
     pcre
+    pcre2
     python3
     sysprof
     template-glib
@@ -91,17 +100,14 @@ stdenv.mkDerivation rec {
 
   checkInputs = [
     dbus
-    xvfb_run
+    xvfb-run
   ];
-
-  outputs = [ "out" "devdoc" ];
 
   prePatch = ''
     patchShebangs build-aux/meson/post_install.py
   '';
 
   mesonFlags = [
-    "-Dpython_libprefix=${python3.libPrefix}"
     "-Ddocs=true"
 
     # Making the build system correctly detect clang header and library paths
@@ -137,9 +143,16 @@ stdenv.mkDerivation rec {
     done
   '';
 
-  passthru.updateScript = gnome3.updateScript { packageName = pname; };
+  postFixup = ''
+    # Cannot be in postInstall, otherwise _multioutDocs hook in preFixup will move right back.
+    moveToOutput share/doc/libide "$devdoc"
+  '';
 
-  meta = with stdenv.lib; {
+  passthru.updateScript = gnome.updateScript {
+    packageName = pname;
+  };
+
+  meta = with lib; {
     description = "An IDE for writing GNOME-based software";
     longDescription = ''
       Global search, auto-completion, source code map, documentation
@@ -151,9 +164,9 @@ stdenv.mkDerivation rec {
       currently recommend running gnome-builder inside a nix-shell with
       appropriate dependencies loaded.
     '';
-    homepage = https://wiki.gnome.org/Apps/Builder;
+    homepage = "https://wiki.gnome.org/Apps/Builder";
     license = licenses.gpl3Plus;
-    maintainers = gnome3.maintainers;
+    maintainers = teams.gnome.members;
     platforms = platforms.linux;
   };
 }

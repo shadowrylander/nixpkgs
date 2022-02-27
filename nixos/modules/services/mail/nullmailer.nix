@@ -14,7 +14,7 @@ with lib;
       };
 
       user = mkOption {
-        type = types.string;
+        type = types.str;
         default = "nullmailer";
         description = ''
           User to use to run nullmailer-send.
@@ -22,7 +22,7 @@ with lib;
       };
 
       group = mkOption {
-        type = types.string;
+        type = types.str;
         default = "nullmailer";
         description = ''
           Group to use to run nullmailer-send.
@@ -201,15 +201,13 @@ with lib;
     };
 
     users = {
-      users = singleton {
-        name = cfg.user;
+      users.${cfg.user} = {
         description = "Nullmailer relay-only mta user";
         group = cfg.group;
+        isSystemUser = true;
       };
 
-      groups = singleton {
-        name = cfg.group;
-      };
+      groups.${cfg.group} = { };
     };
 
     systemd.tmpfiles.rules = [
@@ -222,7 +220,7 @@ with lib;
       after = [ "network.target" ];
 
       preStart = ''
-        mkdir -p /var/spool/nullmailer/{queue,tmp}
+        mkdir -p /var/spool/nullmailer/{queue,tmp,failed}
         rm -f /var/spool/nullmailer/trigger && mkfifo -m 660 /var/spool/nullmailer/trigger
       '';
 

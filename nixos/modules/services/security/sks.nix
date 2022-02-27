@@ -23,7 +23,7 @@ in {
 
       package = mkOption {
         default = pkgs.sks;
-        defaultText = "pkgs.sks";
+        defaultText = literalExpression "pkgs.sks";
         type = types.package;
         description = "Which SKS derivation to use.";
       };
@@ -74,7 +74,7 @@ in {
       webroot = mkOption {
         type = types.nullOr types.path;
         default = "${sksPkg.webSamples}/OpenPKG";
-        defaultText = "\${pkgs.sks.webSamples}/OpenPKG";
+        defaultText = literalExpression ''"''${package.webSamples}/OpenPKG"'';
         description = ''
           Source directory (will be symlinked, if not null) for the files the
           built-in webserver should serve. SKS (''${pkgs.sks.webSamples})
@@ -108,7 +108,7 @@ in {
       hkpAddress = "'" + (builtins.concatStringsSep " " cfg.hkpAddress) + "'" ;
       hkpPort = builtins.toString cfg.hkpPort;
     in {
-      "sks-db" = {
+      sks-db = {
         description = "SKS database server";
         after = [ "network.target" ];
         wantedBy = [ "multi-user.target" ];

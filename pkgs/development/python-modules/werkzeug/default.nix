@@ -1,33 +1,61 @@
-{ stdenv, buildPythonPackage, fetchPypi
-, itsdangerous, hypothesis
-, pytest, requests, glibcLocales }:
+{ lib
+, stdenv
+, buildPythonPackage
+, pythonOlder
+, fetchPypi
+, watchdog
+, dataclasses
+, pytest-timeout
+, pytest-xprocess
+, pytestCheckHook
+}:
 
 buildPythonPackage rec {
-  pname = "Werkzeug";
-  version = "0.15.2";
+  pname = "werkzeug";
+  version = "2.0.2";
+  format = "setuptools";
+
+  disabled = pythonOlder "3.6";
 
   src = fetchPypi {
-    inherit pname version;
-    sha256 = "0a73e8bb2ff2feecfc5d56e6f458f5b99290ef34f565ffb2665801ff7de6af7a";
+    pname = "Werkzeug";
+    inherit version;
+    sha256 = "sha256-qiu2/I3ujWxQTArB5/X33FgQqZA+eTtvcVqfAVva25o=";
   };
 
-  propagatedBuildInputs = [ itsdangerous ];
-  checkInputs = [ pytest requests hypothesis ];
+  propagatedBuildInputs = lib.optionals (!stdenv.isDarwin) [
+    # watchdog requires macos-sdk 10.13+
+    watchdog
+  ] ++ lib.optionals (pythonOlder "3.7") [
+    dataclasses
+  ];
 
-  # Hi! New version of Werkzeug? Please double-check that this commit is
-  # inclucded, and then remove the following patch.
-  # https://github.com/pallets/werkzeug/commit/1cfdcf9824cb20e362979e8f7734012926492165
-  patchPhase = ''
-    substituteInPlace "tests/test_serving.py" --replace "'python'" "sys.executable"
-  '';
+  checkInputs = [
+    pytest-timeout
+    pytest-xprocess
+    pytestCheckHook
+  ];
 
-  checkPhase = ''
-    pytest ${stdenv.lib.optionalString stdenv.isDarwin "-k 'not test_get_machine_id'"}
-  '';
+  disabledTests = lib.optionals stdenv.isDarwin [
+    "test_get_machine_id"
+  ];
 
-  meta = with stdenv.lib; {
-    homepage = http://werkzeug.pocoo.org/;
-    description = "A WSGI utility library for Python";
+  pytestFlagsArray = [
+    # don't run tests that are marked with filterwarnings, they fail with
+    # warnings._OptionError: unknown warning category: 'pytest.PytestUnraisableExceptionWarning'
+    "-m 'not filterwarnings'"
+  ];
+
+  meta = with lib; {
+    homepage = "https://palletsprojects.com/p/werkzeug/";
+    description = "The comprehensive WSGI web application library";
+    longDescription = ''
+      Werkzeug is a comprehensive WSGI web application library. It
+      began as a simple collection of various utilities for WSGI
+      applications and has become one of the most advanced WSGI
+      utility libraries.
+    '';
     license = licenses.bsd3;
+    maintainers = with maintainers; [ ];
   };
 }

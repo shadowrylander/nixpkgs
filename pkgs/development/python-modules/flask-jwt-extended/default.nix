@@ -1,24 +1,24 @@
-{ stdenv, buildPythonPackage, fetchPypi, flask, pyjwt, werkzeug, pytest }:
+{ lib, buildPythonPackage, fetchPypi, python-dateutil, flask, pyjwt, werkzeug, pytest }:
 
 buildPythonPackage rec {
   pname = "Flask-JWT-Extended";
-  version = "3.17.0";
+  version = "4.3.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "97c66f197b4b175173bf955b9a845d03d62e521e512e88f6abff707e6859e7c3";
+    sha256 = "ad6977b07c54e51c13b5981afc246868b9901a46715d9b9827898bfd916aae88";
   };
 
-  propagatedBuildInputs = [ flask pyjwt werkzeug ];
+  propagatedBuildInputs = [ python-dateutil flask pyjwt werkzeug ];
   checkInputs = [ pytest ];
 
   checkPhase = ''
     pytest tests/
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "JWT extension for Flask";
-    homepage = https://flask-jwt-extended.readthedocs.io/;
+    homepage = "https://flask-jwt-extended.readthedocs.io/";
     license = licenses.mit;
     maintainers = with maintainers; [ gerschtli ];
   };

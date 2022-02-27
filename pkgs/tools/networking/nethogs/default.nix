@@ -1,23 +1,33 @@
-{ stdenv, fetchFromGitHub, ncurses, libpcap }:
+{ lib, stdenv, fetchFromGitHub, fetchpatch, ncurses, libpcap }:
 
 stdenv.mkDerivation rec {
-  name = "nethogs-${version}";
-  version = "0.8.5";
+  pname = "nethogs";
+  version = "0.8.6";
 
   src = fetchFromGitHub {
     owner = "raboof";
     repo = "nethogs";
     rev = "v${version}";
-    sha256 = "13plwblwbnyyi40jaqx471gwhln08wm7f0fxyvj1yh3d81k556yx";
+    sha256 = "0sn1sdp86akwlm4r1vmkxjjl50c0xaisk91bbz57z7kcsaphxna9";
   };
+
+  patches = [
+    # Pull upstream patch for ncurses-6.3 support:
+    #  https://github.com/raboof/nethogs/pull/210
+    (fetchpatch {
+      name = "ncurses-6.3.patch";
+      url = "https://github.com/raboof/nethogs/commit/455daf357da7f394763e5b93b11b3defe1f82ed1.patch";
+      sha256 = "0wkp0yr6qg1asgvmsn7blf7rq48sh5k4n3w0nxf5869hxvkhnnzs";
+    })
+  ];
 
   buildInputs = [ ncurses libpcap ];
 
-  makeFlags = [ "VERSION=${version}" ];
+  makeFlags = [ "VERSION=${version}" "nethogs" ];
 
   installFlags = [ "PREFIX=$(out)" "sbin=$(out)/bin" ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A small 'net top' tool, grouping bandwidth by process";
     longDescription = ''
       NetHogs is a small 'net top' tool. Instead of breaking the traffic down

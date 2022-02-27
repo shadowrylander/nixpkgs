@@ -1,29 +1,41 @@
-{ stdenv, buildGoPackage, fetchFromGitHub }:
+{ lib, buildGoModule, fetchFromGitHub, nixosTests }:
+let
+  version = "2.4.6";
+  dist = fetchFromGitHub {
+    owner = "caddyserver";
+    repo = "dist";
+    rev = "v${version}";
+    sha256 = "sha256-EXs+LNb87RWkmSWvs8nZIVqRJMutn+ntR241gqI7CUg=";
+  };
+in
+buildGoModule {
+  pname = "caddy";
+  inherit version;
 
-buildGoPackage rec {
-  name = "caddy-${version}";
-  version = "0.11.4";
-
-  goPackagePath = "github.com/mholt/caddy";
-
-  subPackages = [ "caddy" ];
+  subPackages = [ "cmd/caddy" ];
 
   src = fetchFromGitHub {
-    owner = "mholt";
+    owner = "caddyserver";
     repo = "caddy";
     rev = "v${version}";
-    sha256 = "1h7zx5gzv40xkxab8pc6hgd9zkpbnhiy1hnldriybpf2ya2lac9a";
+    sha256 = "sha256-xNCxzoNpXkj8WF9+kYJfO18ux8/OhxygkGjA49+Q4vY=";
   };
 
-  buildFlagsArray = ''
-    -ldflags=
-      -X github.com/mholt/caddy/caddy/caddymain.gitTag=v${version}
+  vendorSha256 = "sha256-NomgHqIiugSISbEtvIbJDn5GRn6Dn72adLPkAvLbUQU=";
+
+  postInstall = ''
+    install -Dm644 ${dist}/init/caddy.service ${dist}/init/caddy-api.service -t $out/lib/systemd/system
+
+    substituteInPlace $out/lib/systemd/system/caddy.service --replace "/usr/bin/caddy" "$out/bin/caddy"
+    substituteInPlace $out/lib/systemd/system/caddy-api.service --replace "/usr/bin/caddy" "$out/bin/caddy"
   '';
 
-  meta = with stdenv.lib; {
-    homepage = https://caddyserver.com;
+  passthru.tests = { inherit (nixosTests) caddy; };
+
+  meta = with lib; {
+    homepage = "https://caddyserver.com";
     description = "Fast, cross-platform HTTP/2 web server with automatic HTTPS";
     license = licenses.asl20;
-    maintainers = with maintainers; [ rushmorem fpletz zimbatm ];
+    maintainers = with maintainers; [ Br1ght0ne ];
   };
 }

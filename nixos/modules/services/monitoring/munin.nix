@@ -189,7 +189,7 @@ in
           <literal>/bin</literal>, <literal>/usr/bin</literal>,
           <literal>/sbin</literal>, and <literal>/usr/sbin</literal>.
         '';
-        example = literalExample ''
+        example = literalExpression ''
           {
             zfs_usage_bigpool = /src/munin-contrib/plugins/zfs/zfs_usage_;
             zfs_usage_smallpool = /src/munin-contrib/plugins/zfs/zfs_usage_;
@@ -220,7 +220,7 @@ in
           <literal>/bin</literal>, <literal>/usr/bin</literal>,
           <literal>/sbin</literal>, and <literal>/usr/sbin</literal>.
         '';
-        example = literalExample ''
+        example = literalExpression ''
           [
             /src/munin-contrib/plugins/zfs
             /src/munin-contrib/plugins/ssh
@@ -233,7 +233,7 @@ in
         # In the meantime this at least suppresses a useless graph full of
         # NaNs in the output.
         default = [ "munin_stats" ];
-        type = with types; listOf string;
+        type = with types; listOf str;
         description = ''
           Munin plugins to disable, even if
           <literal>munin-node-configure --suggest</literal> tries to enable
@@ -285,9 +285,11 @@ in
           host for cron to succeed. See
           <link xlink:href='http://guide.munin-monitoring.org/en/latest/reference/munin.conf.html' />
         '';
-        example = ''
-          [''${config.networking.hostName}]
-          address localhost
+        example = literalExpression ''
+          '''
+            [''${config.networking.hostName}]
+            address localhost
+          '''
         '';
       };
 
@@ -317,18 +319,16 @@ in
 
     environment.systemPackages = [ pkgs.munin ];
 
-    users.users = [{
-      name = "munin";
+    users.users.munin = {
       description = "Munin monitoring user";
       group = "munin";
       uid = config.ids.uids.munin;
       home = "/var/lib/munin";
-    }];
+    };
 
-    users.groups = [{
-      name = "munin";
+    users.groups.munin = {
       gid = config.ids.gids.munin;
-    }];
+    };
 
   }) (mkIf nodeCfg.enable {
 

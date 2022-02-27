@@ -1,28 +1,32 @@
-{ stdenv, fetchurl, libjpeg, libtiff, giflib, libpng, bzip2, pkgconfig
-, freetype, libid3tag
-, x11Support ? true, xlibsWrapper ? null }:
+{ lib, stdenv, fetchurl
+# Image file formats
+, libjpeg, libtiff, giflib, libpng, libwebp
+# imlib2 can load images from ID3 tags.
+, libid3tag
+, freetype , bzip2, pkg-config
+, x11Support ? true, xlibsWrapper ? null
+}:
 
-with stdenv.lib;
-
+let
+  inherit (lib) optional;
+in
 stdenv.mkDerivation rec {
-  name = "imlib2-1.5.1";
+  pname = "imlib2";
+  version = "1.7.5";
 
   src = fetchurl {
-    url = "mirror://sourceforge/enlightenment/${name}.tar.bz2";
-    sha256 = "1bms2iwmvnvpz5jqq3r52glarqkafif47zbh1ykz8hw85d2mfkps";
+    url = "mirror://sourceforge/enlightenment/${pname}-${version}.tar.xz";
+    hash = "sha256-RY2DAKp6bUzjU1GDi7pdn9+wiES9WxU8WTjs/kP/Ngo=";
   };
 
-  buildInputs = [ libjpeg libtiff giflib libpng bzip2 freetype libid3tag ]
-    ++ optional x11Support xlibsWrapper;
+  buildInputs = [
+    libjpeg libtiff giflib libpng libwebp
+    bzip2 freetype libid3tag
+  ] ++ optional x11Support xlibsWrapper;
 
-  nativeBuildInputs = [ pkgconfig ];
+  nativeBuildInputs = [ pkg-config ];
 
   enableParallelBuilding = true;
-
-  preConfigure = ''
-    substituteInPlace imlib2-config.in \
-      --replace "@my_libs@" ""
-  '';
 
   # Do not build amd64 assembly code on Darwin, because it fails to compile
   # with unknow directive errors
@@ -31,11 +35,7 @@ stdenv.mkDerivation rec {
 
   outputs = [ "bin" "out" "dev" ];
 
-  postInstall = ''
-    moveToOutput bin/imlib2-config "$dev"
-  '';
-
-  meta = {
+  meta = with lib; {
     description = "Image manipulation library";
 
     longDescription = ''
@@ -46,8 +46,9 @@ stdenv.mkDerivation rec {
       easily, without sacrificing speed.
     '';
 
-    homepage = http://docs.enlightenment.org/api/imlib2/html;
-    license = licenses.free;
+    homepage = "https://docs.enlightenment.org/api/imlib2/html";
+    changelog = "https://git.enlightenment.org/legacy/imlib2.git/plain/ChangeLog?h=v${version}";
+    license = licenses.imlib2;
     platforms = platforms.unix;
     maintainers = with maintainers; [ spwhitt ];
   };

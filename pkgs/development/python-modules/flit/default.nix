@@ -1,16 +1,14 @@
 { lib
 , buildPythonPackage
-, fetchPypi
-, isPy3k
+, fetchFromGitHub
 , docutils
 , requests
-, requests_download
-, zipfile36
-, pythonOlder
 , pytest
 , testpath
 , responses
-, pytoml
+, flit-core
+, tomli
+, tomli-w
 }:
 
 # Flit is actually an application to build universal wheels.
@@ -20,16 +18,27 @@
 
 buildPythonPackage rec {
   pname = "flit";
-  version = "1.3";
+  version = "3.6.0";
+  format = "pyproject";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "6f6f0fb83c51ffa3a150fa41b5ac118df9ea4a87c2c06dff4ebf9adbe7b52b36";
+  src = fetchFromGitHub {
+    owner = "takluyver";
+    repo = "flit";
+    rev = version;
+    sha256 = "sha256-D3q/1g6njrrmizooGmzNd9g2nKs00dMGj9jrrv3Y6HQ=";
   };
 
-  disabled = !isPy3k;
-  propagatedBuildInputs = [ docutils requests requests_download pytoml ]
-    ++ lib.optional (pythonOlder "3.6") zipfile36;
+  nativeBuildInputs = [
+    flit-core
+  ];
+
+  propagatedBuildInputs = [
+    docutils
+    requests
+    flit-core
+    tomli
+    tomli-w
+  ];
 
   checkInputs = [ pytest testpath responses ];
 
@@ -39,10 +48,10 @@ buildPythonPackage rec {
     HOME=$(mktemp -d) pytest -k "not test_invalid_classifier and not test_build_sdist"
   '';
 
-  meta = {
+  meta = with lib; {
     description = "A simple packaging tool for simple packages";
-    homepage = https://github.com/takluyver/flit;
-    license = lib.licenses.bsd3;
-    maintainers = [ lib.maintainers.fridh ];
+    homepage = "https://github.com/takluyver/flit";
+    license = licenses.bsd3;
+    maintainers = [ maintainers.fridh ];
   };
 }

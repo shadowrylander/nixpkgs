@@ -1,37 +1,59 @@
 { stdenv
+, lib
 , buildPythonPackage
-, fetchPypi
+, fetchFromGitHub
 , ifaddr
-, typing
-, isPy27
+, pytest-asyncio
 , pythonOlder
-, python
+, pytestCheckHook
 }:
 
 buildPythonPackage rec {
   pname = "zeroconf";
-  version = "0.21.3";
-  disabled = isPy27;
+  version = "0.38.3";
+  format = "setuptools";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "5b52dfdf4e665d98a17bf9aa50dea7a8c98e25f972d9c1d7660e2b978a1f5713";
+  disabled = pythonOlder "3.7";
+
+  src = fetchFromGitHub {
+    owner = "jstasiak";
+    repo = "python-zeroconf";
+    rev = version;
+    sha256 = "sha256-pLTqnIbe7rTZrQFe//0/h5Tyx0GzJW+q9mUuDNifo/0=";
   };
 
-  propagatedBuildInputs = [ ifaddr ]
-    ++ stdenv.lib.optionals (pythonOlder "3.5") [ typing ];
+  propagatedBuildInputs = [
+    ifaddr
+  ];
 
-  # tests not included with pypi release
-  doCheck = false;
+  checkInputs = [
+    pytest-asyncio
+    pytestCheckHook
+  ];
 
-  checkPhase = ''
-    ${python.interpreter} test_zeroconf.py
-  '';
+  disabledTests = [
+    # tests that require network interaction
+    "test_close_multiple_times"
+    "test_launch_and_close"
+    "test_launch_and_close_context_manager"
+    "test_launch_and_close_v4_v6"
+    "test_launch_and_close_v6_only"
+    "test_integration_with_listener_ipv6"
+  ] ++ lib.optionals stdenv.isDarwin [
+    "test_lots_of_names"
+  ];
 
-  meta = with stdenv.lib; {
-    description = "A pure python implementation of multicast DNS service discovery";
-    homepage = https://github.com/jstasiak/python-zeroconf;
-    license = licenses.lgpl21;
+  __darwinAllowLocalNetworking = true;
+
+  pythonImportsCheck = [
+    "zeroconf"
+    "zeroconf.asyncio"
+  ];
+
+  meta = with lib; {
+    description = "Python implementation of multicast DNS service discovery";
+    homepage = "https://github.com/jstasiak/python-zeroconf";
+    license = licenses.lgpl21Only;
     maintainers = with maintainers; [ abbradar ];
   };
 }

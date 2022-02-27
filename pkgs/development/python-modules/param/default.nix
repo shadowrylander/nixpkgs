@@ -1,28 +1,38 @@
 { lib
 , buildPythonPackage
-, fetchPypi
-, flake8
-, nose
+, fetchFromGitHub
+, pytestCheckHook
 }:
 
 buildPythonPackage rec {
   pname = "param";
-  version = "1.8.2";
+  version = "1.12.0";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "49927979d4f6c994bcd8f6f7f2b34e3a0a7f0d62404dca6bcae5acde0192bb01";
+  src = fetchFromGitHub {
+    owner = "holoviz";
+    repo = pname;
+    rev = "v${version}";
+    sha256 = "02zmd4bwyn8b4q1l9jgddc70ii1i7bmynacanl1cvbr6la4v9b2c";
   };
 
-  checkInputs = [ flake8 nose ];
+  checkInputs = [
+    pytestCheckHook
+  ];
 
-  # tests not included with pypi release
-  doCheck = false;
+  postPatch = ''
+    # Version is not set properly
+    substituteInPlace setup.py \
+      --replace 'version=get_setup_version("param"),' 'version="${version}",'
+  '';
+
+  pythonImportsCheck = [
+    "param"
+  ];
 
   meta = with lib; {
     description = "Declarative Python programming using Parameters";
-    homepage = https://github.com/pyviz/param;
+    homepage = "https://github.com/pyviz/param";
     license = licenses.bsd3;
-    maintainers = [ maintainers.costrouc ];
+    maintainers = with maintainers; [ costrouc ];
   };
 }

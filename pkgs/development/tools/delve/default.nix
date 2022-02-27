@@ -1,8 +1,8 @@
-{ stdenv, buildGoPackage, fetchFromGitHub }:
+{ lib, buildGoPackage, fetchFromGitHub, makeWrapper }:
 
 buildGoPackage rec {
-  name = "delve-${version}";
-  version = "1.2.0";
+  pname = "delve";
+  version = "1.8.1";
 
   goPackagePath = "github.com/go-delve/delve";
   excludedPackages = "\\(_fixtures\\|scripts\\|service/test\\)";
@@ -11,13 +11,27 @@ buildGoPackage rec {
     owner = "go-delve";
     repo = "delve";
     rev = "v${version}";
-    sha256 = "1xz1xm0lb1arwm3w2ydq5y5xglq60fc0q46x9xndr3i9j0rm8bxh";
+    sha256 = "sha256-GIwu3G8cy2xKqFzN/7d/mbpS+5oGJa3QexoELlEwWRA=";
   };
 
-  meta = with stdenv.lib; {
+  subPackages = [ "cmd/dlv" ];
+
+  nativeBuildInputs = [ makeWrapper ];
+
+  postInstall = ''
+    # fortify source breaks build since delve compiles with -O0
+    wrapProgram $out/bin/dlv \
+      --prefix disableHardening " " fortify
+
+    # add symlink for vscode golang extension
+    # https://github.com/golang/vscode-go/blob/master/docs/debugging.md#manually-installing-dlv-dap
+    ln $out/bin/dlv $out/bin/dlv-dap
+  '';
+
+  meta = with lib; {
     description = "debugger for the Go programming language";
-    homepage = https://github.com/derekparker/delve;
-    maintainers = with maintainers; [ vdemeester ];
+    homepage = "https://github.com/go-delve/delve";
+    maintainers = with maintainers; [ SuperSandro2000 vdemeester ];
     license = licenses.mit;
     platforms = [ "x86_64-linux" ] ++ platforms.darwin;
   };

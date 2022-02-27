@@ -1,37 +1,43 @@
-{ stdenv, fetchurl, pkgconfig, intltool, itstool, isocodes, enchant, libxml2, python3, gnome3, gtksourceview3, libpeas, mate, wrapGAppsHook }:
+{ lib, stdenv, fetchurl, pkg-config, gettext, perl, itstool, isocodes, enchant, libxml2, python3
+, adwaita-icon-theme, gtksourceview4, libpeas, mate-desktop, wrapGAppsHook, mateUpdateScript }:
 
 stdenv.mkDerivation rec {
-  name = "pluma-${version}";
-  version = "1.22.1";
+  pname = "pluma";
+  version = "1.26.0";
 
   src = fetchurl {
-    url = "http://pub.mate-desktop.org/releases/${stdenv.lib.versions.majorMinor version}/${name}.tar.xz";
-    sha256 = "14d5c5fg31d7br9h1y3gdcr53j4sxlgybf326jvdcw8mgy91k3dg";
+    url = "https://pub.mate-desktop.org/releases/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "0lway12q2xygiwjgrx7chgka838jbnmlzz98g7agag1rwzd481ii";
   };
 
   nativeBuildInputs = [
-    pkgconfig
-    intltool
-    itstool
+    gettext
     isocodes
+    itstool
+    perl
+    pkg-config
     wrapGAppsHook
   ];
 
   buildInputs = [
+    adwaita-icon-theme
     enchant
-    libxml2
-    python3
-    gtksourceview3
+    gtksourceview4
     libpeas
-    gnome3.adwaita-icon-theme
-    mate.mate-desktop
+    libxml2
+    mate-desktop
+    python3
   ];
 
-  meta = {
+  enableParallelBuilding = true;
+
+  passthru.updateScript = mateUpdateScript { inherit pname version; };
+
+  meta = with lib; {
     description = "Powerful text editor for the MATE desktop";
-    homepage = https://mate-desktop.org;
-    license = stdenv.lib.licenses.gpl2;
-    platforms = stdenv.lib.platforms.unix;
-    maintainers = [ stdenv.lib.maintainers.romildo ];
+    homepage = "https://mate-desktop.org";
+    license = with licenses; [ gpl2Plus lgpl2Plus fdl11Plus ];
+    platforms = platforms.unix;
+    maintainers = teams.mate.members;
   };
 }

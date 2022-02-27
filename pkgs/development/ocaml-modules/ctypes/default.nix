@@ -1,35 +1,41 @@
-{ stdenv, buildOcaml, fetchzip, libffi, pkgconfig, ncurses, integers }:
+{ lib, stdenv, fetchFromGitHub, ocaml, findlib, libffi, pkg-config, ncurses, integers, bigarray-compat }:
 
-buildOcaml rec {
-  name = "ctypes";
-  version = "0.13.1";
+if !lib.versionAtLeast ocaml.version "4.02"
+then throw "ctypes is not available for OCaml ${ocaml.version}"
+else
 
-  minimumSupportedOcamlVersion = "4";
+stdenv.mkDerivation rec {
+  pname = "ocaml${ocaml.version}-ctypes";
+  version = "0.18.0";
 
-  src = fetchzip {
-    url = "https://github.com/ocamllabs/ocaml-ctypes/archive/67e711ec891e087fbe1e0b4665aa525af4eaa409.tar.gz";
-    sha256 = "1z84s5znr3lj84rzv6m37xxj9h7fwx4qiiykx3djf52qgk1rb2xb";
+  src = fetchFromGitHub {
+    owner = "ocamllabs";
+    repo = "ocaml-ctypes";
+    rev = version;
+    sha256 = "sha256-eu5RAuPYC97IM4XUsUw3HQ1BJlEHQ+eBpsdUE6hd+Q8=";
   };
 
-  nativeBuildInputs = [ pkgconfig ];
+  nativeBuildInputs = [ pkg-config ocaml findlib ];
   buildInputs = [ ncurses ];
-  propagatedBuildInputs = [ integers libffi ];
+  propagatedBuildInputs = [ integers libffi bigarray-compat ];
 
-  hasSharedObjects = true;
+  strictDeps = true;
 
-  buildPhase =  ''
-     make XEN=false libffi.config ctypes-base ctypes-stubs
-     make XEN=false ctypes-foreign
+  buildPhase = ''
+    make XEN=false libffi.config ctypes-base ctypes-stubs
+    make XEN=false ctypes-foreign
   '';
 
-  installPhase =  ''
+  installPhase = ''
+    mkdir -p $out/lib/ocaml/${ocaml.version}/site-lib/stublibs
     make install XEN=false
   '';
 
-  meta = with stdenv.lib; {
-    homepage = https://github.com/ocamllabs/ocaml-ctypes;
+  meta = with lib; {
+    homepage = "https://github.com/ocamllabs/ocaml-ctypes";
     description = "Library for binding to C libraries using pure OCaml";
     license = licenses.mit;
     maintainers = [ maintainers.ericbmerritt ];
+    inherit (ocaml.meta) platforms;
   };
 }

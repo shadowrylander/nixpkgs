@@ -96,9 +96,8 @@ let
     };
   } cfg.extraConfig;
 
-  configFile = pkgs.runCommand "config.toml" {
-    buildInputs = [ pkgs.remarshal ];
-    preferLocalBuild = true;
+  configFile = pkgs.runCommandLocal "config.toml" {
+    nativeBuildInputs = [ pkgs.remarshal ];
   } ''
     remarshal -if json -of toml \
       < ${pkgs.writeText "config.json" (builtins.toJSON configOptions)} \
@@ -121,7 +120,7 @@ in
 
       package = mkOption {
         default = pkgs.influxdb;
-        defaultText = "pkgs.influxdb";
+        defaultText = literalExpression "pkgs.influxdb";
         description = "Which influxdb derivation to use";
         type = types.package;
       };
@@ -129,13 +128,13 @@ in
       user = mkOption {
         default = "influxdb";
         description = "User account under which influxdb runs";
-        type = types.string;
+        type = types.str;
       };
 
       group = mkOption {
         default = "influxdb";
         description = "Group under which influxdb runs";
-        type = types.string;
+        type = types.str;
       };
 
       dataDir = mkOption {
@@ -182,15 +181,16 @@ in
         '';
     };
 
-    users.users = optional (cfg.user == "influxdb") {
-      name = "influxdb";
-      uid = config.ids.uids.influxdb;
-      description = "Influxdb daemon user";
+    users.users = optionalAttrs (cfg.user == "influxdb") {
+      influxdb = {
+        uid = config.ids.uids.influxdb;
+        group = "influxdb";
+        description = "Influxdb daemon user";
+      };
     };
 
-    users.groups = optional (cfg.group == "influxdb") {
-      name = "influxdb";
-      gid = config.ids.gids.influxdb;
+    users.groups = optionalAttrs (cfg.group == "influxdb") {
+      influxdb.gid = config.ids.gids.influxdb;
     };
   };
 

@@ -1,37 +1,49 @@
-{ stdenv
+{ lib
 , buildPythonPackage
 , fetchPypi
-, notebook
 , jsonschema
 , pythonOlder
 , requests
-, pytest
+, pytestCheckHook
+, pyjson5
+, Babel
+, jupyter_server
+, openapi-core
+, pytest-tornasync
+, ruamel-yaml
+, strict-rfc3339
 }:
 
 buildPythonPackage rec {
   pname = "jupyterlab_server";
-  version = "0.3.0";
-  disabled = pythonOlder "3.5";
+  version = "2.10.3";
+  disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "13b728z5ls0g3p1gq5hvfqg7302clxna5grvgjfwbfzss0avlpjc";
+    sha256 = "3fb84a5813d6d836ceda773fb2d4e9ef3c7944dbc1b45a8d59d98641a80de80a";
   };
 
-  checkInputs = [ requests pytest ];
-  propagatedBuildInputs = [ notebook jsonschema ];
-
-  # test_listing test fails
-  # this is a new package and not all tests pass
-  doCheck = false;
-
-  checkPhase = ''
-    pytest
+  postPatch = ''
+    sed -i "/^addopts/d" pyproject.toml
   '';
 
-  meta = with stdenv.lib; {
+  propagatedBuildInputs = [ requests jsonschema pyjson5 Babel jupyter_server ];
+
+  checkInputs = [
+    openapi-core
+    pytestCheckHook
+    pytest-tornasync
+    ruamel-yaml
+  ];
+
+  pytestFlagsArray = [ "--pyargs" "jupyterlab_server" ];
+
+  __darwinAllowLocalNetworking = true;
+
+  meta = with lib; {
     description = "JupyterLab Server";
-    homepage = https://jupyter.org;
+    homepage = "https://jupyter.org";
     license = licenses.bsdOriginal;
     maintainers = [ maintainers.costrouc ];
   };

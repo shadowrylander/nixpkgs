@@ -1,13 +1,12 @@
-{ stdenv, fetchurl, cpio, xorgproto, libX11, libXmu, libXaw, libXt, tcl, tk
+{ lib, stdenv, fetchurl, cpio, xorgproto, libX11, libXmu, libXaw, libXt, tcl, tk
 , libXext, fontconfig, makeWrapper }:
 
 stdenv.mkDerivation rec {
-  name = "${baseName}-${version}";
-  baseName = "xconq";
+  pname = "xconq";
   version = "7.5.0-0pre.0.20050612";
 
   src = fetchurl {
-    url = "mirror://sourceforge/project/${baseName}/${baseName}/${name}/${name}.tar.gz";
+    url = "mirror://sourceforge/project/xconq/xconq/xconq-${version}/xconq-${version}.tar.gz";
     sha256 = "1za78yx57mgwcmmi33wx3533yz1x093dnqis8q2qmqivxav51lca";
   };
 
@@ -45,7 +44,7 @@ stdenv.mkDerivation rec {
     done
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A programmable turn-based strategy game";
     maintainers = with maintainers; [ raskin ];
     platforms = platforms.linux;

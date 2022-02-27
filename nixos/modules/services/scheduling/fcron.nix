@@ -86,7 +86,8 @@ in
 
     services.fcron.systab = systemCronJobs;
 
-    environment.etc =
+    environment.etc = listToAttrs
+      (map (x: { name = x.target; value = x; })
       [ (allowdeny "allow" (cfg.allow))
         (allowdeny "deny" cfg.deny)
         # see man 5 fcron.conf
@@ -112,7 +113,7 @@ in
           gid = config.ids.gids.fcron;
           mode = "0644";
         }
-      ];
+      ]);
 
     environment.systemPackages = [ pkgs.fcron ];
     users.users.fcron = {
@@ -135,15 +136,17 @@ in
         owner = "fcron";
         group = "fcron";
         setgid = true;
+        setuid = false;
       };
       fcronsighup = {
         source = "${pkgs.fcron}/bin/fcronsighup";
+        owner = "root";
         group = "fcron";
+        setuid = true;
       };
     };
     systemd.services.fcron = {
       description = "fcron daemon";
-      after = [ "local-fs.target" ];
       wantedBy = [ "multi-user.target" ];
 
       path = [ pkgs.fcron ];

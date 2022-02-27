@@ -1,41 +1,52 @@
-{ stdenv
+{ lib
+, stdenv
+, pythonAtLeast
+, pythonOlder
 , fetchPypi
 , python
 , buildPythonPackage
-, isPy27
-, isPy33
-, isPy3k
 , numpy
 , llvmlite
-, funcsigs
-, singledispatch
+, setuptools
 , libcxx
 }:
 
 buildPythonPackage rec {
-  version = "0.40.1";
+  version = "0.55.0";
   pname = "numba";
+  disabled = pythonOlder "3.6" || pythonAtLeast "3.10";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "52d046c13bcf0de79dbfb936874b7228f141b9b8e3447cc35855e9ad3e12aa33";
+    sha256 = "sha256-siHr2ZdmKh3Ld+TwkUDgIvv+dXetB4H8LgIUE126bL0=";
   };
 
-  NIX_CFLAGS_COMPILE = stdenv.lib.optionalString stdenv.isDarwin "-I${libcxx}/include/c++/v1";
+  postPatch = ''
+    substituteInPlace setup.py \
+      --replace "1.21" "1.22"
 
-  propagatedBuildInputs = [numpy llvmlite] ++ stdenv.lib.optional (!isPy3k) funcsigs ++ stdenv.lib.optional (isPy27 || isPy33) singledispatch;
+    substituteInPlace numba/__init__.py \
+      --replace "(1, 20)" "(1, 21)"
+  '';
+
+  NIX_CFLAGS_COMPILE = lib.optionalString stdenv.isDarwin "-I${lib.getDev libcxx}/include/c++/v1";
+
+  propagatedBuildInputs = [ numpy llvmlite setuptools ];
 
   # Copy test script into $out and run the test suite.
   checkPhase = ''
     ${python.interpreter} -m numba.runtests
   '';
+
   # ImportError: cannot import name '_typeconv'
   doCheck = false;
 
-  meta =  {
-    homepage = http://numba.pydata.org/;
-    license = stdenv.lib.licenses.bsd2;
+  pythonImportsCheck = [ "numba" ];
+
+  meta =  with lib; {
+    homepage = "https://numba.pydata.org/";
+    license = licenses.bsd2;
     description = "Compiling Python code using LLVM";
-    maintainers = with stdenv.lib.maintainers; [ fridh ];
+    maintainers = with maintainers; [ fridh ];
   };
 }

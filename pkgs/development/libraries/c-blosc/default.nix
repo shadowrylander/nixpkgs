@@ -1,23 +1,21 @@
-{ stdenv, fetchFromGitHub, cmake }:
+{ lib, stdenv, fetchFromGitHub, cmake }:
 
 stdenv.mkDerivation rec {
-  name = "c-blosc-${version}";
-  version = "1.16.2";
+  pname = "c-blosc";
+  version = "1.21.1";
 
   src = fetchFromGitHub {
     owner = "Blosc";
     repo = "c-blosc";
     rev = "v${version}";
-    sha256 = "19wb699rb5bn6h9qhw1m18m2w77lws7r50vxpgrvggnl27mvm3xc";
+    sha256 = "sha256-6SKEyciwDOxcbO8chvmxrLCxLkc93zxo6eH0c/lRyT8=";
   };
 
-  buildInputs = [ cmake ];
+  nativeBuildInputs = [ cmake ];
 
-  enableParallelBuilding = true;
-
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A blocking, shuffling and loss-less compression library";
-    homepage = http://www.blosc.org;
+    homepage = "https://www.blosc.org";
     license = licenses.bsd3;
     platforms = platforms.all;
   };

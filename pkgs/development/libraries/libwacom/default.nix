@@ -1,23 +1,50 @@
-{ stdenv, fetchFromGitHub, autoreconfHook, glib, pkgconfig, udev, libgudev }:
+{ stdenv
+, lib
+, fetchFromGitHub
+, meson
+, ninja
+, glib
+, pkg-config
+, udev
+, libgudev
+, python3
+}:
 
 stdenv.mkDerivation rec {
-  name = "libwacom-${version}";
-  version = "0.33";
+  pname = "libwacom";
+  version = "1.99.1";
+
+  outputs = [ "out" "dev" ];
 
   src = fetchFromGitHub {
     owner = "linuxwacom";
     repo = "libwacom";
     rev = "libwacom-${version}";
-    sha256 = "0np0a7rpnlm9iqw1i8ycz5mprin6bb99p4h522v9vjk4lhzsp34m";
+    sha256 = "sha256-WGW/4m+BTe6dEigUcuUIZjoTeamInW6zrtrlaqKM6Js=";
   };
 
-  nativeBuildInputs = [ pkgconfig autoreconfHook ];
-  buildInputs = [ glib udev libgudev ];
+  nativeBuildInputs = [
+    pkg-config
+    meson
+    ninja
+    python3
+  ];
 
-  meta = with stdenv.lib; {
+  buildInputs = [
+    glib
+    udev
+    libgudev
+  ];
+
+  mesonFlags = [
+    "-Dtests=disabled"
+  ];
+
+  meta = with lib; {
     platforms = platforms.linux;
-    homepage = https://linuxwacom.github.io/;
+    homepage = "https://linuxwacom.github.io/";
     description = "Libraries, configuration, and diagnostic tools for Wacom tablets running under Linux";
+    maintainers = teams.freedesktop.members;
     license = licenses.mit;
   };
 }

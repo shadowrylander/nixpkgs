@@ -2,20 +2,22 @@
 
 buildGoModule rec {
   pname = "obfs4";
-  version = "0.0.10";
+  version = "0.0.11";
 
   src = fetchgit {
     url = meta.repositories.git;
     rev = "refs/tags/${pname}proxy-${version}";
-    sha256 = "05aqmw8x8s0yqyqmdj5zcsq06gsbcmrlcd52gaqm20m1pg9503ad";
+    sha256 = "sha256-VjJ/Pc1YjNB2iLnN/5CxuaxolcaR1IMWgoESMzOXU/g=";
   };
 
-  modSha256 = "150kg22kznrdj5icjxk3qd70g7wpq8zd2zklw1y2fgvrggw8zvyv";
+  vendorSha256 = "sha256-xGCK8biTYcrmKbsl6ZyCjpRrVP9x5xGrC3VcMsR7ETo=";
+
+  doCheck = false;
 
   meta = with lib; {
     description = "A pluggable transport proxy";
-    homepage = https://www.torproject.org/projects/obfsproxy;
-    repositories.git = https://git.torproject.org/pluggable-transports/obfs4.git;
-    maintainers = with maintainers; [ phreedom thoughtpolice ];
+    homepage = "https://www.torproject.org/projects/obfsproxy";
+    repositories.git = "https://git.torproject.org/pluggable-transports/obfs4.git";
+    maintainers = with maintainers; [ thoughtpolice ];
   };
 }

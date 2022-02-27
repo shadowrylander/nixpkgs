@@ -1,8 +1,8 @@
-{ stdenv, fetchurl, imake, libXt, libXaw, libXtst
+{ lib, stdenv, fetchurl, imake, libXt, libXaw, libXtst
 , libXi, libXpm, xorgproto, gccmakedep, Xaw3d }:
 
-stdenv.mkDerivation rec {
-  name = "xvkbd-${version}";
+stdenv.mkDerivation {
+  pname = "xvkbd";
   version = "3.9";
   src = fetchurl {
     url = "http://t-sato.in.coocan.jp/xvkbd/xvkbd-3.9.tar.gz";
@@ -13,19 +13,21 @@ stdenv.mkDerivation rec {
   buildInputs = [ libXt libXaw libXtst xorgproto libXi Xaw3d libXpm ];
   installTargets = [ "install" "install.man" ];
   makeFlags = [
-    "BINDIR=$(out)/bin"
-    "XAPPLOADDIR=$(out)/etc/X11/app-defaults"
-    "MANPATH=$(out)/man"
+    "BINDIR=${placeholder "out"}/bin"
+    "CONFDIR=${placeholder "out"}/etc/X11"
+    "LIBDIR=${placeholder "out"}/lib/X11"
+    "XAPPLOADDIR=${placeholder "out"}/etc/X11/app-defaults"
+    "MANPATH=${placeholder "out"}/man"
   ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Virtual keyboard for X window system";
     longDescription = ''
       xvkbd is a virtual (graphical) keyboard program for X Window System which provides
       facility to enter characters onto other clients (softwares) by clicking on a
       keyboard displayed on the screen.
     '';
-    homepage = http://t-sato.in.coocan.jp/xvkbd;
+    homepage = "http://t-sato.in.coocan.jp/xvkbd";
     license = licenses.gpl2Plus;
     maintainers = [ maintainers.bennofs ];
     platforms = platforms.linux;

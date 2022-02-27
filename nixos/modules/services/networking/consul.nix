@@ -8,14 +8,16 @@ let
 
   configOptions = {
     data_dir = dataDir;
-    ui = cfg.webUi;
+    ui_config = {
+      enabled = cfg.webUi;
+    };
   } // cfg.extraConfig;
 
   configFiles = [ "/etc/consul.json" "/etc/consul-addrs.json" ]
     ++ cfg.extraConfigFiles;
 
   devices = attrValues (filterAttrs (_: i: i != null) cfg.interface);
-  systemdDevices = flip map devices
+  systemdDevices = forEach devices
     (i: "sys-subsystem-net-devices-${utils.escapeSystemdPath i}.device");
 in
 {
@@ -34,7 +36,7 @@ in
       package = mkOption {
         type = types.package;
         default = pkgs.consul;
-        defaultText = "pkgs.consul";
+        defaultText = literalExpression "pkgs.consul";
         description = ''
           The package used for the Consul agent and CLI.
         '';
@@ -99,6 +101,7 @@ in
 
       extraConfig = mkOption {
         default = { };
+        type = types.attrsOf types.anything;
         description = ''
           Extra configuration options which are serialized to json and added
           to the config.json file.
@@ -120,7 +123,7 @@ in
         package = mkOption {
           description = "Package to use for consul-alerts.";
           default = pkgs.consul-alerts;
-          defaultText = "pkgs.consul-alerts";
+          defaultText = literalExpression "pkgs.consul-alerts";
           type = types.package;
         };
 
@@ -156,12 +159,14 @@ in
   config = mkIf cfg.enable (
     mkMerge [{
 
-      users.users."consul" = {
+      users.users.consul = {
         description = "Consul agent daemon user";
-        uid = config.ids.uids.consul;
+        isSystemUser = true;
+        group = "consul";
         # The shell is needed for health checks
         shell = "/run/current-system/sw/bin/bash";
       };
+      users.groups.consul = {};
 
       environment = {
         etc."consul.json".text = builtins.toJSON configOptions;
@@ -179,18 +184,18 @@ in
             (filterAttrs (n: _: hasPrefix "consul.d/" n) config.environment.etc);
 
         serviceConfig = {
-          ExecStart = "@${cfg.package.bin}/bin/consul consul agent -config-dir /etc/consul.d"
+          ExecStart = "@${cfg.package}/bin/consul consul agent -config-dir /etc/consul.d"
             + concatMapStrings (n: " -config-file ${n}") configFiles;
-          ExecReload = "${cfg.package.bin}/bin/consul reload";
+          ExecReload = "${cfg.package}/bin/consul reload";
           PermissionsStartOnly = true;
           User = if cfg.dropPrivileges then "consul" else null;
           Restart = "on-failure";
           TimeoutStartSec = "infinity";
         } // (optionalAttrs (cfg.leaveOnStop) {
-          ExecStop = "${cfg.package.bin}/bin/consul leave";
+          ExecStop = "${cfg.package}/bin/consul leave";
         });
 
-        path = with pkgs; [ iproute gnugrep gawk consul ];
+        path = with pkgs; [ iproute2 gnugrep gawk consul ];
         preStart = ''
           mkdir -m 0700 -p ${dataDir}
           chown -R consul ${dataDir}
@@ -238,7 +243,7 @@ in
 
         serviceConfig = {
           ExecStart = ''
-            ${cfg.alerts.package.bin}/bin/consul-alerts start \
+            ${cfg.alerts.package}/bin/consul-alerts start \
               --alert-addr=${cfg.alerts.listenAddr} \
               --consul-addr=${cfg.alerts.consulAddr} \
               ${optionalString cfg.alerts.watchChecks "--watch-checks"} \

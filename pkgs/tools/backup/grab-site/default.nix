@@ -1,18 +1,45 @@
-{ stdenv, python3Packages, fetchFromGitHub }:
-
-python3Packages.buildPythonApplication rec {
-  version = "2.1.15";
-  name = "grab-site-${version}";
-
-  src = fetchFromGitHub {
-    rev = "${version}";
-    owner = "ArchiveTeam";
-    repo = "grab-site";
-    sha256 = "1h3ajsj1c2wlxji1san97vmjd9d97dv0rh0jw1p77irkcvhzfpj8";
+{ lib, python38, fetchFromGitHub }:
+let
+  python = python38.override {
+    self = python;
+    packageOverrides = self: super: {
+      sqlalchemy = super.sqlalchemy.overridePythonAttrs (oldAttrs: rec {
+        version = "1.3.24";
+        src = oldAttrs.src.override {
+          inherit version;
+          sha256 = "ebbb777cbf9312359b897bf81ba00dae0f5cb69fba2a18265dcc18a6f5ef7519";
+        };
+      });
+      tornado = super.tornado_4;
+    };
   };
 
-  propagatedBuildInputs = with python3Packages; [
-    click ludios_wpull manhole lmdb autobahn fb-re2 websockets cchardet
+in
+with python.pkgs; buildPythonApplication rec {
+  pname = "grab-site";
+  version = "2.2.2";
+
+  src = fetchFromGitHub {
+    rev = version;
+    owner = "ArchiveTeam";
+    repo = "grab-site";
+    sha256 = "0af53g703kqpxa6bn72mb2l5l0qrjknq5wqwl4wryyscdp4xabx4";
+  };
+
+  postPatch = ''
+    substituteInPlace setup.py \
+      --replace '"wpull @ https://github.com/ArchiveTeam/ludios_wpull/tarball/master#egg=wpull-${ludios_wpull.version}"' '"wpull"'
+  '';
+
+  propagatedBuildInputs = [
+    click
+    ludios_wpull
+    manhole
+    lmdb
+    autobahn
+    fb-re2
+    websockets
+    cchardet
   ];
 
   checkPhase = ''
@@ -20,9 +47,9 @@ python3Packages.buildPythonApplication rec {
     bash ./tests/offline-tests
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Crawler for web archiving with WARC output";
-    homepage = https://github.com/ArchiveTeam/grab-site;
+    homepage = "https://github.com/ArchiveTeam/grab-site";
     license = licenses.mit;
     maintainers = with maintainers; [ ivan ];
     platforms = platforms.all;

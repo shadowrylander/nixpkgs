@@ -1,24 +1,20 @@
-{ stdenv, fetchFromGitHub, autoreconfHook }:
+{ lib, stdenv, fetchurl, autoreconfHook, fetchFromGitHub }:
 
 stdenv.mkDerivation rec {
-  name = "patchelf-${version}";
-  version = "0.10-pre-20180509";
+  pname = "patchelf";
+  version = "2021-11-16";
 
   src = fetchFromGitHub {
     owner = "NixOS";
     repo = "patchelf";
-    rev = "27ffe8ae871e7a186018d66020ef3f6162c12c69";
-    sha256 = "1sfkqsvwqqm2kdgkiddrxni86ilbrdw5my29szz81nj1m2j16asr";
+    rev = "a174cf3006baf31e0e9eaa62bc9adead93af63f7";
+    sha256 = "sha256-cKZ4DE70R5XiIqfnIVAl2s7a1bJxaaPpuCmxs3pxFRU=";
   };
 
   # Drop test that fails on musl (?)
-  postPatch = stdenv.lib.optionalString stdenv.hostPlatform.isMusl ''
+  postPatch = lib.optionalString stdenv.hostPlatform.isMusl ''
     substituteInPlace tests/Makefile.am \
       --replace "set-rpath-library.sh" ""
-  '' +
-  # extend version identifier to more informative than "0.10".
-  ''
-    echo -n ${version} > version
   '';
 
   setupHook = [ ./setup-hook.sh ];
@@ -28,11 +24,11 @@ stdenv.mkDerivation rec {
 
   doCheck = !stdenv.isDarwin;
 
-  meta = {
-    homepage = https://nixos.org/patchelf.html;
-    license = "GPL";
+  meta = with lib; {
+    homepage = "https://github.com/NixOS/patchelf";
+    license = licenses.gpl3;
     description = "A small utility to modify the dynamic linker and RPATH of ELF executables";
-    maintainers = [ stdenv.lib.maintainers.eelco ];
-    platforms = stdenv.lib.platforms.all;
+    maintainers = [ maintainers.eelco ];
+    platforms = platforms.all;
   };
 }

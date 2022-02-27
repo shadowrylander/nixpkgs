@@ -1,15 +1,25 @@
-{ stdenv, fetchurl }:
+{ lib, stdenv, fetchFromGitHub, python3, runCommand, makeWrapper, stress-ng }:
 
-stdenv.mkDerivation rec {
-  name = "graphene-hardened-malloc-${version}";
-  version = "190405.003.2019.04.01.19";
+lib.fix (self: stdenv.mkDerivation rec {
+  pname = "graphene-hardened-malloc";
+  version = "8";
 
-  src = fetchurl {
-    url = "https://github.com/GrapheneOS/hardened_malloc/archive/PQ2A.${version}.tar.gz";
-    sha256 = "1qczmajy3q07jd236dmal4iq5xxcsrkyw26gc9r4vs4wj4m42d11";
+  src = fetchFromGitHub {
+    owner = "GrapheneOS";
+    repo = "hardened_malloc";
+    rev = version;
+    sha256 = "sha256-+5kJb3hhuFTto7zsIymIXl3tpKUOm3v1DCY4EkAOCgo=";
   };
 
+  doCheck = true;
+  checkInputs = [ python3 ];
+  # these tests cover use as a build-time-linked library
+  checkPhase = ''
+    make test
+  '';
+
   installPhase = ''
+    install -Dm444 -t $out/include include/*
     install -Dm444 -t $out/lib libhardened_malloc.so
 
     mkdir -p $out/bin
@@ -17,31 +27,56 @@ stdenv.mkDerivation rec {
     chmod 0555 $out/bin/preload-hardened-malloc
   '';
 
-  doInstallCheck = true;
-  installCheckPhase = ''
-    pushd test
-    make
-    $out/bin/preload-hardened-malloc ./offset
+  separateDebugInfo = true;
 
-    pushd simple-memory-corruption
-    make
+  passthru = {
+    ld-preload-tests = stdenv.mkDerivation {
+      name = "${self.name}-ld-preload-tests";
+      src = self.src;
 
-    # these tests don't actually appear to generate overflows currently
-    rm read_after_free_small string_overflow
+      nativeBuildInputs = [ makeWrapper ];
 
-    for t in `find . -regex ".*/[a-z_]+"` ; do
-      echo "Running $t..."
-      # the program being aborted (as it should be) would result in an exit code > 128
-      (($out/bin/preload-hardened-malloc $t) && false) \
-        || (test $? -gt 128 || (echo "$t was not aborted" && false))
-    done
-    popd
+      # reuse the projects tests to cover use with LD_PRELOAD. we have
+      # to convince the test programs to build as though they're naive
+      # standalone executables. this includes disabling tests for
+      # malloc_object_size, which doesn't make sense to use via LD_PRELOAD.
+      buildPhase = ''
+        pushd test/simple-memory-corruption
+        make LDLIBS= LDFLAGS=-Wl,--unresolved-symbols=ignore-all CXXFLAGS=-lstdc++
+        substituteInPlace test_smc.py \
+          --replace 'test_malloc_object_size' 'dont_test_malloc_object_size' \
+          --replace 'test_invalid_malloc_object_size' 'dont_test_invalid_malloc_object_size'
+        popd # test/simple-memory-corruption
+      '';
 
-    popd
-  '';
+      installPhase = ''
+        mkdir -p $out/test
+        cp -r test/simple-memory-corruption $out/test/simple-memory-corruption
 
-  meta = with stdenv.lib; {
-    homepage = https://github.com/GrapheneOS/hardened_malloc;
+        mkdir -p $out/bin
+        makeWrapper ${python3.interpreter} $out/bin/run-tests \
+          --add-flags "-I -m unittest discover --start-directory $out/test/simple-memory-corruption"
+      '';
+    };
+    tests = {
+      ld-preload = runCommand "ld-preload-test-run" {} ''
+        ${self}/bin/preload-hardened-malloc ${self.ld-preload-tests}/bin/run-tests
+        touch $out
+      '';
+      # to compensate for the lack of tests of correct normal malloc operation
+      stress = runCommand "stress-test-run" {} ''
+        ${self}/bin/preload-hardened-malloc ${stress-ng}/bin/stress-ng \
+          --no-rand-seed \
+          --malloc 8 \
+          --malloc-ops 1000000 \
+          --verify
+        touch $out
+      '';
+    };
+  };
+
+  meta = with lib; {
+    homepage = "https://github.com/GrapheneOS/hardened_malloc";
     description = "Hardened allocator designed for modern systems";
     longDescription = ''
       This is a security-focused general purpose memory allocator providing the malloc API
@@ -50,6 +85,6 @@ stdenv.mkDerivation rec {
     '';
     license = licenses.mit;
     maintainers = with maintainers; [ ris ];
-    platforms = platforms.linux;
+    platforms = [ "x86_64-linux" "aarch64-linux" ];
   };
-}
+})

@@ -8,18 +8,30 @@
 , fetchPypi
 , isPy3k
 , lib
+, stdenv
+, argon2-cffi-bindings
 }:
 
 buildPythonPackage rec {
   pname = "argon2_cffi";
-  version = "19.1.0";
+  version = "21.3.0";
+  format = "flit";
 
   src = fetchPypi {
-    inherit pname version;
-    sha256 = "81548a27b919861040cb928a350733f4f9455dd67c7d1ba92eb5960a1d7f8b26";
+    pname = "argon2-cffi";
+    inherit version;
+    sha256 = "d384164d944190a7dd7ef22c6aa3ff197da12962bd04b17f64d4e93d934dba5b";
   };
 
   propagatedBuildInputs = [ cffi six ] ++ lib.optional (!isPy3k) enum34;
+
+  propagatedNativeBuildInputs = [
+    argon2-cffi-bindings
+    cffi
+  ];
+
+  ARGON2_CFFI_USE_SSE2 = lib.optionals (stdenv.hostPlatform != stdenv.buildPlatform) "0";
+
   checkInputs = [ hypothesis pytest wheel ];
   checkPhase = ''
     pytest tests
@@ -27,7 +39,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Secure Password Hashes for Python";
-    homepage    = https://argon2-cffi.readthedocs.io/;
+    homepage    = "https://argon2-cffi.readthedocs.io/";
     license     = licenses.mit;
   };
 }

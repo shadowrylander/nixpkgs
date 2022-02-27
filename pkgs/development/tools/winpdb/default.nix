@@ -1,15 +1,16 @@
-{ stdenv, fetchurl, pythonPackages, makeDesktopItem }:
+{ lib, fetchurl, python2Packages, makeDesktopItem }:
 
-pythonPackages.buildPythonApplication rec {
-  name = "winpdb-1.4.8";
+python2Packages.buildPythonApplication rec {
+  pname = "winpdb";
+  version = "1.4.8";
   namePrefix = "";
 
   src = fetchurl {
-    url = "https://winpdb.googlecode.com/files/${name}.tar.gz";
+    url = "https://winpdb.googlecode.com/files/${pname}-${version}.tar.gz";
     sha256 = "0vkpd24r40j928vc04c721innv0168sbllg97v4zw10adm24d8fs";
   };
 
-  propagatedBuildInputs = [ pythonPackages.wxPython ];
+  propagatedBuildInputs = [ python2Packages.wxPython ];
 
   desktopItem = makeDesktopItem {
     name = "winpdb";
@@ -18,7 +19,7 @@ pythonPackages.buildPythonApplication rec {
     comment = "Platform independend Python debugger";
     desktopName = "Winpdb";
     genericName = "Python Debugger";
-    categories = "Application;Development;Debugger;";
+    categories = [ "Development" "Debugger" ];
   };
 
   # Don't call gnome-terminal with "--disable-factory" flag, which is
@@ -36,14 +37,17 @@ pythonPackages.buildPythonApplication rec {
     cp artwork/winpdb-icon.svg "$out"/share/icons/winpdb.svg
   '';
 
-  meta = with stdenv.lib; {
+  # no tests
+  doCheck = false;
+
+  meta = with lib; {
     description = "Platform independent Python debugger";
     longDescription = ''
       Winpdb is a platform independent GPL Python debugger with support for
       multiple threads, namespace modification, embedded debugging, encrypted
       communication and is up to 20 times faster than pdb.
     '';
-    homepage = http://winpdb.org/;
+    homepage = "http://winpdb.org/";
     license = licenses.gpl2Plus;
     platforms = platforms.all;
     maintainers = [ maintainers.bjornfor ];

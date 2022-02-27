@@ -1,30 +1,59 @@
-{ stdenv, buildPythonPackage, fetchPypi, python
-, nose, mock, vcversioner, functools32 }:
+{ lib
+, attrs
+, buildPythonPackage
+, fetchPypi
+, importlib-metadata
+, importlib-resources
+, pyperf
+, pyrsistent
+, pytestCheckHook
+, pythonOlder
+, setuptools-scm
+, twisted
+, typing-extensions
+}:
 
 buildPythonPackage rec {
   pname = "jsonschema";
-  version = "2.6.0";
+  version = "4.4.0";
+  format = "pyproject";
+
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "00kf3zmpp9ya4sydffpifn0j0mzm342a2vzh82p6r0vh10cg7xbg";
+    sha256 = "636694eb41b3535ed608fe04129f26542b59ed99808b4f688aa32dcf55317a83";
   };
 
-  checkInputs = [ nose mock vcversioner ];
-  propagatedBuildInputs = [ functools32 ];
+  SETUPTOOLS_SCM_PRETEND_VERSION = version;
 
-  postPatch = ''
-    substituteInPlace jsonschema/tests/test_jsonschema_test_suite.py \
-      --replace "python" "${python.pythonForBuild.interpreter}"
-  '';
+  nativeBuildInputs = [
+    setuptools-scm
+  ];
 
-  checkPhase = ''
-    nosetests
-  '';
+  propagatedBuildInputs = [
+    attrs
+    pyrsistent
+  ] ++ lib.optionals (pythonOlder "3.8") [
+    importlib-metadata
+    typing-extensions
+  ] ++ lib.optionals (pythonOlder "3.9") [
+    importlib-resources
+  ];
 
-  meta = with stdenv.lib; {
-    homepage = https://github.com/Julian/jsonschema;
+  checkInputs = [
+    pyperf
+    pytestCheckHook
+    twisted
+  ];
+
+  pythonImportsCheck = [
+    "jsonschema"
+  ];
+
+  meta = with lib; {
     description = "An implementation of JSON Schema validation for Python";
+    homepage = "https://github.com/Julian/jsonschema";
     license = licenses.mit;
     maintainers = with maintainers; [ domenkozar ];
   };

@@ -1,27 +1,25 @@
-{ stdenv
+{ lib
 , buildPythonPackage
 , fetchPypi
 , html5lib
-, isPy3k
 }:
 
 buildPythonPackage rec {
   pname = "mechanize";
-  version = "0.4.2";
-  disabled = isPy3k;
+  version = "0.4.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "b680ca1b4fabe5ef52024d120f40b8e2ed7d175ed4d67225d2c477dac7c7a58b";
+    sha256 = "1773a8f5818398e0010e781dc0f942cd88b107a57424c904d545cd827c216809";
   };
 
   propagatedBuildInputs = [ html5lib ];
 
   doCheck = false;
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Stateful programmatic web browsing in Python";
-    homepage = http://wwwsearch.sourceforge.net/;
+    homepage = "https://github.com/python-mechanize/mechanize";
     license = "BSD-style";
   };
 

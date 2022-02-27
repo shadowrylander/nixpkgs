@@ -1,36 +1,32 @@
-{ stdenv, lib, fetchFromGitHub, mercurial, makeWrapper
+{ lib, fetchFromGitHub, python3Packages
 , asciidoc, xmlto, docbook_xsl, docbook_xml_dtd_45, libxslt, libxml2
 }:
 
-stdenv.mkDerivation rec {
+python3Packages.buildPythonApplication rec {
   pname = "git-remote-hg";
-  version = "1.0.0";
+  version = "1.0.2.1";
 
   src = fetchFromGitHub {
     owner = "mnauw";
     repo = "git-remote-hg";
     rev = "v${version}";
-    sha256 = "0anl054zdi5rg5m4bm1n763kbdjkpdws3c89c8w8m5gq1ifsbd4d";
+    sha256 = "1crgq13v2p9wmw1yhckmyzybh8h1nz3839qhqvzh48vxqkailzmn";
   };
 
-  buildInputs = [ mercurial.python mercurial makeWrapper
+  nativeBuildInputs = [
     asciidoc xmlto docbook_xsl docbook_xml_dtd_45 libxslt libxml2
   ];
-
-  doCheck = false;
-
-  installFlags = "HOME=\${out} install-doc";
+  propagatedBuildInputs = with python3Packages; [ mercurial ];
 
   postInstall = ''
-    wrapProgram $out/bin/git-remote-hg \
-      --prefix PYTHONPATH : "$(echo ${mercurial}/lib/python*/site-packages):$(echo ${mercurial.python}/lib/python*/site-packages)${stdenv.lib.concatMapStrings (x: ":$(echo ${x}/lib/python*/site-packages)") mercurial.pythonPackages or []}"
+    make install-doc prefix=$out
   '';
 
   meta = with lib; {
-    homepage = https://github.com/mnauw/git-remote-hg;
+    homepage = "https://github.com/mnauw/git-remote-hg";
     description = "Semi-official Mercurial bridge from Git project";
     license = licenses.gpl2;
-    maintainers = [ maintainers.garbas ];
+    maintainers = with maintainers; [ qyliss ];
     platforms = platforms.unix;
   };
 }

@@ -1,9 +1,10 @@
-{ stdenv, firmwareLinuxNonfree, libarchive }:
+{ lib, stdenv, linux-firmware, libarchive }:
 
-stdenv.mkDerivation rec {
-  name = "amd-ucode-${firmwareLinuxNonfree.version}";
+stdenv.mkDerivation {
+  pname = "amd-ucode";
+  version = linux-firmware.version;
 
-  src = firmwareLinuxNonfree;
+  src = linux-firmware;
 
   sourceRoot = ".";
 
@@ -11,7 +12,7 @@ stdenv.mkDerivation rec {
 
   buildPhase = ''
     mkdir -p kernel/x86/microcode
-    find ${firmwareLinuxNonfree}/lib/firmware/amd-ucode -name \*.bin \
+    find ${linux-firmware}/lib/firmware/amd-ucode -name \*.bin \
       -exec sh -c 'cat {} >> kernel/x86/microcode/AuthenticAMD.bin' \;
   '';
 
@@ -20,9 +21,9 @@ stdenv.mkDerivation rec {
     echo kernel/x86/microcode/AuthenticAMD.bin | bsdcpio -o -H newc -R 0:0 > $out/amd-ucode.img
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "AMD Processor microcode patch";
-    homepage = http://www.amd64.org/support/microcode.html;
+    homepage = "https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git";
     license = licenses.unfreeRedistributableFirmware;
     platforms = platforms.linux;
   };

@@ -1,28 +1,43 @@
-{ stdenv, fetchFromGitHub, rustPlatform, nix, boost, graphviz, darwin }:
+{ lib
+, stdenv
+, fetchFromGitHub
+, rustPlatform
+, nix
+, nlohmann_json
+, boost
+, graphviz
+, Security
+, pkg-config
+}:
+
 rustPlatform.buildRustPackage rec {
-  name = "nix-du-${version}";
-  version = "0.3.0";
+  pname = "nix-du";
+  version = "0.4.1";
 
   src = fetchFromGitHub {
     owner = "symphorien";
     repo = "nix-du";
     rev = "v${version}";
-    sha256 = "1x6qpivxbn94034jfdxb97xi97fhcdv2z7llq2ccfc80mgd0gz8l";
+    sha256 = "0v6hixj81aa6g3sddny46i0yqaaqv6krp5xadj0xz1g77cb8xy2w";
   };
-  cargoSha256 = "0sva4lnhccm6ly7pa6m99s3fqkmh1dzv7r2727nsg2f55prd4kxc";
+
+  cargoSha256 = "11jaks6adsvrvxlqqw3glvn4ff7xh9j35ayfrl89rb4achvqp7xn";
 
   doCheck = true;
-  checkInputs = [ graphviz ];
+  checkInputs = [ nix graphviz ];
 
   buildInputs = [
     boost
     nix
-  ] ++ stdenv.lib.optional stdenv.isDarwin darwin.apple_sdk.frameworks.Security;
+    nlohmann_json
+  ] ++ lib.optionals stdenv.isDarwin [ Security ];
 
-  meta = with stdenv.lib; {
+  nativeBuildInputs = [ pkg-config ];
+
+  meta = with lib; {
     description = "A tool to determine which gc-roots take space in your nix store";
-    homepage = https://github.com/symphorien/nix-du;
-    license = licenses.lgpl3;
+    homepage = "https://github.com/symphorien/nix-du";
+    license = licenses.lgpl3Only;
     maintainers = [ maintainers.symphorien ];
     platforms = platforms.unix;
   };

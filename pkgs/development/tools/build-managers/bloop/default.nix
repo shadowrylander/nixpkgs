@@ -1,63 +1,100 @@
-{ stdenv, lib, fetchurl, coursier, jdk, jre, python, makeWrapper }:
+{ stdenv
+, fetchurl
+, coursier
+, autoPatchelfHook
+, installShellFiles
+, makeWrapper
+, jre
+, lib
+, zlib
+}:
 
-let
-  baseName = "bloop";
-  version = "1.2.5";
-  deps = stdenv.mkDerivation {
-    name = "${baseName}-deps-${version}";
-    buildCommand = ''
+stdenv.mkDerivation rec {
+  pname = "bloop";
+  version = "1.4.13";
+
+  bloop-coursier-channel = fetchurl {
+    url = "https://github.com/scalacenter/bloop/releases/download/v${version}/bloop-coursier.json";
+    sha256 = "bf3uHuGfmJukf0Qeudv8ZXz/9Uql/qsmvPS0XBb7oTQ=";
+  };
+
+  bloop-bash = fetchurl {
+    url = "https://github.com/scalacenter/bloop/releases/download/v${version}/bash-completions";
+    sha256 = "2mt+zUEJvQ/5ixxFLZ3Z0m7uDSj/YE9sg/uNMjamvdE=";
+  };
+
+  bloop-fish = fetchurl {
+    url = "https://github.com/scalacenter/bloop/releases/download/v${version}/fish-completions";
+    sha256 = "eFESR6iPHRDViGv+Fk3sCvPgVAhk2L1gCG4LnfXO/v4=";
+  };
+
+  bloop-zsh = fetchurl {
+    url = "https://github.com/scalacenter/bloop/releases/download/v${version}/zsh-completions";
+    sha256 = "WNMsPwBfd5EjeRbRtc06lCEVI2FVoLfrqL82OR0G7/c=";
+  };
+
+  bloop-coursier = stdenv.mkDerivation rec {
+    name = "${pname}-coursier-${version}";
+
+    platform = if stdenv.isLinux && stdenv.isx86_64 then "x86_64-pc-linux"
+    else if stdenv.isDarwin && stdenv.isx86_64 then "x86_64-apple-darwin"
+    else throw "unsupported platform";
+
+    dontUnpack = true;
+    installPhase = ''
+      runHook preInstall
+
       export COURSIER_CACHE=$(pwd)
-      ${coursier}/bin/coursier fetch ch.epfl.scala:bloop-frontend_2.12:${version} \
-        -r "bintray:scalameta/maven" \
-        -r "bintray:scalacenter/releases" \
-        -r "https://oss.sonatype.org/content/repositories/staging" > deps
-      mkdir -p $out/share/java
-      cp $(< deps) $out/share/java/
+      export COURSIER_JVM_CACHE=$(pwd)
+
+      mkdir channel
+      ln -s ${bloop-coursier-channel} channel/bloop.json
+      ${coursier}/bin/cs install --install-dir . --install-platform ${platform} --default-channels=false --channel channel --only-prebuilt=true bloop
+
+      # Only keeping the binary, we'll wrap it ourselves
+      # This guarantees the output of this fixed-output derivation doesn't have references to itself
+      install -D -m 0755 .bloop.aux $out
+
+      runHook postInstall
     '';
+
     outputHashMode = "recursive";
     outputHashAlgo = "sha256";
-    outputHash     = "19373fyb0g7irrdzb1vsjmyv5xj84qwbcfb6lm076px7wfyn0w1c";
-  };
-in
-stdenv.mkDerivation rec {
-  name = "${baseName}-${version}";
-
-  # Fetched from https://github.com/scalacenter/bloop/releases/download/v${version}/install.py
-  nailgunCommit = "0c325237";
-
-  buildInputs = [ jdk makeWrapper deps ];
-
-  phases = [ "installPhase" ];
-
-  client = fetchurl {
-    url = "https://raw.githubusercontent.com/scalacenter/nailgun/${nailgunCommit}/pynailgun/ng.py";
-    sha256 = "0qjw4nsyb4cxg96jj1yv5c0ivcxvmscxxqfzll5w9p1pjb30bq0n";
+    outputHash = if stdenv.isLinux && stdenv.isx86_64 then "sha256-jqcecAM51qEDmTim2VBNm8IO8wQmwU19R57Zk4pxwSA="
+    else if stdenv.isDarwin && stdenv.isx86_64 then "sha256-WJytRIbsygi4zoIVfkJmzWyFe2p8mQuT4DDO5KDKopY="
+    else throw "unsupported platform";
   };
 
-  zshCompletion = fetchurl {
-    url = "https://raw.githubusercontent.com/scalacenter/bloop/v${version}/etc/zsh/_bloop";
-    sha256 = "1id6f1fgy2rk0q5aad6ffivhbxa94fallzsc04l9n0y1s2xdhqpm";
-  };
+  dontUnpack = true;
+  nativeBuildInputs = [ autoPatchelfHook installShellFiles makeWrapper ];
+  buildInputs = [ stdenv.cc.cc.lib zlib ];
+  propagatedBuildInputs = [ jre ];
 
   installPhase = ''
-    mkdir -p $out/bin
-    mkdir -p $out/share/zsh/site-functions
+    runHook preInstall
 
-    cp ${client} $out/bin/blp-client
-    cp ${zshCompletion} $out/share/zsh/site-functions/_bloop
-    chmod +x $out/bin/blp-client
+    export COURSIER_CACHE=$(pwd)
+    export COURSIER_JVM_CACHE=$(pwd)
 
-    makeWrapper ${jre}/bin/java $out/bin/blp-server \
-      --prefix PATH : ${lib.makeBinPath [ jdk ]} \
-      --add-flags "-cp $CLASSPATH bloop.Server"
-    makeWrapper $out/bin/blp-client $out/bin/bloop \
-      --prefix PATH : ${lib.makeBinPath [ python ]}
+    install -D -m 0755 ${bloop-coursier} $out/.bloop-wrapped
+
+    makeWrapper $out/.bloop-wrapped $out/bin/bloop \
+      --set CS_NATIVE_LAUNCHER true \
+      --set IS_CS_INSTALLED_LAUNCHER true
+
+    #Install completions
+    installShellCompletion --name bloop --bash ${bloop-bash}
+    installShellCompletion --name _bloop --zsh ${bloop-zsh}
+    installShellCompletion --name bloop.fish --fish ${bloop-fish}
+
+    runHook postInstall
   '';
 
-  meta = with stdenv.lib; {
-    homepage = https://scalacenter.github.io/bloop/;
+  meta = with lib; {
+    homepage = "https://scalacenter.github.io/bloop/";
     license = licenses.asl20;
-    description = "Bloop is a Scala build server and command-line tool to make the compile and test developer workflows fast and productive in a build-tool-agnostic way.";
-    maintainers = with maintainers; [ tomahna ];
+    description = "A Scala build server and command-line tool to make the compile and test developer workflows fast and productive in a build-tool-agnostic way";
+    platforms = [ "x86_64-linux" "x86_64-darwin" ];
+    maintainers = with maintainers; [ kubukoz tomahna ];
   };
 }

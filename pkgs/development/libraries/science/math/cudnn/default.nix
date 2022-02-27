@@ -1,69 +1,77 @@
-{ callPackage, cudatoolkit_7, cudatoolkit_7_5, cudatoolkit_8, cudatoolkit_9_0, cudatoolkit_9_1, cudatoolkit_9_2, cudatoolkit_10_0 }:
+# The following version combinations are supported:
+#  * cuDNN 7.4.2, cudatoolkit 10.0
+#  * cuDNN 7.6.5, cudatoolkit 10.2
+#  * cuDNN 8.1.1, cudatoolkit 11.0-11.2
+#  * cuDNN 8.3.0, cudatoolkit 11.0-11.5
+{ callPackage
+, cudatoolkit_10_0
+, cudatoolkit_10_2
+, cudatoolkit_11_0
+, cudatoolkit_11_1
+, cudatoolkit_11_2
+, cudatoolkit_11_3
+, cudatoolkit_11_4
+, cudatoolkit_11_5
+}:
 
 let
-  generic = args: callPackage (import ./generic.nix (removeAttrs args ["cudatoolkit"])) {
+  generic = args: callPackage (import ./generic.nix (removeAttrs args [ "cudatoolkit" ])) {
     inherit (args) cudatoolkit;
   };
-
-in rec {
-  cudnn_cudatoolkit_7 = generic rec {
-    # Old URL is v4 instead of v4.0 for some reason...
-    version = "4";
-    cudatoolkit = cudatoolkit_7;
-    srcName = "cudnn-${cudatoolkit.majorVersion}-linux-x64-v4.0-prod.tgz";
-    sha256 = "01a4v5j4v9n2xjqcc4m28c3m67qrvsx87npvy7zhx7w8smiif2fd";
-  };
-
-  cudnn_cudatoolkit_7_5 = generic rec {
-    version = "6.0";
-    cudatoolkit = cudatoolkit_7_5;
-    srcName = "cudnn-${cudatoolkit.majorVersion}-linux-x64-v${version}.tgz";
-    sha256 = "0b68hv8pqcvh7z8xlgm4cxr9rfbjs0yvg1xj2n5ap4az1h3lp3an";
-  };
-
-  cudnn6_cudatoolkit_8 = generic rec {
-    version = "6.0";
-    cudatoolkit = cudatoolkit_8;
-    srcName = "cudnn-${cudatoolkit.majorVersion}-linux-x64-v${version}.tgz";
-    sha256 = "173zpgrk55ri8if7s5yngsc89ajd6hz4pss4cdxlv6lcyh5122cv";
-  };
-
-  cudnn_cudatoolkit_8 = generic rec {
-    version = "7.0.5";
-    cudatoolkit = cudatoolkit_8;
-    srcName = "cudnn-${cudatoolkit.majorVersion}-linux-x64-v7.tgz";
-    sha256 = "9e0b31735918fe33a79c4b3e612143d33f48f61c095a3b993023cdab46f6d66e";
-  };
-
-  cudnn_cudatoolkit_9_0 = generic rec {
-    version = "7.3.0";
-    cudatoolkit = cudatoolkit_9_0;
-    srcName = "cudnn-${cudatoolkit.majorVersion}-linux-x64-v7.3.0.29.tgz";
-    sha256 = "16z4vgbcmbayk4hppz0xshgs3g07blkp4j25cxcjqyrczx1r0gs0";
-  };
-
-  cudnn_cudatoolkit_9_1 = generic rec {
-    version = "7.1.3";
-    cudatoolkit = cudatoolkit_9_1;
-    srcName = "cudnn-${cudatoolkit.majorVersion}-linux-x64-v7.1.tgz";
-    sha256 = "0a0237gpr0p63s92njai0xvxmkbailzgfsvh7n9fnz0njhvnsqfx";
-  };
-
-  cudnn_cudatoolkit_9_2 = generic rec {
-    version = "7.2.1";
-    cudatoolkit = cudatoolkit_9_2;
-    srcName = "cudnn-${cudatoolkit.majorVersion}-linux-x64-v7.2.1.38.tgz";
-    sha256 = "1sf215wm6zgr17gs6sxfhw61b7a0qmcxiwhgy1b4nqdyxpqgay1y";
-  };
-
-  cudnn_cudatoolkit_9 = cudnn_cudatoolkit_9_2;
-
-  cudnn_cudatoolkit_10_0 = generic rec {
+in
+rec {
+  # cuDNN 7.x
+  # Still used by libtensorflow-bin. It should be upgraded at some point.
+  cudnn_7_4_cudatoolkit_10_0 = generic rec {
     version = "7.4.2";
     cudatoolkit = cudatoolkit_10_0;
     srcName = "cudnn-${cudatoolkit.majorVersion}-linux-x64-v7.4.2.24.tgz";
     sha256 = "18ys0apiz9afid2s6lvy9qbyi8g66aimb2a7ikl1f3dm09mciprf";
   };
 
-  cudnn_cudatoolkit_10 = cudnn_cudatoolkit_10_0;
+  # The `cudnn` alias still points to this in all-packages.nix. It should be
+  # upgraded at some point.
+  cudnn_7_6_cudatoolkit_10_2 = generic rec {
+    version = "7.6.5";
+    cudatoolkit = cudatoolkit_10_2;
+    srcName = "cudnn-${cudatoolkit.majorVersion}-linux-x64-v7.6.5.32.tgz";
+    sha256 = "084c13vzjdkb5s1996yilybg6dgav1lscjr1xdcgvlmfrbr6f0k0";
+  };
+
+  cudnn_7_6_cudatoolkit_10 = cudnn_7_6_cudatoolkit_10_2;
+
+  # cuDNN 8.x
+  # cuDNN 8.1 is still used by tensorflow at the time of writing (2022-02-17).
+  # See https://github.com/NixOS/nixpkgs/pull/158218 for more info.
+  cudnn_8_1_cudatoolkit_11_0 = generic rec {
+    version = "8.1.1";
+    cudatoolkit = cudatoolkit_11_0;
+    # 8.1.0 is compatible with CUDA 11.0-11.2:
+    # https://docs.nvidia.com/deeplearning/cudnn/archives/cudnn-811/support-matrix/index.html
+    srcName = "cudnn-11.2-linux-x64-v8.1.1.33.tgz";
+    hash = "sha256-mKh4TpKGLyABjSDCgbMNSgzZUfk2lPZDPM9K6cUCumo=";
+  };
+  cudnn_8_1_cudatoolkit_11_1 = cudnn_8_1_cudatoolkit_11_0.override { cudatoolkit = cudatoolkit_11_1; };
+  cudnn_8_1_cudatoolkit_11_2 = cudnn_8_1_cudatoolkit_11_0.override { cudatoolkit = cudatoolkit_11_2; };
+  cudnn_8_1_cudatoolkit_11 = cudnn_8_1_cudatoolkit_11_2;
+
+  # cuDNN 8.3 is necessary for the latest jaxlib, esp. jaxlib-bin. See
+  # https://github.com/google/jax/discussions/9455 for more info.
+  cudnn_8_3_cudatoolkit_11_0 = generic rec {
+    # 8.3.0 is the last version to respect the folder structure that generic.nix
+    # expects. Later versions have files in a subdirectory `local_installers`.
+    # See eg https://developer.download.nvidia.com/compute/redist/cudnn/v8.3.1/.
+    version = "8.3.0";
+    cudatoolkit = cudatoolkit_11_0;
+    # 8.3.0 is compatible with CUDA 11.0-11.5:
+    # https://docs.nvidia.com/deeplearning/cudnn/archives/cudnn-830/support-matrix/index.html
+    srcName = "cudnn-11.5-linux-x64-v8.3.0.98.tgz";
+    hash = "sha256-RMb1rVyxL7dPoMmh58qvTwTXVa3xGi5bbJ5BfaN2srI=";
+  };
+  cudnn_8_3_cudatoolkit_11_1 = cudnn_8_3_cudatoolkit_11_0.override { cudatoolkit = cudatoolkit_11_1; };
+  cudnn_8_3_cudatoolkit_11_2 = cudnn_8_3_cudatoolkit_11_0.override { cudatoolkit = cudatoolkit_11_2; };
+  cudnn_8_3_cudatoolkit_11_3 = cudnn_8_3_cudatoolkit_11_0.override { cudatoolkit = cudatoolkit_11_3; };
+  cudnn_8_3_cudatoolkit_11_4 = cudnn_8_3_cudatoolkit_11_0.override { cudatoolkit = cudatoolkit_11_4; };
+  cudnn_8_3_cudatoolkit_11_5 = cudnn_8_3_cudatoolkit_11_0.override { cudatoolkit = cudatoolkit_11_5; };
+  cudnn_8_3_cudatoolkit_11 = cudnn_8_3_cudatoolkit_11_5;
 }

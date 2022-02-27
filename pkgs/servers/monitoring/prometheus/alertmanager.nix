@@ -1,39 +1,44 @@
-{ stdenv, go, buildGoPackage, fetchFromGitHub }:
+{ lib, go, buildGoModule, fetchFromGitHub, installShellFiles }:
 
-buildGoPackage rec {
-  name = "alertmanager-${version}";
-  version = "0.16.2";
+buildGoModule rec {
+  pname = "alertmanager";
+  version = "0.23.0";
   rev = "v${version}";
-
-  goPackagePath = "github.com/prometheus/alertmanager";
 
   src = fetchFromGitHub {
     inherit rev;
     owner = "prometheus";
     repo = "alertmanager";
-    sha256 = "0zjyr9964qxv5fsb17qhmxa1v4z0c7va60n05p9w6j2ah4dmcd8q";
+    sha256 = "sha256-06mKgWUyw5jsjKiRXQ9/oqHvFdkY2nS9Z3eW60lTNbU=";
   };
 
-  buildFlagsArray = let t = "${goPackagePath}/vendor/github.com/prometheus/common/version"; in ''
-    -ldflags=
-       -X ${t}.Version=${version}
-       -X ${t}.Revision=${src.rev}
-       -X ${t}.Branch=unknown
-       -X ${t}.BuildUser=nix@nixpkgs
-       -X ${t}.BuildDate=unknown
-       -X ${t}.GoVersion=${stdenv.lib.getVersion go}
-  '';
+  vendorSha256 = "sha256-zJvzCC7Vn5repWssyDuGtoUSZC2ojQhMqDX5Orr0ST0=";
+
+  subPackages = [ "cmd/alertmanager" "cmd/amtool" ];
+
+  ldflags = let t = "github.com/prometheus/common/version"; in [
+    "-X ${t}.Version=${version}"
+    "-X ${t}.Revision=${src.rev}"
+    "-X ${t}.Branch=unknown"
+    "-X ${t}.BuildUser=nix@nixpkgs"
+    "-X ${t}.BuildDate=unknown"
+    "-X ${t}.GoVersion=${lib.getVersion go}"
+  ];
+
+  nativeBuildInputs = [ installShellFiles ];
 
   postInstall = ''
-    mkdir -p $bin/etc/bash_completion.d
-    $NIX_BUILD_TOP/go/bin/amtool --completion-script-bash > $bin/etc/bash_completion.d/amtool_completion.sh
+    $out/bin/amtool --completion-script-bash > amtool.bash
+    installShellCompletion amtool.bash
+    $out/bin/amtool --completion-script-zsh > amtool.zsh
+    installShellCompletion amtool.zsh
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Alert dispatcher for the Prometheus monitoring system";
-    homepage = https://github.com/prometheus/alertmanager;
+    homepage = "https://github.com/prometheus/alertmanager";
     license = licenses.asl20;
-    maintainers = with maintainers; [ benley fpletz ];
+    maintainers = with maintainers; [ benley fpletz globin Frostman ];
     platforms = platforms.unix;
   };
 }

@@ -1,4 +1,4 @@
-{ pkgs, lib, emscripten, python }:
+{ pkgs, lib, emscripten, python2 }:
 
 { buildInputs ? [], nativeBuildInputs ? []
 
@@ -7,12 +7,13 @@
 , meta ? {}, ... } @ args:
 
 pkgs.stdenv.mkDerivation (
-  args // 
+  args //
   {
 
-  name = "emscripten-${args.name}";
-  buildInputs = [ emscripten python ] ++ buildInputs;
-  nativeBuildInputs = [ emscripten python ] ++ nativeBuildInputs;
+  pname = "emscripten-${lib.getName args}";
+  version = lib.getVersion args;
+  buildInputs = [ emscripten python2 ] ++ buildInputs;
+  nativeBuildInputs = [ emscripten python2 ] ++ nativeBuildInputs;
 
   # fake conftest results with emscripten's python magic
   EMCONFIGURE_JS=2;

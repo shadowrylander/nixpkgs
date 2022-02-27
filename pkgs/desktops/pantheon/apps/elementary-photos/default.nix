@@ -1,75 +1,85 @@
-{ stdenv, fetchFromGitHub, pantheon, meson, ninja, pkgconfig, vala, desktop-file-utils
-, gtk3, glib, libaccounts-glib, libexif, libgee, geocode-glib, gexiv2,libgphoto2, fetchpatch
-, granite, gst_all_1, libgudev, json-glib, libraw, librest, libsoup, sqlite, python3
-, scour, webkitgtk, libwebp, appstream, libunity, wrapGAppsHook, gobject-introspection, elementary-icon-theme }:
+{ lib
+, stdenv
+, fetchFromGitHub
+, nix-update-script
+, meson
+, ninja
+, pkg-config
+, vala
+, desktop-file-utils
+, gtk3
+, libexif
+, libgee
+, libhandy
+, geocode-glib
+, gexiv2
+, libgphoto2
+, granite
+, gst_all_1
+, libgudev
+, json-glib
+, libraw
+, librest
+, libsoup
+, sqlite
+, python3
+, webkitgtk
+, libwebp
+, appstream
+, wrapGAppsHook
+, elementary-icon-theme
+}:
 
 stdenv.mkDerivation rec {
-  pname = "photos";
-  version = "2.6.3";
-
-  name = "elementary-${pname}-${version}";
+  pname = "elementary-photos";
+  version = "2.7.4";
 
   src = fetchFromGitHub {
     owner = "elementary";
-    repo = pname;
+    repo = "photos";
     rev = version;
-    sha256 = "1s0ww5g26wj0gd1drj8gxs74gvg2c9fdj4ixpifj8jh8yafdmrvg";
-  };
-
-  passthru = {
-    updateScript = pantheon.updateScript {
-      repoName = pname;
-      attrPath = "elementary-${pname}";
-    };
+    sha256 = "sha256-NhF/WgS6IOwgALSCNyFNxz8ROVTb+mUX+lBtnWEyhEI=";
   };
 
   nativeBuildInputs = [
     appstream
     desktop-file-utils
-    gobject-introspection
     meson
     ninja
-    pkgconfig
+    pkg-config
     python3
     vala
     wrapGAppsHook
   ];
 
-  buildInputs = with gst_all_1; [
+  buildInputs = [
     elementary-icon-theme
     geocode-glib
     gexiv2
     granite
+    gtk3
+    json-glib
+    libexif
+    libgee
+    libgphoto2
+    libgudev
+    libhandy
+    libraw
+    librest
+    libsoup
+    libwebp
+    sqlite
+    webkitgtk
+  ] ++ (with gst_all_1; [
     gst-plugins-bad
     gst-plugins-base
     gst-plugins-good
     gst-plugins-ugly
     gstreamer
-    gtk3
-    json-glib
-    libaccounts-glib
-    libexif
-    libgee
-    libgphoto2
-    libgudev
-    libraw
-    libsoup
-    libunity
-    libwebp
-    librest
-    scour
-    sqlite
-    webkitgtk
-  ];
+  ]);
 
   mesonFlags = [
     "-Dplugins=false"
-  ];
-
-  patches = [
-    # https://github.com/elementary/photos/pull/505
-    # Unrelated line got dropped in https://github.com/elementary/photos/pull/498
-    ./fix-missing-line.patch
   ];
 
   postPatch = ''
@@ -77,11 +87,18 @@ stdenv.mkDerivation rec {
     patchShebangs meson/post_install.py
   '';
 
-  meta =  with stdenv.lib; {
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = "pantheon.${pname}";
+    };
+  };
+
+  meta = with lib; {
     description = "Photo viewer and organizer designed for elementary OS";
-    homepage = https://github.com/elementary/photos;
+    homepage = "https://github.com/elementary/photos";
     license = licenses.lgpl21Plus;
     platforms = platforms.linux;
-    maintainers = pantheon.maintainers;
+    maintainers = teams.pantheon.members;
+    mainProgram = "io.elementary.photos";
   };
 }

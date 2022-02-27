@@ -1,35 +1,28 @@
-{ stdenv, fetchFromGitHub, ocaml, findlib, dune
-, cmdliner, cppo, yojson
+{ lib, fetchurl, buildDunePackage
+, cmdliner, yojson, ppxlib
+, menhir, menhirLib
 }:
 
-if !stdenv.lib.versionAtLeast ocaml.version "4.02"
-then throw "js_of_ocaml-compiler is not available for OCaml ${ocaml.version}"
-else
+buildDunePackage rec {
+  pname = "js_of_ocaml-compiler";
+  version = "3.11.0";
+  useDune2 = true;
 
-stdenv.mkDerivation rec {
-	name = "js_of_ocaml-compiler-${version}";
-	version = "3.3.0";
+  src = fetchurl {
+    url = "https://github.com/ocsigen/js_of_ocaml/releases/download/${version}/js_of_ocaml-${version}.tbz";
+    sha256 = "sha256:0flws9mw0yjfw4d8d3y3k408mivy2xgky70xk1br3iqs4zksz38m";
+  };
 
-	src = fetchFromGitHub {
-		owner = "ocsigen";
-		repo = "js_of_ocaml";
-		rev = version;
-		sha256 = "0bg8x2s3f24c8ia2g293ikd5yg0yjw3hkdgdql59c8k2amqin8f8";
-	};
+  nativeBuildInputs = [ menhir ];
+  buildInputs = [ cmdliner ppxlib ];
 
-	buildInputs = [ ocaml findlib dune cmdliner cppo ];
+  configurePlatforms = [];
+  propagatedBuildInputs = [ menhirLib yojson ];
 
-	propagatedBuildInputs = [ yojson ];
-
-	buildPhase = "dune build -p js_of_ocaml-compiler";
-
-	inherit (dune) installPhase;
-
-	meta = {
-		description = "Compiler from OCaml bytecode to Javascript";
-		license = stdenv.lib.licenses.gpl2;
-		maintainers = [ stdenv.lib.maintainers.vbgl ];
-		inherit (src.meta) homepage;
-		inherit (ocaml.meta) platforms;
-	};
+  meta = {
+    description = "Compiler from OCaml bytecode to Javascript";
+    license = lib.licenses.gpl2;
+    maintainers = [ lib.maintainers.vbgl ];
+    homepage = "https://ocsigen.org/js_of_ocaml/";
+  };
 }

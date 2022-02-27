@@ -1,22 +1,43 @@
-{ stdenv, fetchurl, pkgconfig, intltool, glib, gobject-introspection
+{ lib, stdenv
+, fetchurl
+, pkg-config
+, glib
+, gobject-introspection
 , meson
 , ninja
 , python3
   # just for passthru
-, gnome3 }:
+, gnome
+}:
 
 stdenv.mkDerivation rec {
-  name = "gsettings-desktop-schemas-${version}";
-  version = "3.32.0";
+  pname = "gsettings-desktop-schemas";
+  version = "41.0";
 
   src = fetchurl {
-    url = "mirror://gnome/sources/gsettings-desktop-schemas/${stdenv.lib.versions.majorMinor version}/${name}.tar.xz";
-    sha256 = "0d8a6479vappgplq5crdr3ah0ykqcr3fw533wkx9v1a8lnrv8n9d";
+    url = "mirror://gnome/sources/${pname}/${lib.versions.major version}/${pname}-${version}.tar.xz";
+    sha256 = "dyiZcuWW0ERYPwwFYwbY8dvYrc+RKRClDaCmY+ZTMu0=";
   };
 
-  passthru = {
-    updateScript = gnome3.updateScript { packageName = "gsettings-desktop-schemas"; };
-  };
+  strictDeps = true;
+  depsBuildBuild = [ pkg-config ];
+  nativeBuildInputs = [
+    glib
+    meson
+    ninja
+    pkg-config
+    python3
+    gobject-introspection
+  ];
+
+  mesonFlags = [
+    "-Dintrospection=${lib.boolToString (stdenv.buildPlatform == stdenv.hostPlatform)}"
+  ];
+
+  postPatch = ''
+    chmod +x build-aux/meson/post-install.py
+    patchShebangs build-aux/meson/post-install.py
+  '';
 
   # meson installs the schemas to share/glib-2.0/schemas
   # We add the override file there too so it will be compiled and later moved by
@@ -32,16 +53,15 @@ stdenv.mkDerivation rec {
     EOF
   '';
 
-  postPatch = ''
-    chmod +x build-aux/meson/post-install.py
-    patchShebangs build-aux/meson/post-install.py
-  '';
+  passthru = {
+    updateScript = gnome.updateScript {
+      packageName = pname;
+    };
+  };
 
-  buildInputs = [ glib gobject-introspection ];
-
-  nativeBuildInputs = [ pkgconfig python3 meson ninja ];
-
-  meta = with stdenv.lib; {
-    maintainers = gnome3.maintainers;
+  meta = with lib; {
+    description = "Collection of GSettings schemas for settings shared by various components of a desktop";
+    license = licenses.lgpl21Plus;
+    maintainers = teams.gnome.members;
   };
 }

@@ -1,69 +1,91 @@
 { lib
 , buildPythonPackage
+, callPackage
 , fetchPypi
 , pythonOlder
 , pytest
-, preshed
-, ftfy
-, numpy
-, murmurhash
-, plac
-, ujson
-, dill
-, requests
-, thinc
-, regex
+, blis
+, catalogue
 , cymem
-, pathlib
-, msgpack-python
-, msgpack-numpy
+, jinja2
+, jsonschema
+, murmurhash
+, numpy
+, preshed
+, requests
+, setuptools
+, srsly
+, spacy-legacy
+, thinc
+, typer
+, wasabi
+, packaging
+, pathy
+, pydantic
+, python
+, tqdm
+, typing-extensions
+, spacy-loggers
+, langcodes
 }:
 
 buildPythonPackage rec {
   pname = "spacy";
-  version = "2.0.18";
+  version = "3.2.2";
+
+  disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0mybdms7c40jvk8ak180n65anjiyg4c8gkaqwkzicrd1mxq3ngqj";
+    sha256 = "sha256-s9mjYeHjwcGtD38kTyaH+s5CD+LWQtkpic01eUSn1w8=";
   };
 
-  prePatch = ''
-    substituteInPlace setup.py \
-      --replace "regex==" "regex>=" \
-      --replace "plac<1.0.0,>=0.9.6" "plac>=0.9.6" \
-      --replace "wheel>=0.32.0,<0.33.0" "wheel>=0.32.0"
-  '';
-
   propagatedBuildInputs = [
-   numpy
-   murmurhash
-   cymem
-   preshed
-   thinc
-   plac
-   ujson
-   dill
-   requests
-   regex
-   ftfy
-   msgpack-python
-   msgpack-numpy
-  ] ++ lib.optional (pythonOlder "3.4") pathlib;
+    blis
+    catalogue
+    cymem
+    jinja2
+    jsonschema
+    murmurhash
+    numpy
+    packaging
+    pathy
+    preshed
+    pydantic
+    requests
+    setuptools
+    srsly
+    spacy-legacy
+    thinc
+    tqdm
+    typer
+    wasabi
+    spacy-loggers
+    langcodes
+  ] ++ lib.optional (pythonOlder "3.8") typing-extensions;
+
+  postPatch = ''
+    substituteInPlace setup.cfg \
+      --replace "pydantic>=1.7.4,!=1.8,!=1.8.1,<1.9.0" "pydantic~=1.2"
+  '';
 
   checkInputs = [
     pytest
   ];
 
   doCheck = false;
-  # checkPhase = ''
-  #   ${python.interpreter} -m pytest spacy/tests --vectors --models --slow
-  # '';
+  checkPhase = ''
+    ${python.interpreter} -m pytest spacy/tests --vectors --models --slow
+  '';
+
+  pythonImportsCheck = [ "spacy" ];
+
+  passthru.tests.annotation = callPackage ./annotation-test { };
 
   meta = with lib; {
     description = "Industrial-strength Natural Language Processing (NLP) with Python and Cython";
-    homepage = https://github.com/explosion/spaCy;
+    homepage = "https://github.com/explosion/spaCy";
     license = licenses.mit;
-    maintainers = with maintainers; [ sdll ];
-    };
+    maintainers = with maintainers; [ ];
+  };
 }

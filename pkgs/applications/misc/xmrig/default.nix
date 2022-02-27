@@ -1,25 +1,26 @@
-{ stdenv, lib, fetchFromGitHub, cmake, libuv, libmicrohttpd, openssl
+{ stdenv, lib, fetchFromGitHub, cmake, libuv, libmicrohttpd, openssl, hwloc
 , donateLevel ? 0
 }:
 
 stdenv.mkDerivation rec {
-  name = "xmrig-${version}";
-  version = "2.14.1";
+  pname = "xmrig";
+  version = "6.16.4";
 
   src = fetchFromGitHub {
     owner = "xmrig";
     repo = "xmrig";
     rev = "v${version}";
-    sha256 = "0pc3ssmnn36xs3jgznx36q4z3qh06fkbz8md3p3rk6rpvly929pn";
+    sha256 = "sha256-hfdKhTUGoVN4DIURO+e3MOSpsL6GWxOV3LItd0nA51Y=";
   };
 
   nativeBuildInputs = [ cmake ];
-  buildInputs = [ libuv libmicrohttpd openssl ];
+  buildInputs = [ libuv libmicrohttpd openssl hwloc ];
 
+  inherit donateLevel;
+
+  patches = [ ./donate-level.patch ];
   postPatch = ''
-    substituteInPlace src/donate.h \
-      --replace "kDefaultDonateLevel = 5;" "kDefaultDonateLevel = ${toString donateLevel};" \
-      --replace "kMinimumDonateLevel = 1;" "kMinimumDonateLevel = ${toString donateLevel};"
+    substituteAllInPlace src/donate.h
   '';
 
   installPhase = ''
@@ -31,6 +32,6 @@ stdenv.mkDerivation rec {
     homepage = "https://github.com/xmrig/xmrig";
     license = licenses.gpl3Plus;
     platforms   = [ "x86_64-linux" "x86_64-darwin" ];
-    maintainers = with maintainers; [ fpletz ];
+    maintainers = with maintainers; [ fpletz kim0 ];
   };
 }

@@ -1,19 +1,19 @@
-{ stdenv, buildPythonPackage, fetchPypi, pillow, poppler_utils }:
+{ lib, buildPythonPackage, fetchPypi, pillow, poppler_utils }:
 
 buildPythonPackage rec {
   pname = "pdf2image";
-  version = "1.4.2";
+  version = "1.16.0";
 
   propagatedBuildInputs = [ pillow poppler_utils ];
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "694f8014f4c3722e5913f1c378c7056b1330db070ff7cb8196a80d24b80fa61e";
+    sha256 = "d58ed94d978a70c73c2bb7fdf8acbaf2a7089c29ff8141be5f45433c0c4293bb";
   };
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A python module that wraps the pdftoppm utility to convert PDF to PIL Image object";
-    homepage = https://github.com/Belval/pdf2image;
+    homepage = "https://github.com/Belval/pdf2image";
     license = licenses.mit;
     maintainers = with maintainers; [ gerschtli ];
     platforms = platforms.all;

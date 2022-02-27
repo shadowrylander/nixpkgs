@@ -1,17 +1,14 @@
-{ stdenv, fetchFromGitHub }:
-
-let
-  version = "0.4.3";
-in
+{ lib, stdenv, fetchFromGitHub }:
 
 stdenv.mkDerivation rec {
-  name = "nix-zsh-completions-${version}";
+  pname = "nix-zsh-completions";
+  version = "0.4.4";
 
   src = fetchFromGitHub {
     owner = "spwhitt";
     repo = "nix-zsh-completions";
-    rev = "${version}";
-    sha256 = "0fq1zlnsj1bb7byli7mwlz7nm2yszwmyx43ccczcv51mjjfivyp3";
+    rev = version;
+    sha256 = "1n9whlys95k4wc57cnz3n07p7zpkv796qkmn68a50ygkx6h3afqf";
   };
 
   installPhase = ''
@@ -20,9 +17,10 @@ stdenv.mkDerivation rec {
     cp *.zsh $out/share/zsh/plugins/nix
   '';
 
-  meta = with stdenv.lib; {
-    homepage = https://github.com/spwhitt/nix-zsh-completions;
+  meta = with lib; {
+    homepage = "https://github.com/spwhitt/nix-zsh-completions";
     description = "ZSH completions for Nix, NixOS, and NixOps";
+    priority = 6; # prevent collisions with nix 2.4's built-in completions
     license = licenses.bsd3;
     platforms = platforms.all;
     maintainers = with maintainers; [ spwhitt olejorgenb hedning ma27 ];

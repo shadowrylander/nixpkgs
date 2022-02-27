@@ -1,46 +1,95 @@
-{ stdenv, fetchFromGitHub, python, fixDarwinDylibNames }:
+{ lib
+, stdenv
+, fetchFromGitHub
+, python
+, fixDarwinDylibNames
+, javaBindings ? false
+, ocamlBindings ? false
+, pythonBindings ? true
+, jdk ? null
+, ocaml ? null
+, findlib ? null
+, zarith ? null
+, writeScript
+}:
+
+assert javaBindings -> jdk != null;
+assert ocamlBindings -> ocaml != null && findlib != null && zarith != null;
+
+with lib;
 
 stdenv.mkDerivation rec {
-  name = "z3-${version}";
-  version = "4.8.4";
+  pname = "z3";
+  version = "4.8.14";
 
   src = fetchFromGitHub {
-    owner  = "Z3Prover";
-    repo   = "z3";
-    rev    = name;
-    sha256 = "014igqm5vwswz0yhz0cdxsj3a6dh7i79hvhgc3jmmmz3z0xm1gyn";
+    owner = "Z3Prover";
+    repo = pname;
+    rev = "z3-${version}";
+    sha256 = "jPSTVSndp/T7n+VxZ/g9Rjco00Up+9xeDIVkeLl1MTw=";
   };
 
-  patches = [
-    ./0001-fix-2131.patch
-  ];
-
-  buildInputs = [ python fixDarwinDylibNames ];
+  nativeBuildInputs = optional stdenv.hostPlatform.isDarwin fixDarwinDylibNames;
+  buildInputs = [ python ]
+    ++ optional javaBindings jdk
+    ++ optionals ocamlBindings [ ocaml findlib zarith ]
+  ;
   propagatedBuildInputs = [ python.pkgs.setuptools ];
   enableParallelBuilding = true;
 
-  configurePhase = ''
-    ${python.interpreter} scripts/mk_make.py --prefix=$out --python --pypkgdir=$out/${python.sitePackages}
-    cd build
+  postPatch = optionalString ocamlBindings ''
+    export OCAMLFIND_DESTDIR=$ocaml/lib/ocaml/${ocaml.version}/site-lib
+    mkdir -p $OCAMLFIND_DESTDIR/stublibs
   '';
+
+  configurePhase = concatStringsSep " "
+    (
+      [ "${python.interpreter} scripts/mk_make.py --prefix=$out" ]
+        ++ optional javaBindings "--java"
+        ++ optional ocamlBindings "--ml"
+        ++ optional pythonBindings "--python --pypkgdir=$out/${python.sitePackages}"
+    ) + "\n" + "cd build";
 
   postInstall = ''
-    mkdir -p $dev $lib $python/lib
-
-    mv $out/lib/python*  $python/lib/
-    mv $out/lib          $lib/lib
-    mv $out/include      $dev/include
-
+    mkdir -p $dev $lib
+    mv $out/lib $lib/lib
+    mv $out/include $dev/include
+  '' + optionalString pythonBindings ''
+    mkdir -p $python/lib
+    mv $lib/lib/python* $python/lib/
     ln -sf $lib/lib/libz3${stdenv.hostPlatform.extensions.sharedLibrary} $python/${python.sitePackages}/z3/lib/libz3${stdenv.hostPlatform.extensions.sharedLibrary}
+  '' + optionalString javaBindings ''
+    mkdir -p $java/share/java
+    mv com.microsoft.z3.jar $java/share/java
+    moveToOutput "lib/libz3java.${stdenv.hostPlatform.extensions.sharedLibrary}" "$java"
   '';
 
-  outputs = [ "out" "lib" "dev" "python" ];
+  outputs = [ "out" "lib" "dev" "python" ]
+    ++ optional javaBindings "java"
+    ++ optional ocamlBindings "ocaml";
 
-  meta = {
+   passthru = {
+    updateScript = writeScript "update-z3" ''
+      #!/usr/bin/env nix-shell
+      #!nix-shell -i bash -p common-updater-scripts curl jq
+
+      set -eu -o pipefail
+
+      # Expect tags in format
+      #    [{name: "Nightly", ..., {name: "z3-vv.vv.vv", ...].
+      # Below we extract frst "z3-vv.vv" and drop "z3-" prefix.
+      newVersion="$(curl -s https://api.github.com/repos/Z3Prover/z3/releases |
+          jq 'first(.[].name|select(startswith("z3-"))|ltrimstr("z3-"))' --raw-output
+      )"
+      update-source-version ${pname} "$newVersion"
+    '';
+   };
+
+  meta = with lib; {
     description = "A high-performance theorem prover and SMT solver";
-    homepage    = "https://github.com/Z3Prover/z3";
-    license     = stdenv.lib.licenses.mit;
-    platforms   = stdenv.lib.platforms.x86_64;
-    maintainers = [ stdenv.lib.maintainers.thoughtpolice ];
+    homepage = "https://github.com/Z3Prover/z3";
+    license = licenses.mit;
+    platforms = platforms.unix;
+    maintainers = with maintainers; [ thoughtpolice ttuegel ];
   };
 }

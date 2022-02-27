@@ -1,14 +1,62 @@
-{ stdenv, fetchurl, pkgconfig, atk, cairo, glib, gtk3, pango, vala
-, libxml2, perl, gettext, gnome3, gobject-introspection, dbus, xvfb_run, shared-mime-info }:
+{ lib
+, stdenv
+, fetchurl
+, meson
+, ninja
+, pkg-config
+, atk
+, cairo
+, glib
+, gtk3
+, pango
+, fribidi
+, vala
+, libxml2
+, perl
+, gettext
+, gnome
+, gobject-introspection
+, dbus
+, xvfb-run
+, shared-mime-info
+}:
 
 stdenv.mkDerivation rec {
-  name = "gtksourceview-${version}";
-  version = "4.2.0";
+  pname = "gtksourceview";
+  version = "4.8.2";
+
+  outputs = [ "out" "dev" ];
 
   src = fetchurl {
-    url = "mirror://gnome/sources/gtksourceview/${stdenv.lib.versions.majorMinor version}/${name}.tar.xz";
-    sha256 = "0xgnjj7jd56wbl99s76sa1vjq9bkz4mdsxwgwlcphg689liyncf4";
+    url = "mirror://gnome/sources/${pname}/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "1k1pava84ywgq62xl5bz8y3zm7z2kz6kkgp423c0y02jrgjyfbc4";
   };
+
+  patches = [
+    # By default, the library loads syntaxes from XDG_DATA_DIRS and user directory
+    # but not from its own datadr (it assumes it will be in XDG_DATA_DIRS).
+    # Since this is not generally true with Nix, let’s add $out/share unconditionally.
+    ./4.x-nix_share_path.patch
+  ];
+
+  nativeBuildInputs = [
+    meson
+    ninja
+    pkg-config
+    gettext
+    perl
+    gobject-introspection
+    vala
+  ];
+
+  buildInputs = [
+    atk
+    cairo
+    glib
+    pango
+    fribidi
+    libxml2
+  ];
 
   propagatedBuildInputs = [
     # Required by gtksourceview-4.0.pc
@@ -17,38 +65,38 @@ stdenv.mkDerivation rec {
     shared-mime-info
   ];
 
-  outputs = [ "out" "dev" ];
-
-  nativeBuildInputs = [ pkgconfig gettext perl gobject-introspection vala ];
-
-  checkInputs = [ xvfb_run dbus ];
-
-  buildInputs = [ atk cairo glib pango libxml2 ];
-
-  patches = [ ./4.x-nix_share_path.patch ];
-
-  enableParallelBuilding = true;
+  checkInputs = [
+    xvfb-run
+    dbus
+  ];
 
   doCheck = stdenv.isLinux;
+
   checkPhase = ''
-    NO_AT_BRIDGE=1 \
+    runHook preCheck
+
     XDG_DATA_DIRS="$XDG_DATA_DIRS:${shared-mime-info}/share" \
     xvfb-run -s '-screen 0 800x600x24' dbus-run-session \
       --config-file=${dbus.daemon}/share/dbus-1/session.conf \
-      make check
+      meson test --no-rebuild --print-errorlogs
+
+    runHook postCheck
   '';
 
   passthru = {
-    updateScript = gnome3.updateScript {
+    updateScript = gnome.updateScript {
       packageName = "gtksourceview";
       attrPath = "gtksourceview4";
+      versionPolicy = "odd-unstable";
+      freeze = true;
     };
   };
 
-  meta = with stdenv.lib; {
-    homepage = https://wiki.gnome.org/Projects/GtkSourceView;
-    platforms = with platforms; linux ++ darwin;
-    license = licenses.lgpl21;
-    maintainers = gnome3.maintainers;
+  meta = with lib; {
+    description = "Source code editing widget for GTK";
+    homepage = "https://wiki.gnome.org/Projects/GtkSourceView";
+    platforms = platforms.unix;
+    license = licenses.lgpl21Plus;
+    maintainers = teams.gnome.members;
   };
 }

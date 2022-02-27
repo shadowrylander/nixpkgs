@@ -4,11 +4,19 @@ let
   callPackage = newScope self;
 
   self = rec {
-  
+
+    # Update script tailored to mate packages from git repository
+    mateUpdateScript = { pname, version, odd-unstable ? true, url ? "https://pub.mate-desktop.org/releases" }:
+      pkgs.httpTwoLevelsUpdater {
+        inherit pname version odd-unstable url;
+        attrPath = "mate.${pname}";
+      };
+
     atril = callPackage ./atril { };
     caja = callPackage ./caja { };
     caja-dropbox = callPackage ./caja-dropbox { };
     caja-extensions = callPackage ./caja-extensions { };
+    caja-with-extensions = callPackage ./caja-with-extensions { };
     engrampa = callPackage ./engrampa { };
     eom = callPackage ./eom { };
     libmatekbd = callPackage ./libmatekbd { };
@@ -38,11 +46,12 @@ let
     mate-system-monitor = callPackage ./mate-system-monitor { };
     mate-terminal = callPackage ./mate-terminal { };
     mate-themes = callPackage ./mate-themes { };
+    mate-tweak = callPackage ./mate-tweak { };
     mate-user-guide = callPackage ./mate-user-guide { };
     mate-user-share = callPackage ./mate-user-share { };
     mate-utils = callPackage ./mate-utils { };
     mozo = callPackage ./mozo { };
-    pluma = callPackage ./pluma { };
+    pluma = callPackage ./pluma { inherit (pkgs.gnome) adwaita-icon-theme; };
     python-caja = callPackage ./python-caja { };
 
     basePackages = [
@@ -86,7 +95,7 @@ let
       mozo
       pluma
     ];
-  
+
   };
 
 in self

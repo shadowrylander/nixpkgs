@@ -1,42 +1,77 @@
-{ stdenv, lib, fetchPypi, python, buildPythonPackage, gfortran, pytest, blas, writeTextFile }:
+{ lib
+, fetchPypi
+, fetchpatch
+, python
+, buildPythonPackage
+, gfortran
+, hypothesis
+, pytest
+, blas
+, lapack
+, writeTextFile
+, cython
+, setuptoolsBuildHook
+, pythonOlder
+}:
+
+assert (!blas.isILP64) && (!lapack.isILP64);
 
 let
-  blasImplementation = lib.nameFromURL blas.name "-";
   cfg = writeTextFile {
     name = "site.cfg";
     text = (lib.generators.toINI {} {
-      "${blasImplementation}" = {
-        include_dirs = "${blas}/include";
+      ${blas.implementation} = {
+        include_dirs = "${lib.getDev blas}/include:${lib.getDev lapack}/include";
+        library_dirs = "${blas}/lib:${lapack}/lib";
+        runtime_library_dirs = "${blas}/lib:${lapack}/lib";
+        libraries = "lapack,lapacke,blas,cblas";
+      };
+      lapack = {
+        include_dirs = "${lib.getDev lapack}/include";
+        library_dirs = "${lapack}/lib";
+        runtime_library_dirs = "${lapack}/lib";
+      };
+      blas = {
+        include_dirs = "${lib.getDev blas}/include";
         library_dirs = "${blas}/lib";
-      } // lib.optionalAttrs (blasImplementation == "mkl") {
-        mkl_libs = "mkl_rt";
-        lapack_libs = "";
+        runtime_library_dirs = "${blas}/lib";
       };
     });
   };
 in buildPythonPackage rec {
   pname = "numpy";
-  version = "1.16.2";
+
+  # Attention! v1.22.0 breaks scipy and by extension scikit-learn, so
+  # build both to verify they don't break.
+  # https://github.com/scipy/scipy/issues/15414
+  version = "1.21.5";
+
+  format = "pyproject.toml";
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
     extension = "zip";
-    sha256 = "1c4inssky16p6ab63n1gass6dik1dzxrp3y7kmxbdq6xg4w2wsbc";
+    sha256 = "sha256-alkovGJBJk3OXtUJ5m8zZ2/Jf0ZOepGe3GcvtVMiIe4=";
   };
 
-  nativeBuildInputs = [ gfortran pytest ];
-  buildInputs = [ blas ];
-
-  patches = lib.optionals (python.hasDistutilsCxxPatch or false) [
+  patches = lib.optionals python.hasDistutilsCxxPatch [
     # We patch cpython/distutils to fix https://bugs.python.org/issue1222585
     # Patching of numpy.distutils is needed to prevent it from undoing the
     # patch to distutils.
     ./numpy-distutils-C++.patch
   ];
 
+  nativeBuildInputs = [ gfortran cython setuptoolsBuildHook ];
+  buildInputs = [ blas lapack ];
+
+  # we default openblas to build with 64 threads
+  # if a machine has more than 64 threads, it will segfault
+  # see https://github.com/xianyi/OpenBLAS/issues/2993
   preConfigure = ''
     sed -i 's/-faltivec//' numpy/distutils/system_info.py
     export NPY_NUM_BUILD_JOBS=$NIX_BUILD_CORES
+    export OMP_NUM_THREADS=$((NIX_BUILD_CORES > 64 ? 64 : NIX_BUILD_CORES))
   '';
 
   preBuild = ''
@@ -44,6 +79,11 @@ in buildPythonPackage rec {
   '';
 
   enableParallelBuilding = true;
+
+  checkInputs = [
+    pytest
+    hypothesis
+  ];
 
   checkPhase = ''
     runHook preCheck
@@ -54,18 +94,20 @@ in buildPythonPackage rec {
   '';
 
   passthru = {
-    blas = blas;
-    inherit blasImplementation cfg;
+    # just for backwards compatibility
+    blas = blas.provider;
+    blasImplementation = blas.implementation;
+    inherit cfg;
   };
 
-  # Disable two tests
-  # - test_f2py: f2py isn't yet on path.
+  # Disable test
   # - test_large_file_support: takes a long time and can cause the machine to run out of disk space
-  NOSE_EXCLUDE="test_f2py,test_large_file_support";
+  NOSE_EXCLUDE="test_large_file_support";
 
   meta = {
     description = "Scientific tools for Python";
-    homepage = http://numpy.scipy.org/;
+    homepage = "https://numpy.org/";
+    license = lib.licenses.bsd3;
     maintainers = with lib.maintainers; [ fridh ];
   };
 }

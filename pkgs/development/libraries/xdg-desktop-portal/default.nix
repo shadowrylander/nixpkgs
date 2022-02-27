@@ -1,8 +1,29 @@
-{ stdenv, fetchFromGitHub, substituteAll, autoreconfHook, pkgconfig, libxml2, glib, pipewire, fontconfig, flatpak, gsettings-desktop-schemas, acl, dbus, fuse, geoclue2, wrapGAppsHook }:
+{ lib
+, acl
+, autoreconfHook
+, dbus
+, fetchFromGitHub
+, fetchpatch
+, flatpak
+, fuse
+, geoclue2
+, glib
+, gsettings-desktop-schemas
+, json-glib
+, libportal
+, libxml2
+, nixosTests
+, pipewire
+, pkg-config
+, stdenv
+, substituteAll
+, wrapGAppsHook
+, enableGeoLocation ? true
+}:
 
 stdenv.mkDerivation rec {
   pname = "xdg-desktop-portal";
-  version = "1.2.0";
+  version = "1.12.1";
 
   outputs = [ "out" "installedTests" ];
 
@@ -10,34 +31,58 @@ stdenv.mkDerivation rec {
     owner = "flatpak";
     repo = pname;
     rev = version;
-    sha256 = "1gjyif4gly0mkdx6ir6wc4vhfh1raah9jq03q28i88hr7phjdy71";
+    sha256 = "1fc3LXN6wp/zQw4HQ0Q99HUvBhynHrQi2p3s/08izuE=";
   };
 
   patches = [
-    ./respect-path-env-var.patch
+    # Hardcode paths used by x-d-p itself.
     (substituteAll {
       src = ./fix-paths.patch;
       inherit flatpak;
     })
   ];
 
-  nativeBuildInputs = [ autoreconfHook pkgconfig libxml2 wrapGAppsHook ];
-  buildInputs = [ glib pipewire fontconfig flatpak acl dbus geoclue2 fuse gsettings-desktop-schemas ];
+  nativeBuildInputs = [
+    autoreconfHook
+    libxml2
+    pkg-config
+    wrapGAppsHook
+  ];
 
-  doCheck = true; # XXX: investigate!
+  buildInputs = [
+    acl
+    dbus
+    flatpak
+    fuse
+    glib
+    gsettings-desktop-schemas
+    json-glib
+    libportal
+    pipewire
+  ] ++ lib.optionals enableGeoLocation [
+    geoclue2
+  ];
 
   configureFlags = [
     "--enable-installed-tests"
+  ] ++ lib.optionals (!enableGeoLocation) [
+    "--disable-geoclue"
   ];
 
   makeFlags = [
-    "installed_testdir=$(installedTests)/libexec/installed-tests/xdg-desktop-portal"
-    "installed_test_metadir=$(installedTests)/share/installed-tests/xdg-desktop-portal"
+    "installed_testdir=${placeholder "installedTests"}/libexec/installed-tests/xdg-desktop-portal"
+    "installed_test_metadir=${placeholder "installedTests"}/share/installed-tests/xdg-desktop-portal"
   ];
 
-  meta = with stdenv.lib; {
+  passthru = {
+    tests = {
+      installedTests = nixosTests.installed-tests.xdg-desktop-portal;
+    };
+  };
+
+  meta = with lib; {
     description = "Desktop integration portals for sandboxed apps";
-    license = licenses.lgpl21;
+    license = licenses.lgpl2Plus;
     maintainers = with maintainers; [ jtojnar ];
     platforms = platforms.linux;
   };

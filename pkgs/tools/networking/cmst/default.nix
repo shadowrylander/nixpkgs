@@ -1,21 +1,19 @@
-{ stdenv, fetchFromGitHub, qmake, qtbase }:
+{ mkDerivation, lib, fetchFromGitHub, qmake, qtbase, qttools }:
 
-stdenv.mkDerivation rec {
-  name = "cmst-${version}";
-  version = "2019.01.13";
+mkDerivation rec {
+  pname = "cmst";
+  version = "2022.01.05";
 
   src = fetchFromGitHub {
     repo = "cmst";
     owner = "andrew-bibb";
-    rev = name;
-    sha256 = "13739f0ddld34dcqlfhylzn1zqz5a7jbp4a4id7gj7pcxjx1lafh";
+    rev = "${pname}-${version}";
+    sha256 = "0d05vrsjm30q22wpxicnxhjzrjq5kxjhpb6262m46sgkr8yipfhr";
   };
 
-  nativeBuildInputs = [ qmake ];
+  nativeBuildInputs = [ qmake qttools ];
 
   buildInputs = [ qtbase ];
-
-  enableParallelBuilding = true;
 
   postPatch = ''
     for f in $(find . -name \*.cpp -o -name \*.pri -o -name \*.pro); do
@@ -23,11 +21,11 @@ stdenv.mkDerivation rec {
     done
   '';
 
-  meta = {
+  meta = with lib; {
     description = "QT GUI for Connman with system tray icon";
-    homepage = https://github.com/andrew-bibb/cmst;
-    maintainers = [ stdenv.lib.maintainers.matejc ];
-    platforms = stdenv.lib.platforms.linux;
-    license = stdenv.lib.licenses.mit;
+    homepage = "https://github.com/andrew-bibb/cmst";
+    maintainers = with maintainers; [ matejc romildo ];
+    platforms = platforms.linux;
+    license = licenses.mit;
   };
 }

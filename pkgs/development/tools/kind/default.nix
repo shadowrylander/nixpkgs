@@ -1,29 +1,42 @@
-{ stdenv, buildGoPackage, fetchFromGitHub }:
+{ lib, buildGoModule, fetchFromGitHub, installShellFiles }:
 
-with stdenv.lib;
+with lib;
 
-buildGoPackage rec {
-  name = "kind-${version}";
-  version = "0.2.1";
+buildGoModule rec {
+  pname = "kind";
+  version = "0.11.1";
 
   src = fetchFromGitHub {
-    rev    = "${version}";
+    rev    = "v${version}";
     owner  = "kubernetes-sigs";
     repo   = "kind";
-    sha256 = "14ddhml9rh7x4j315fb332206xbn1rzx3i0ngj3220vb6d5dv8if";
+    sha256 = "sha256-pjg52ONseKNw06EOBzD6Elge+Cz+C3llPvjJPHkn1cw=";
   };
 
-  # move dev tool package that confuses the go compiler
-  patchPhase = "rm -r hack";
+  patches = [
+    # fix kernel module path used by kind
+    ./kernel-module-path.patch
+  ];
 
-  goPackagePath = "sigs.k8s.io/kind";
-  excludedPackages = "images/base/entrypoint";
+  vendorSha256 = "sha256-HiVdekSZrC/RkMSvcwm1mv6AE4bA5kayUsMdVCbckiE=";
+
+  doCheck = false;
+
+  subPackages = [ "." ];
+
+  nativeBuildInputs = [ installShellFiles ];
+  postInstall = ''
+    for shell in bash fish zsh; do
+      $out/bin/kind completion $shell > kind.$shell
+      installShellCompletion kind.$shell
+    done
+  '';
 
   meta = {
     description = "Kubernetes IN Docker - local clusters for testing Kubernetes";
-    homepage    = https://github.com/kubernetes-sigs/kind;
+    homepage    = "https://github.com/kubernetes-sigs/kind";
     maintainers = with maintainers; [ offline rawkode ];
-    license     = stdenv.lib.licenses.asl20;
+    license     = lib.licenses.asl20;
     platforms   = platforms.unix;
   };
 }

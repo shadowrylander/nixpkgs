@@ -1,21 +1,74 @@
-{ lib, buildPythonPackage, fetchPypi }:
+{ lib
+, stdenv
+, buildPythonPackage
+, cryptography
+, fetchFromGitHub
+, isPy27
+, mock
+, pyparsing
+, pytest-forked
+, pytest-randomly
+, pytest-timeout
+, pytest-xdist
+, pytestCheckHook
+, six
+}:
 
 buildPythonPackage rec {
   pname = "httplib2";
-  version = "0.12.1";
+  version = "0.20.3";
+  format = "setuptools";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "4ba6b8fd77d0038769bf3c33c9a96a6f752bc4cdf739701fdcaf210121f399d4";
+  src = fetchFromGitHub {
+    owner = pname;
+    repo = pname;
+    rev = "v${version}";
+    sha256 = "sha256-Q5KkhVqyHDoIeKjvvYoHRbZPY7LUXGDwgp4CSuyvQ1g=";
   };
 
-  # Needs setting up
-  doCheck = false;
+  propagatedBuildInputs = [
+    pyparsing
+  ];
+
+  checkInputs = [
+    cryptography
+    mock
+    pytest-forked
+    pytest-randomly
+    pytest-timeout
+    pytest-xdist
+    six
+    pytestCheckHook
+  ];
+
+  # Don't run tests for Python 2.7
+  doCheck = !isPy27;
+
+  postPatch = ''
+    sed -i "/--cov/d" setup.cfg
+  '';
+
+  disabledTests = [
+    # ValueError: Unable to load PEM file.
+    # https://github.com/httplib2/httplib2/issues/192#issuecomment-993165140
+    "test_client_cert_password_verified"
+  ] ++ lib.optionals (stdenv.isDarwin) [
+    # fails with HTTP 408 Request Timeout, instead of expected 200 OK
+    "test_timeout_subsequent"
+  ];
+
+  pytestFlagsArray = [
+    "--ignore python2"
+  ];
+
+  pythonImportsCheck = [
+    "httplib2"
+  ];
 
   meta = with lib; {
-    homepage = http://code.google.com/p/httplib2;
     description = "A comprehensive HTTP client library";
+    homepage = "https://github.com/httplib2/httplib2";
     license = licenses.mit;
-    maintainers = with maintainers; [ garbas ];
+    maintainers = with maintainers; [ fab ];
   };
 }

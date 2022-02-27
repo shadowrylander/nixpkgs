@@ -7,7 +7,7 @@ buildPythonPackage rec {
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1bsqcv3h49dzqnyn29ijq8r7k1ra8ikl1y9qcpcns9nbvhaq3wq3";
+    sha256 = "19gs051jbsixxwhlfs4xdxpzg8w1vypzpz3w56bp9x01qwzfbdy6";
   };
 
   # No tests included
@@ -15,7 +15,7 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Test vectors for the cryptography package";
-    homepage = https://cryptography.io/en/latest/development/test-vectors/;
+    homepage = "https://cryptography.io/en/latest/development/test-vectors/";
     # Source: https://github.com/pyca/cryptography/tree/master/vectors;
     license = with licenses; [ asl20 bsd3 ];
     maintainers = with maintainers; [ primeos ];

@@ -1,29 +1,29 @@
-{ stdenv, fetchurl, pkgconfig, intltool, itstool, glib, libwnck3, librsvg, libxml2, gnome3, gtk3, mate, hicolor-icon-theme, gobject-introspection, wrapGAppsHook }:
+{ lib, stdenv, fetchurl, pkg-config, gettext, itstool, glib, libwnck, librsvg, libxml2, dconf, gtk3, mate, hicolor-icon-theme, gobject-introspection, wrapGAppsHook, mateUpdateScript }:
 
 stdenv.mkDerivation rec {
-  name = "mate-panel-${version}";
-  version = "1.22.1";
+  pname = "mate-panel";
+  version = "1.26.2";
 
   src = fetchurl {
-    url = "http://pub.mate-desktop.org/releases/${stdenv.lib.versions.majorMinor version}/${name}.tar.xz";
-    sha256 = "0pb9dpgsfjp6gsldg4ad2jz23xdvjfarmz4cjwkpakygkq5i6dma";
+    url = "https://pub.mate-desktop.org/releases/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "rsT5jInFnnbMBlbtBILx2CkS9N7MZg8hyNAE5JPgVBA=";
   };
 
   nativeBuildInputs = [
     gobject-introspection
-    intltool
+    gettext
     itstool
-    pkgconfig
+    pkg-config
     wrapGAppsHook
   ];
 
   buildInputs = [
     glib
-    libwnck3
+    libwnck
     librsvg
     libxml2
     gtk3
-    gnome3.dconf
+    dconf
     mate.libmateweather
     mate.mate-desktop
     mate.mate-menus
@@ -37,11 +37,15 @@ stdenv.mkDerivation rec {
     "INTROSPECTION_TYPELIBDIR=$(out)/lib/girepository-1.0"
   ];
 
-  meta = with stdenv.lib; {
+  enableParallelBuilding = true;
+
+  passthru.updateScript = mateUpdateScript { inherit pname version; };
+
+  meta = with lib; {
     description = "The MATE panel";
-    homepage = https://github.com/mate-desktop/mate-panel;
-    license = with licenses; [ gpl2 lgpl2 ];
+    homepage = "https://github.com/mate-desktop/mate-panel";
+    license = with licenses; [ gpl2Plus lgpl2Plus fdl11Plus ];
     platforms = platforms.unix;
-    maintainers = [ maintainers.romildo ];
+    maintainers = teams.mate.members;
   };
 }

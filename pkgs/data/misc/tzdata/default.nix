@@ -1,17 +1,17 @@
-{ stdenv, fetchurl, buildPackages }:
+{ lib, stdenv, fetchurl, buildPackages }:
 
 stdenv.mkDerivation rec {
-  name = "tzdata-${version}";
-  version = "2019a";
+  pname = "tzdata";
+  version = "2021e";
 
   srcs =
     [ (fetchurl {
         url = "https://data.iana.org/time-zones/releases/tzdata${version}.tar.gz";
-        sha256 = "0wlpqm4asvi0waaz24xj20iq40gqfypmb4nldjhkfgm09bgnsdlh";
+        sha256 = "1cdjdcxl0s9xf0dg1z64kh7llm80byxqlzrkkjzcdlyh6yvl5v07";
       })
       (fetchurl {
         url = "https://data.iana.org/time-zones/releases/tzcode${version}.tar.gz";
-        sha256 = "1x9z8fpgnhzlsnps0hamb54ymaskjab7ys9m4i4gpk9hpiig2fc7";
+        sha256 = "0x8pcfmjvxk29yfh8bklchv2f0vpl4yih0gc4wyx292l78wncijq";
       })
     ];
 
@@ -31,6 +31,7 @@ stdenv.mkDerivation rec {
     "MANDIR=$(man)/share/man"
     "AWK=awk"
     "CFLAGS=-DHAVE_LINK=0"
+    "CFLAGS+=-DZIC_BLOAT_DEFAULT=\\\"fat\\\""
     "cc=${stdenv.cc.targetPrefix}cc"
     "AR=${stdenv.cc.targetPrefix}ar"
   ];
@@ -44,7 +45,7 @@ stdenv.mkDerivation rec {
   preInstall = ''
      mv zic.o zic.o.orig
      mv zic zic.orig
-     make $makeFlags cc=cc AR=ar zic
+     make $makeFlags cc=${stdenv.cc.nativePrefix}cc AR=${stdenv.cc.nativePrefix}ar zic
      mv zic zic-native
      mv zic.o.orig zic.o
      mv zic.orig zic
@@ -63,10 +64,15 @@ stdenv.mkDerivation rec {
 
   setupHook = ./tzdata-setup-hook.sh;
 
-  meta = with stdenv.lib; {
-    homepage = http://www.iana.org/time-zones;
+  meta = with lib; {
+    homepage = "http://www.iana.org/time-zones";
     description = "Database of current and historical time zones";
+    changelog = "https://github.com/eggert/tz/blob/${version}/NEWS";
+    license = with licenses; [
+      bsd3 # tzcode
+      publicDomain # tzdata
+    ];
     platforms = platforms.all;
-    maintainers = with maintainers; [ fpletz ];
+    maintainers = with maintainers; [ ajs124 fpletz ];
   };
 }

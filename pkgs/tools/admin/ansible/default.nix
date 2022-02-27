@@ -1,27 +1,24 @@
-{ python3Packages, fetchurl }:
+{ python3Packages, fetchFromGitHub }:
 
-{
-  ansible = with python3Packages; toPythonApplication ansible;
+rec {
+  ansible = ansible_2_12;
 
-  ansible_2_7 = with python3Packages; toPythonApplication ansible;
+  ansible_2_12 = python3Packages.toPythonApplication python3Packages.ansible-core;
 
-  ansible_2_6 = with python3Packages; toPythonApplication (ansible.overridePythonAttrs(old: rec {
-    pname = "ansible";
-    version = "2.6.15";
+  ansible_2_11 = python3Packages.toPythonApplication (python3Packages.ansible-core.overridePythonAttrs (old: rec {
+    pname = "ansible-core";
+    version = "2.11.6";
 
-    src = fetchurl {
-      url = "https://releases.ansible.com/ansible/${pname}-${version}.tar.gz";
-      sha256 = "1l4ji9sryfn0l651hy6cf5zqq8fpwi956c7qzjm4sihz5ps6wyhd";
+    src = python3Packages.fetchPypi {
+      inherit pname version;
+      sha256 = "sha256-k9UCg8fFtHbev4PcCJs/Z5uTmouae11ijSjar7s9MDo=";
     };
   }));
 
-  ansible_2_5 = with python3Packages; toPythonApplication (ansible.overridePythonAttrs(old: rec {
-    pname = "ansible";
-    version = "2.5.15";
+  ansible_2_10 = python3Packages.toPythonApplication python3Packages.ansible-base;
 
-    src = fetchurl {
-      url = "https://releases.ansible.com/ansible/${pname}-${version}.tar.gz";
-      sha256 = "1w9wfv1s2jq6vkx1hm6n69zwxv2pgjj7nidyg452miwh684jpg7z";
-    };
-  }));
+  # End of support 2021/10/02, End of life 2021/12/31
+  ansible_2_9 = python3Packages.toPythonApplication python3Packages.ansible;
+
+  ansible_2_8 = throw "Ansible 2.8 went end of life on 2021/01/03 and has subsequently been dropped";
 }

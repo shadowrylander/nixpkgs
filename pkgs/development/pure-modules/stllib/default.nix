@@ -1,9 +1,8 @@
-{ stdenv, fetchurl, pkgconfig, pure }:
+{ lib, stdenv, fetchurl, pkg-config, pure }:
 
 stdenv.mkDerivation rec {
-  baseName = "stllib";
+  pname = "pure-stllib";
   version = "0.6";
-  name = "pure-${baseName}-${version}";
 
   src = fetchurl {
     url = "https://bitbucket.org/purelang/pure-lang/downloads/pure-stllib-${version}.tar.gz";
@@ -16,16 +15,16 @@ stdenv.mkDerivation rec {
     done
   '';
 
-  nativeBuildInputs = [ pkgconfig ];
+  nativeBuildInputs = [ pkg-config ];
   propagatedBuildInputs = [ pure ];
-  makeFlags = "libdir=$(out)/lib prefix=$(out)/";
+  makeFlags = [ "libdir=$(out)/lib" "prefix=$(out)/" ];
   setupHook = ../generic-setup-hook.sh;
 
   meta = {
     description = "An “umbrella” package that contains a pair of Pure addons, pure-stlvec and pure-stlmap";
-    homepage = http://puredocs.bitbucket.org/pure-stllib.html;
-    license = stdenv.lib.licenses.bsd3;
-    platforms = stdenv.lib.platforms.linux;
-    maintainers = with stdenv.lib.maintainers; [ asppsa ];
+    homepage = "http://puredocs.bitbucket.org/pure-stllib.html";
+    license = lib.licenses.bsd3;
+    platforms = lib.platforms.linux;
+    maintainers = with lib.maintainers; [ asppsa ];
   };
 }

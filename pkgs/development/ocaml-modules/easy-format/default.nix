@@ -1,27 +1,28 @@
-{ stdenv, fetchzip, ocaml, findlib }:
-let
+{ lib, stdenv, fetchFromGitHub, ocaml, findlib }:
+
+stdenv.mkDerivation rec {
+
   pname = "easy-format";
   version = "1.2.0";
-in
-stdenv.mkDerivation {
 
-  name = "${pname}-${version}";
-
-  src = fetchzip {
-    url = "https://github.com/mjambon/${pname}/archive/v${version}.tar.gz";
-    sha256 = "00ga7mrlycjc99gzp3bgx6iwhf7i6j8856f8xzrf1yas7zwzgzm9";
+  src = fetchFromGitHub {
+    owner = "mjambon";
+    repo = "easy-format";
+    rev = "v${version}";
+    sha256 = "sha256-qf73+T9a+eDy78iZgpA08TjIo+lvjftfSkwyT3M96gE=";
   };
 
-  buildInputs = [ ocaml findlib ];
+  nativeBuildInputs = [ ocaml findlib ];
+  strictDeps = true;
 
   createFindlibDestdir = true;
 
   doCheck = true;
   checkTarget = "test";
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A high-level and functional interface to the Format module of the OCaml standard library";
-    homepage = "http://mjambon.com/${pname}.html";
+    homepage = "https://github.com/ocaml-community/easy-format";
     license = licenses.bsd3;
     maintainers = [ maintainers.vbgl ];
   };

@@ -1,25 +1,24 @@
-{ stdenv, fetchurl, pkgconfig, pure, liblo }:
+{ lib, stdenv, fetchurl, pkg-config, pure, liblo }:
 
 stdenv.mkDerivation rec {
-  baseName = "liblo";
+  pname = "pure-liblo";
   version = "0.9";
-  name = "pure-${baseName}-${version}";
 
   src = fetchurl {
-    url = "https://bitbucket.org/purelang/pure-lang/downloads/${name}.tar.gz";
+    url = "https://bitbucket.org/purelang/pure-lang/downloads/pure-liblo-${version}.tar.gz";
     sha256 = "c2ba4d6f94489acf8a8fac73982ae03d5ad4113146eb1f7d6558a956c57cb8ee";
   };
 
-  nativeBuildInputs = [ pkgconfig ];
+  nativeBuildInputs = [ pkg-config ];
   propagatedBuildInputs = [ pure liblo ];
-  makeFlags = "libdir=$(out)/lib prefix=$(out)/";
+  makeFlags = [ "libdir=$(out)/lib" "prefix=$(out)/" ];
   setupHook = ../generic-setup-hook.sh;
 
   meta = {
     description = "A quick and dirty Pure wrapper for the liblo library, which implements Berkeley’s Open Sound Control (OSC) protocol";
-    homepage = http://puredocs.bitbucket.org/pure-liblo.html;
-    license = stdenv.lib.licenses.lgpl3Plus;
-    platforms = stdenv.lib.platforms.linux;
-    maintainers = with stdenv.lib.maintainers; [ asppsa ];
+    homepage = "http://puredocs.bitbucket.org/pure-liblo.html";
+    license = lib.licenses.lgpl3Plus;
+    platforms = lib.platforms.linux;
+    maintainers = with lib.maintainers; [ asppsa ];
   };
 }

@@ -2,7 +2,7 @@
 
 buildDunePackage rec {
   pname = "lwt_camlp4";
-  version = "git-20180325";
+  version = "unstable-2018-03-25";
 
   src = fetchFromGitHub {
     owner = "ocsigen";
@@ -14,6 +14,8 @@ buildDunePackage rec {
   minimumOCamlVersion = "4.02";
 
   propagatedBuildInputs = [ camlp4 ];
+
+  preBuild = "rm META.lwt_camlp4";
 
   meta = {
     description = "Camlp4 syntax extension for Lwt (deprecated)";

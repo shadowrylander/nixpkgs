@@ -1,8 +1,8 @@
-{ config, lib , pkgs, ...}:
+{ config, lib, pkgs, utils, ...}:
 
+with utils.systemdUtils.unitOptions;
+with utils.systemdUtils.lib;
 with lib;
-with import ./systemd-unit-options.nix { inherit config lib; };
-with import ./systemd-lib.nix { inherit config lib pkgs; };
 
 let
   cfg = config.systemd.nspawn;
@@ -113,11 +113,13 @@ in {
   config =
     let
       units = mapAttrs' (n: v: let nspawnFile = "${n}.nspawn"; in nameValuePair nspawnFile (instanceToUnit nspawnFile v)) cfg;
-    in mkIf (cfg != {}) {
-
-      environment.etc."systemd/nspawn".source = generateUnits "nspawn" units [] [];
-
-      systemd.targets."multi-user".wants = [ "machines.target" ];
-  };
-
+    in
+      mkMerge [
+        (mkIf (cfg != {}) {
+          environment.etc."systemd/nspawn".source = mkIf (cfg != {}) (generateUnits' false "nspawn" units [] []);
+        })
+        {
+          systemd.targets.multi-user.wants = [ "machines.target" ];
+        }
+      ];
 }

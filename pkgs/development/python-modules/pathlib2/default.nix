@@ -3,18 +3,18 @@
 , fetchPypi
 , six
 , pythonOlder
-, scandir
+, scandir ? null
 , glibcLocales
-, mock
+, mock ? null
 }:
 
 buildPythonPackage rec {
   pname = "pathlib2";
-  version = "2.3.3";
+  version = "2.3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "25199318e8cc3c25dcb45cbe084cc061051336d5a9ea2a12448d3d8cb748f742";
+    sha256 = "7d8bcb5555003cdf4a8d2872c538faa3a0f5d20630cb360e518ca3b981795e5f";
   };
 
   propagatedBuildInputs = [ six ] ++ lib.optional (pythonOlder "3.5") scandir;
@@ -26,7 +26,7 @@ buildPythonPackage rec {
 
   meta = {
     description = "This module offers classes representing filesystem paths with semantics appropriate for different operating systems.";
-    homepage = https://pypi.python.org/pypi/pathlib2/;
+    homepage = "https://pypi.python.org/pypi/pathlib2/";
     license = with lib.licenses; [ mit ];
   };
 }

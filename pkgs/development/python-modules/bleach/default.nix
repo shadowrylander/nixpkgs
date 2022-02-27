@@ -1,29 +1,43 @@
 { lib
 , buildPythonPackage
 , fetchPypi
-, pytest
-, pytestrunner
+, pytestCheckHook
 , six
 , html5lib
+, setuptools
+, packaging
+, pythonOlder
 }:
 
 buildPythonPackage rec {
   pname = "bleach";
-  version = "3.1.0";
+  version = "4.1.0";
+  disabled = pythonOlder "3.6";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "3fdf7f77adcf649c9911387df51254b813185e32b2c6619f690b593a617e19fa";
+    sha256 = "sha256-CQDYs366YagC7kCsAGH4wrXe4pwZJ90dIz4HXr9acdo=";
   };
 
-  checkInputs = [ pytest pytestrunner ];
-  propagatedBuildInputs = [ six html5lib ];
+  propagatedBuildInputs = [
+    packaging
+    six
+    html5lib
+    setuptools
+  ];
 
-  postPatch = ''
-    substituteInPlace setup.py --replace ",<3dev" ""
-  '';
+  checkInputs = [
+    pytestCheckHook
+  ];
 
-  meta = {
+  disabledTests = [
+    # Disable network tests
+    "protocols"
+  ];
+
+  pythonImportsCheck = [ "bleach" ];
+
+  meta = with lib; {
     description = "An easy, HTML5, whitelisting HTML sanitizer";
     longDescription = ''
       Bleach is an HTML sanitizing library that escapes or strips markup and
@@ -36,9 +50,9 @@ buildPythonPackage rec {
       to do lots of things, you're probably outside the use cases. Either
       trust those users, or don't.
     '';
-    homepage = https://github.com/mozilla/bleach;
-    downloadPage = https://github.com/mozilla/bleach/releases;
-    license = lib.licenses.asl20;
-    maintainers = with lib.maintainers; [ prikhi ];
+    homepage = "https://github.com/mozilla/bleach";
+    downloadPage = "https://github.com/mozilla/bleach/releases";
+    license = licenses.asl20;
+    maintainers = with maintainers; [ prikhi ];
   };
 }

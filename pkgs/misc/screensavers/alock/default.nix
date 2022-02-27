@@ -1,12 +1,12 @@
-{ stdenv, fetchgit, pkgconfig, autoreconfHook
+{ lib, stdenv, fetchgit, pkg-config, autoreconfHook
 , libX11, pam, libgcrypt, libXrender, imlib2 }:
 
 stdenv.mkDerivation rec {
-  date = "20170720";
-  name = "alock-${date}";
+  pname = "alock";
+  version = "unstable-2017-07-20";
 
   src = fetchgit {
-    url = https://github.com/Arkq/alock;
+    url = "https://github.com/Arkq/alock";
     rev = "2035e1d4a2293432f5503e82d10f899232eb0f38";
     sha256 = "1by954fjn0ryqda89zlmq3gclakg3gz7zy1wjrbgw4lzsk538va6";
   };
@@ -20,14 +20,14 @@ stdenv.mkDerivation rec {
     "--enable-imlib2"
   ];
 
-  nativeBuildInputs = [ pkgconfig ];
+  nativeBuildInputs = [ pkg-config ];
   buildInputs = [
     autoreconfHook libX11
     pam libgcrypt libXrender imlib2
   ];
 
-  meta = with stdenv.lib; {
-    homepage = https://github.com/Arkq/alock;
+  meta = with lib; {
+    homepage = "https://github.com/Arkq/alock";
     description = "Simple screen lock application for X server";
     longDescription = ''
       alock locks the X server until the user enters a password

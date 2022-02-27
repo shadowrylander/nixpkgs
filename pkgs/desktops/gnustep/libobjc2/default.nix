@@ -17,10 +17,9 @@ stdenv.mkDerivation rec {
 
   meta = with lib; {
     description = "Objective-C runtime for use with GNUstep";
-    homepage = http://gnustep.org/;
+    homepage = "http://gnustep.org/";
     license = licenses.mit;
     maintainers = with maintainers; [ ashalkhakov matthewbauer ];
     platforms = platforms.unix;
-    badPlatforms = [ "aarch64-linux" ];
   };
 }

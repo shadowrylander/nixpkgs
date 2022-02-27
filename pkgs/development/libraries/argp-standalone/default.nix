@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, fetchpatch }:
+{ lib, stdenv, fetchurl, fetchpatch }:
 
 let
   patch-argp-fmtstream = fetchpatch {
@@ -20,20 +20,25 @@ let
   };
 in
 stdenv.mkDerivation rec {
-  name = "argp-standalone-1.3";
+  pname = "argp-standalone";
+  version = "1.3";
 
   src = fetchurl {
-    url = "https://www.lysator.liu.se/~nisse/misc/argp-standalone-1.3.tar.gz";
+    url = "https://www.lysator.liu.se/~nisse/misc/argp-standalone-${version}.tar.gz";
     sha256 = "dec79694da1319acd2238ce95df57f3680fea2482096e483323fddf3d818d8be";
   };
 
   patches =
-       stdenv.lib.optionals stdenv.hostPlatform.isDarwin [ patch-argp-fmtstream ]
-    ++ stdenv.lib.optionals stdenv.hostPlatform.isLinux [ patch-throw-in-funcdef patch-shared ];
+       lib.optionals stdenv.hostPlatform.isDarwin [ patch-argp-fmtstream ]
+    ++ lib.optionals stdenv.hostPlatform.isLinux [ patch-throw-in-funcdef patch-shared ];
 
-  patchFlags = stdenv.lib.optionalString stdenv.hostPlatform.isDarwin "-p0";
+  patchFlags = lib.optional stdenv.hostPlatform.isDarwin "-p0";
 
-  preConfigure = stdenv.lib.optionalString stdenv.hostPlatform.isLinux "export CFLAGS='-fgnu89-inline'";
+  # For currently unknown reason, `-fPIC` has to be passed explicitly, otherwise
+  # downstream software like `elfutils` will get `recompile errors like:
+  #     libargp.a(argp-help.o): relocation R_X86_64_PC32 against symbol `program_invocation_short_name' can not be used when making a shared object; recompile with -fPIC
+  # It seems that nixpkgs's on-by-default `-fPIC` is not in effect here.
+  preConfigure = lib.optionalString stdenv.hostPlatform.isLinux "export CFLAGS='-fgnu89-inline -fPIC'";
 
   postInstall = ''
     mkdir -p $out/lib $out/include
@@ -43,12 +48,14 @@ stdenv.mkDerivation rec {
 
   doCheck = true;
 
+  makeFlags = [ "AR:=$(AR)" ];
+
   enableParallelBuilding = true;
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     homepage = "https://www.lysator.liu.se/~nisse/misc/";
     description = "Standalone version of arguments parsing functions from GLIBC";
-    platforms = with platforms; darwin ++ [ "x86_64-linux" ];
+    platforms = with platforms; darwin ++ linux;
     maintainers = with maintainers; [ amar1729 ];
     license = licenses.gpl2;
   };

@@ -1,30 +1,49 @@
-{ stdenv, fetchurl, mono, curl, makeWrapper }:
+{ lib
+, stdenv
+, buildDotnetModule
+, fetchFromGitHub
+, dotnetCorePackages
+, openssl
+, mono
+}:
 
-stdenv.mkDerivation rec {
-  name = "jackett-${version}";
-  version = "0.11.256";
+buildDotnetModule rec {
+  pname = "jackett";
+  version = "0.20.631";
 
-  src = fetchurl {
-    url = "https://github.com/Jackett/Jackett/releases/download/v${version}/Jackett.Binaries.Mono.tar.gz";
-    sha256 = "15rc49ql86anxylpfgvgbb1bv7faxy3g1qaskh7sqyncs4q2jc1h";
+  src = fetchFromGitHub {
+    owner = pname;
+    repo = pname;
+    rev = "v${version}";
+    sha256 = "1y5SQzizjslQ5+JWGrrtk45uvI/hOMnwLL69NhBmNMc=";
   };
 
-  buildInputs = [ makeWrapper ];
+  projectFile = "src/Jackett.Server/Jackett.Server.csproj";
+  nugetDeps = ./deps.nix;
 
-  installPhase = ''
-    mkdir -p $out/{bin,share/${name}}
-    cp -r * $out/share/${name}
+  dotnet-sdk = dotnetCorePackages.sdk_6_0;
+  dotnet-runtime = dotnetCorePackages.aspnetcore_6_0;
 
-    makeWrapper "${mono}/bin/mono" $out/bin/Jackett \
-      --add-flags "$out/share/${name}/JackettConsole.exe" \
-      --prefix LD_LIBRARY_PATH ':' "${curl.out}/lib"
+  dotnetInstallFlags = [ "-p:TargetFramework=net6.0" ];
+
+  runtimeDeps = [ openssl ];
+
+  doCheck = !(stdenv.isDarwin && stdenv.isAarch64); # mono is not available on aarch64-darwin
+  checkInputs = [ mono ];
+  testProjectFile = "src/Jackett.Test/Jackett.Test.csproj";
+
+  postFixup = ''
+    # For compatibility
+    ln -s $out/bin/jackett $out/bin/Jackett || :
+    ln -s $out/bin/Jackett $out/bin/jackett || :
   '';
 
-  meta = with stdenv.lib; {
-    description = "API Support for your favorite torrent trackers.";
-    homepage = https://github.com/Jackett/Jackett/;
-    license = licenses.gpl2;
-    maintainers = with maintainers; [ edwtjo ];
+  meta = with lib; {
+    description = "API Support for your favorite torrent trackers";
+    homepage = "https://github.com/Jackett/Jackett/";
+    license = licenses.gpl2Only;
+    maintainers = with maintainers; [ edwtjo nyanloutre purcell ];
     platforms = platforms.all;
   };
+  passthru.updateScript = ./updater.sh;
 }

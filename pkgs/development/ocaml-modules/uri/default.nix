@@ -1,33 +1,21 @@
-{ lib, fetchurl, buildDunePackage, ppx_sexp_conv, ounit
-, re, sexplib0, sexplib, stringext
-, legacy ? false
+{ lib, fetchurl, buildDunePackage, ounit
+, angstrom, stringext
 }:
 
-let params =
-  if legacy then rec {
-    version = "1.9.6";
-    archive = version;
-    sha256 = "1m845rwd70wi4iijkrigyz939m1x84ba70hvv0d9sgk6971w4kz0";
-    inherit sexplib;
-  } else rec {
-    version = "2.2.0";
-    archive = "v${version}";
-    sha256 = "1q0xmc93l46dilxclkmai7w952bdi745rhvsx5vissaigcj9wbwi";
-    sexplib = sexplib0;
-  }
-; in
-
 buildDunePackage rec {
+  minimumOCamlVersion = "4.03";
   pname = "uri";
-  inherit (params) version;
+  version = "4.2.0";
+
+  useDune2 = true;
 
   src = fetchurl {
-    url = "https://github.com/mirage/ocaml-${pname}/releases/download/v${version}/${pname}-${params.archive}.tbz";
-    inherit (params) sha256;
+    url = "https://github.com/mirage/ocaml-${pname}/releases/download/v${version}/${pname}-v${version}.tbz";
+    sha256 = "0szifda6yism5vn5jdizkha3ad0xk6zw4xgfl8g77dnv83ci7h65";
   };
 
-  buildInputs = [ ounit ];
-  propagatedBuildInputs = [ ppx_sexp_conv re params.sexplib stringext ];
+  checkInputs = [ ounit ];
+  propagatedBuildInputs = [ angstrom stringext ];
   doCheck = true;
 
   meta = {

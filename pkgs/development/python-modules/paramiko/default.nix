@@ -1,48 +1,65 @@
-{ pkgs
-, buildPythonPackage
-, fetchPypi
-, cryptography
+{ lib
 , bcrypt
-, pynacl
-, pyasn1
-, python
-, pytest
-, pytest-relaxed
+, buildPythonPackage
+, cryptography
+, fetchPypi
+, invoke
 , mock
-, isPyPy
-, isPy33
+, pyasn1
+, pynacl
+, pytest-relaxed
+, pytestCheckHook
 }:
 
 buildPythonPackage rec {
   pname = "paramiko";
-  version = "2.4.2";
+  version = "2.9.2";
+  format = "setuptools";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "a8975a7df3560c9f1e2b43dc54ebd40fd00a7017392ca5445ce7df409f900fcb";
+    sha256 = "944a9e5dbdd413ab6c7951ea46b0ab40713235a9c4c5ca81cfe45c6f14fa677b";
   };
 
-  checkInputs = [ pytest mock pytest-relaxed ];
-  propagatedBuildInputs = [ bcrypt cryptography pynacl pyasn1 ];
+  propagatedBuildInputs = [
+    bcrypt
+    cryptography
+    pyasn1
+    pynacl
+  ];
+
+  checkInputs = [
+    invoke
+    mock
+    pytest-relaxed
+    pytestCheckHook
+  ];
+
+  # with python 3.9.6+, the deprecation warnings will fail the test suite
+  # see: https://github.com/pyinvoke/invoke/issues/829
+  doCheck = false;
+
+  disabledTestPaths = [
+    "tests/test_sftp.py"
+    "tests/test_config.py"
+  ];
+
+  pythonImportsCheck = [
+    "paramiko"
+  ];
 
   __darwinAllowLocalNetworking = true;
 
-  # 2 sftp tests fail (skip for now)
-  checkPhase = ''
-    pytest tests --ignore=tests/test_sftp.py
-  '';
-
-  meta = with pkgs.lib; {
+  meta = with lib; {
     homepage = "https://github.com/paramiko/paramiko/";
     description = "Native Python SSHv2 protocol library";
     license = licenses.lgpl21Plus;
-    maintainers = with maintainers; [ aszlig ];
-
     longDescription = ''
-      This is a library for making SSH2 connections (client or server).
-      Emphasis is on using SSH2 as an alternative to SSL for making secure
-      connections between python scripts. All major ciphers and hash methods
-      are supported. SFTP client and server mode are both supported too.
+      Library for making SSH2 connections (client or server). Emphasis is
+      on using SSH2 as an alternative to SSL for making secure connections
+      between python scripts. All major ciphers and hash methods are
+      supported. SFTP client and server mode are both supported too.
     '';
+    maintainers = with maintainers; [ ];
   };
 }

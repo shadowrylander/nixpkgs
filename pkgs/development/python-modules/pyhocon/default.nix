@@ -1,36 +1,39 @@
 { lib
 , buildPythonPackage
-, fetchPypi
-# Runtime inputs:
-, pyparsing
-# Check inputs:
-, pytest
+, fetchFromGitHub
 , mock
+, pyparsing
+, pytestCheckHook
+, python-dateutil
 }:
 
 buildPythonPackage rec {
   pname = "pyhocon";
-  version = "0.3.51";
+  version = "0.3.59";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "10l014br012fa583rnj3wqf6g9gmljamcwpw4snqwwg15i0dmkll";
+  src = fetchFromGitHub {
+    owner = "chimpler";
+    repo = "pyhocon";
+    rev = version;
+    sha256 = "1yr24plg3d4girg27ajjkf9mndig706fs8b2kmnmhi4l2xi866yh";
   };
 
-  propagatedBuildInputs = [ pyparsing ];
+  propagatedBuildInputs = [
+    pyparsing
+    python-dateutil
+  ];
 
-  checkInputs = [ pytest mock ];
+  checkInputs = [
+    mock
+    pytestCheckHook
+  ];
 
-  # Tests fail because necessary data files aren't packaged for PyPi yet.
-  # See https://github.com/chimpler/pyhocon/pull/203
-  doCheck = false;
+  pythonImportsCheck = [ "pyhocon" ];
 
   meta = with lib; {
-    homepage = https://github.com/chimpler/pyhocon/;
+    homepage = "https://github.com/chimpler/pyhocon/";
     description = "HOCON parser for Python";
-    # Long description copied from
-    # https://github.com/chimpler/pyhocon/blob/55a9ea3ebeeac5764bdebebfbeacbf099f64db26/setup.py
-    # (the tip of master as of 2019-03-24).
+    # taken from https://pypi.org/project/pyhocon/
     longDescription = ''
       A HOCON parser for Python. It additionally provides a tool
       (pyhocon) to convert any HOCON content into json, yaml and properties

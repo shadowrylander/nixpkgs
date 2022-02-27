@@ -7,11 +7,11 @@
 
 buildPythonPackage rec {
   pname = "widgetsnbextension";
-  version = "3.4.2";
+  version = "3.5.2";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "fa618be8435447a017fd1bf2c7ae922d0428056cfc7449f7a8641edf76b48265";
+    sha256 = "e0731a60ba540cd19bbbefe771a9076dcd2dde90713a8f87f27f53f2d1db7727";
   };
 
   propagatedBuildInputs = [ notebook ];
@@ -21,7 +21,7 @@ buildPythonPackage rec {
 
   meta = {
     description = "IPython HTML widgets for Jupyter";
-    homepage = http://ipython.org/;
+    homepage = "http://ipython.org/";
     license = ipywidgets.meta.license; # Build from same repo
     maintainers = with lib.maintainers; [ fridh ];
   };

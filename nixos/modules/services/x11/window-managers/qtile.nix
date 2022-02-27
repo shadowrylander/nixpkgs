@@ -15,11 +15,11 @@ in
     services.xserver.windowManager.session = [{
       name = "qtile";
       start = ''
-        ${pkgs.qtile}/bin/qtile &
+        ${pkgs.qtile}/bin/qtile start &
         waitPID=$!
       '';
     }];
-    
+
     environment.systemPackages = [ pkgs.qtile ];
   };
 }

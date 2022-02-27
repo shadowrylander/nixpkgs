@@ -1,17 +1,17 @@
-{ stdenv, fetchurl, pkgconfig, intltool, gtk3, gupnp, mate, imagemagick, wrapGAppsHook }:
+{ lib, stdenv, fetchurl, pkg-config, gettext, gtk3, gupnp, mate, imagemagick, wrapGAppsHook, mateUpdateScript }:
 
 stdenv.mkDerivation rec {
-  name = "caja-extensions-${version}";
-  version = "1.22.0";
+  pname = "caja-extensions";
+  version = "1.26.0";
 
   src = fetchurl {
-    url = "http://pub.mate-desktop.org/releases/${stdenv.lib.versions.majorMinor version}/${name}.tar.xz";
-    sha256 = "1h866jmdd3qpjzi7wjj11krwiaadnlf21844g1zqfb4jgrzj773p";
+    url = "https://pub.mate-desktop.org/releases/${lib.versions.majorMinor version}/${pname}-${version}.tar.xz";
+    sha256 = "03zwv3yl5553cnp6jjn7vr4l28dcdhsap7qimlrbvy20119kj5gh";
   };
 
   nativeBuildInputs = [
-    pkgconfig
-    intltool
+    pkg-config
+    gettext
     wrapGAppsHook
   ];
 
@@ -31,11 +31,15 @@ stdenv.mkDerivation rec {
 
   configureFlags = [ "--with-cajadir=$$out/lib/caja/extensions-2.0" ];
 
-  meta = with stdenv.lib; {
+  enableParallelBuilding = true;
+
+  passthru.updateScript = mateUpdateScript { inherit pname version; };
+
+  meta = with lib; {
     description = "Set of extensions for Caja file manager";
-    homepage = https://mate-desktop.org;
-    license = licenses.gpl2;
+    homepage = "https://mate-desktop.org";
+    license = licenses.gpl2Plus;
     platforms = platforms.unix;
-    maintainers = [ maintainers.romildo ];
+    maintainers = teams.mate.members;
   };
 }

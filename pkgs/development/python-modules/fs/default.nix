@@ -3,11 +3,10 @@
 , buildPythonPackage
 , fetchPypi
 , six
-, nose
 , appdirs
-, scandir
-, backports_os
-, typing
+, scandir ? null
+, backports_os ? null
+, typing ? null
 , pytz
 , enum34
 , pyftpdlib
@@ -15,19 +14,24 @@
 , mock
 , pythonAtLeast
 , isPy3k
+, pytestCheckHook
+, stdenv
 }:
 
 buildPythonPackage rec {
   pname = "fs";
-  version = "2.4.4";
+  version = "2.4.14";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0krf632nz24v2da7g9xivq6l2w9za3vph4vix7mm1k3byzwjnawk";
+    sha256 = "9555dc2bc58c58cac03478ac7e9f622d29fe2d20a4384c24c90ab50de2c7b36c";
   };
 
   buildInputs = [ glibcLocales ];
-  checkInputs = [ nose pyftpdlib mock psutil ];
+
+  # strong cycle with paramaterized
+  doCheck = false;
+  checkInputs = [ pyftpdlib mock psutil pytestCheckHook ];
   propagatedBuildInputs = [ six appdirs pytz ]
     ++ lib.optionals (!isPy3k) [ backports_os ]
     ++ lib.optionals (!pythonAtLeast "3.6") [ typing ]
@@ -36,13 +40,27 @@ buildPythonPackage rec {
 
   LC_ALL="en_US.utf-8";
 
-  checkPhase = ''
-    HOME=$(mktemp -d) nosetests tests []
+  preCheck = ''
+    HOME=$(mktemp -d)
   '';
+
+  pytestFlagsArray = [ "--ignore=tests/test_opener.py" ];
+
+  disabledTests = [
+    "user_data_repr"
+  ] ++ lib.optionals (stdenv.isDarwin) [ # remove if https://github.com/PyFilesystem/pyfilesystem2/issues/430#issue-707878112 resolved
+    "test_ftpfs"
+  ] ++ lib.optionals (pythonAtLeast "3.9") [
+    # update friend version of this commit: https://github.com/PyFilesystem/pyfilesystem2/commit/3e02968ce7da7099dd19167815c5628293e00040
+    # merged into master, able to be removed after >2.4.1
+    "test_copy_sendfile"
+  ];
+
+  __darwinAllowLocalNetworking = true;
 
   meta = with lib; {
     description = "Filesystem abstraction";
-    homepage    = https://github.com/PyFilesystem/pyfilesystem2;
+    homepage    = "https://github.com/PyFilesystem/pyfilesystem2";
     license     = licenses.bsd3;
     maintainers = with maintainers; [ lovek323 ];
     platforms   = platforms.unix;

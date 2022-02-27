@@ -1,31 +1,62 @@
-{ stdenv, buildPythonPackage, fetchPypi, pythonOlder, fetchpatch
-, mock, pytest, pytestrunner
-, configparser, enum34, mccabe, pycodestyle, pyflakes, entrypoints, functools32, typing
+{ lib
+, buildPythonPackage
+, fetchPypi
+, pythonOlder
+, configparser
+, enum34
+, mccabe
+, pycodestyle
+, pyflakes
+, functools32
+, typing
+, importlib-metadata
+, mock
+, pytestCheckHook
 }:
 
 buildPythonPackage rec {
   pname = "flake8";
-  version = "3.7.7";
+  version = "4.0.1";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "859996073f341f2670741b51ec1e67a01da142831aa1fdc6242dbf88dffbe661";
+    sha256 = "03c7mnk34wfz7a0m5zq0273y94awz69fy5iww8alh4a4v96h6vl0";
   };
 
-  checkInputs = [ pytest mock pytestrunner ];
-  propagatedBuildInputs = [ entrypoints pyflakes pycodestyle mccabe ]
-    ++ stdenv.lib.optionals (pythonOlder "3.2") [ configparser functools32 ]
-    ++ stdenv.lib.optionals (pythonOlder "3.4") [ enum34 ]
-    ++ stdenv.lib.optionals (pythonOlder "3.5") [ typing ];
-
-  checkPhase = ''
-    py.test tests
+  postPatch = ''
+    substituteInPlace setup.cfg \
+      --replace "pyflakes >= 2.3.0, < 2.4.0" "pyflakes >= 2.3.0, < 2.5.0"
   '';
 
-  meta = with stdenv.lib; {
-    description = "Code checking using pep8 and pyflakes";
-    homepage = https://pypi.python.org/pypi/flake8;
+  propagatedBuildInputs = [
+    pyflakes
+    pycodestyle
+    mccabe
+  ] ++ lib.optionals (pythonOlder "3.2") [
+    configparser
+    functools32
+  ] ++ lib.optionals (pythonOlder "3.4") [
+    enum34
+  ] ++ lib.optionals (pythonOlder "3.5") [
+    typing
+  ] ++ lib.optionals (pythonOlder "3.8") [
+    importlib-metadata
+  ];
+
+  # Tests fail on Python 3.7 due to importlib using a deprecated interface
+  doCheck = !(pythonOlder "3.8");
+
+  checkInputs = [
+    mock
+    pytestCheckHook
+  ];
+
+  disabled = pythonOlder "3.6";
+
+  meta = with lib; {
+    description = "Flake8 is a wrapper around pyflakes, pycodestyle and mccabe.";
+    homepage = "https://github.com/pycqa/flake8";
     license = licenses.mit;
-    maintainers = with maintainers; [ garbas ];
+    maintainers = with maintainers; [ ];
   };
 }

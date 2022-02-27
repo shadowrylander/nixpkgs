@@ -24,8 +24,8 @@ in
       package = mkOption {
         type = types.package;
         default = pkgs.tomcat85;
-        defaultText = "pkgs.tomcat85";
-        example = lib.literalExample "pkgs.tomcat9";
+        defaultText = literalExpression "pkgs.tomcat85";
+        example = lib.literalExpression "pkgs.tomcat9";
         description = ''
           Which tomcat package to use.
         '';
@@ -74,6 +74,7 @@ in
 
       extraGroups = mkOption {
         default = [];
+        type = types.listOf types.str;
         example = [ "users" ];
         description = "Defines extra groups to which the tomcat user belongs.";
       };
@@ -126,7 +127,7 @@ in
       webapps = mkOption {
         type = types.listOf types.path;
         default = [ tomcat.webapps ];
-        defaultText = "[ pkgs.tomcat85.webapps ]";
+        defaultText = literalExpression "[ pkgs.tomcat85.webapps ]";
         description = "List containing WAR files or directories with WAR files which are web applications to be deployed on Tomcat";
       };
 
@@ -165,7 +166,7 @@ in
       jdk = mkOption {
         type = types.package;
         default = pkgs.jdk;
-        defaultText = "pkgs.jdk";
+        defaultText = literalExpression "pkgs.jdk";
         description = "Which JDK to use.";
       };
 
@@ -194,14 +195,10 @@ in
 
   config = mkIf config.services.tomcat.enable {
 
-    users.groups = singleton
-      { name = "tomcat";
-        gid = config.ids.gids.tomcat;
-      };
+    users.groups.tomcat.gid = config.ids.gids.tomcat;
 
-    users.users = singleton
-      { name = "tomcat";
-        uid = config.ids.uids.tomcat;
+    users.users.tomcat =
+      { uid = config.ids.uids.tomcat;
         description = "Tomcat user";
         home = "/homeless-shelter";
         extraGroups = cfg.extraGroups;

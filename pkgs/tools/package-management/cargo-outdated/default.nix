@@ -1,29 +1,38 @@
-{ stdenv, fetchFromGitHub, rustPlatform, pkgconfig, openssl, darwin }:
+{ lib
+, rustPlatform
+, fetchCrate
+, pkg-config
+, openssl
+, stdenv
+, curl
+, Security
+, SystemConfiguration
+}:
 
 rustPlatform.buildRustPackage rec {
   pname = "cargo-outdated";
-  version = "unstable-2019-04-13";
+  version = "0.10.2";
 
-  src = fetchFromGitHub {
-    owner = "kbknapp";
-    repo = pname;
-    rev = "ce4b6baddc94b77a155abbb5a4fa4d3b31a45598";
-    sha256 = "0x00vn0ldnm2hvndfmq4g4q5w6axyg9vsri3i5zxhmir7423xabp";
+  src = fetchCrate {
+    inherit pname version;
+    sha256 = "sha256-U6qElZkray4kjScv9X4I5m2z1ZWQzqcPYAuPzpyRpW0=";
   };
 
-  cargoSha256 = "1xqii2z0asgkwn1ny9n19w7d4sjz12a6i55x2pf4cfrciapdpvdl";
+  cargoSha256 = "sha256-0J02Uz184zx5xZYhqUmyaAFCQ0aogwy0fQTXbteBdV8=";
 
-  nativeBuildInputs = [ pkgconfig ];
-  buildInputs = [ openssl ]
-  ++ stdenv.lib.optionals stdenv.isDarwin [
-    darwin.apple_sdk.frameworks.Security
+  nativeBuildInputs = [ pkg-config ];
+
+  buildInputs = [ openssl ] ++ lib.optionals stdenv.isDarwin [
+    curl
+    Security
+    SystemConfiguration
   ];
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A cargo subcommand for displaying when Rust dependencies are out of date";
-    homepage = https://github.com/kbknapp/cargo-outdated;
+    homepage = "https://github.com/kbknapp/cargo-outdated";
+    changelog = "https://github.com/kbknapp/cargo-outdated/blob/${version}/CHANGELOG.md";
     license = with licenses; [ asl20 /* or */ mit ];
-    platforms = platforms.all;
-    maintainers = [ maintainers.sondr3 ];
+    maintainers = with maintainers; [ sondr3 ivan ];
   };
 }

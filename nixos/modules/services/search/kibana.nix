@@ -1,15 +1,16 @@
-{ config, lib, pkgs, ... }:
+{ config, lib, options, pkgs, ... }:
 
 with lib;
 
 let
   cfg = config.services.kibana;
+  opt = options.services.kibana;
 
   ge7 = builtins.compareVersions cfg.package.version "7" >= 0;
   lt6_6 = builtins.compareVersions cfg.package.version "6.6" < 0;
 
   cfgFile = pkgs.writeText "kibana.json" (builtins.toJSON (
-    (filterAttrsRecursive (n: v: v != null) ({
+    (filterAttrsRecursive (n: v: v != null && v != []) ({
       server.host = cfg.listenAddress;
       server.port = cfg.port;
       server.ssl.certificate = cfg.cert;
@@ -129,7 +130,10 @@ in {
 
           This defaults to the singleton list [ca] when the <option>ca</option> option is defined.
         '';
-        default = if isNull cfg.elasticsearch.ca then [] else [ca];
+        default = if cfg.elasticsearch.ca == null then [] else [ca];
+        defaultText = literalExpression ''
+          if config.${opt.elasticsearch.ca} == null then [ ] else [ ca ]
+        '';
         type = types.listOf types.path;
       };
 
@@ -149,8 +153,7 @@ in {
     package = mkOption {
       description = "Kibana package to use";
       default = pkgs.kibana;
-      defaultText = "pkgs.kibana";
-      example = "pkgs.kibana5";
+      defaultText = literalExpression "pkgs.kibana";
       type = types.package;
     };
 
@@ -198,12 +201,13 @@ in {
 
     environment.systemPackages = [ cfg.package ];
 
-    users.users = singleton {
-      name = "kibana";
-      uid = config.ids.uids.kibana;
+    users.users.kibana = {
+      isSystemUser = true;
       description = "Kibana service user";
       home = cfg.dataDir;
       createHome = true;
+      group = "kibana";
     };
+    users.groups.kibana = {};
   };
 }

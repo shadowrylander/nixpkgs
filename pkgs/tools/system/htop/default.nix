@@ -1,29 +1,52 @@
-{ lib, fetchurl, stdenv, ncurses,
-IOKit, python }:
+{ lib, fetchFromGitHub, stdenv, autoreconfHook
+, ncurses
+, IOKit
+, sensorsSupport ? stdenv.isLinux, lm_sensors
+, systemdSupport ? stdenv.isLinux, systemd
+}:
+
+with lib;
+
+assert systemdSupport -> stdenv.isLinux;
 
 stdenv.mkDerivation rec {
-  name = "htop-${version}";
-  version = "2.2.0";
+  pname = "htop";
+  version = "3.1.2";
 
-  src = fetchurl {
-    url = "https://hisham.hm/htop/releases/${version}/${name}.tar.gz";
-    sha256 = "0mrwpb3cpn3ai7ar33m31yklj64c3pp576vh1naqff6f21pq5mnr";
+  src = fetchFromGitHub {
+    owner = "htop-dev";
+    repo = pname;
+    rev = version;
+    sha256 = "sha256-RKYS8UYZTVKMR/3DG31eqkG4knPRl8WXsZU/XGmGmAg=";
   };
 
-  nativeBuildInputs = [ python ];
-  buildInputs =
-    [ ncurses ] ++
-    lib.optionals stdenv.isDarwin [ IOKit ];
+  nativeBuildInputs = [ autoreconfHook ];
 
-  prePatch = ''
-    patchShebangs scripts/MakeHeader.py
-  '';
+  buildInputs = [ ncurses ]
+    ++ optional stdenv.isDarwin IOKit
+    ++ optional sensorsSupport lm_sensors
+    ++ optional systemdSupport systemd
+  ;
 
-  meta = with stdenv.lib; {
+  configureFlags = [ "--enable-unicode" "--sysconfdir=/etc" ]
+    ++ optional sensorsSupport "--with-sensors"
+  ;
+
+  postFixup =
+    let
+      optionalPatch = pred: so: optionalString pred "patchelf --add-needed ${so} $out/bin/htop";
+    in
+    ''
+      ${optionalPatch sensorsSupport "${lm_sensors}/lib/libsensors.so"}
+      ${optionalPatch systemdSupport "${systemd}/lib/libsystemd.so"}
+    '';
+
+  meta = {
     description = "An interactive process viewer for Linux";
-    homepage = https://hisham.hm/htop/;
-    license = licenses.gpl2Plus;
-    platforms = with platforms; linux ++ freebsd ++ openbsd ++ darwin;
+    homepage = "https://htop.dev";
+    license = licenses.gpl2Only;
+    platforms = platforms.all;
     maintainers = with maintainers; [ rob relrod ];
+    changelog = "https://github.com/htop-dev/${pname}/blob/${version}/ChangeLog";
   };
 }

@@ -1,13 +1,13 @@
-{ stdenv, fetchurl, fetchgit, autogen, flex, bison, python, autoconf, automake
-, gettext, ncurses, libusb, freetype, qemu, lvm2
+{ lib, stdenv, fetchurl, fetchgit, fetchpatch, autogen, flex, bison, python2, autoconf, automake
+, gettext, ncurses, libusb-compat-0_1, freetype, qemu, lvm2
 , for_HP_laptop ? false
 }:
 
-with stdenv.lib;
+with lib;
 let
   pcSystems = {
-    "i686-linux".target = "i386";
-    "x86_64-linux".target = "i386";
+    i686-linux.target = "i386";
+    x86_64-linux.target = "i386";
   };
 
   inPCSystems = any (system: stdenv.hostPlatform.system == system) (mapAttrsToList (name: _: name) pcSystems);
@@ -29,7 +29,8 @@ let
 in
 
 stdenv.mkDerivation rec {
-  name = "trustedGRUB2-${version}";
+  pname = "trustedGRUB2";
+  inherit version;
 
   src = if for_HP_laptop
         then fetchgit {
@@ -43,8 +44,8 @@ stdenv.mkDerivation rec {
           sha256 = "0yrfwx67gpg9gij5raq0cfbx3jj769lkg3diqgb7i9n86hgcdh4k";
         };
 
-  nativeBuildInputs = [ autogen flex bison python autoconf automake ];
-  buildInputs = [ ncurses libusb freetype gettext lvm2 ]
+  nativeBuildInputs = [ autogen flex bison python2 autoconf automake ];
+  buildInputs = [ ncurses libusb-compat-0_1 freetype gettext lvm2 ]
     ++ optional doCheck qemu;
 
   hardeningDisable = [ "stackprotector" "pic" ];
@@ -80,7 +81,14 @@ stdenv.mkDerivation rec {
            -e "s|/usr/src/unifont.bdf|$PWD/unifont.bdf|g"
     '';
 
-  patches = [ ./fix-bash-completion.patch ];
+  patches = [
+    ./fix-bash-completion.patch
+    (fetchpatch {
+      # glibc-2.26 and above needs '<sys/sysmacros.h>'
+      url = "https://github.com/Rohde-Schwarz/TrustedGRUB2/commit/7a5b301e3adb8e054288518a325135a1883c1c6c.patch";
+      sha256 = "1jfrrmcrd9a8w7n419kszxgbpshx7888wc05smg5q4jvc1ag3xm7";
+    })
+  ];
 
   # save target that grub is compiled for
   grubTarget = if inPCSystems
@@ -88,11 +96,13 @@ stdenv.mkDerivation rec {
                else "";
 
   doCheck = false;
-  enableParallelBuilding = true;
+  # On -j16 races with early header creation:
+  #  config.h:38:10: fatal error: ./config-util.h: No such file or directory
+  enableParallelBuilding = false;
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "GRUB 2.0 extended with TCG (TPM) support for integrity measured boot process (trusted boot)";
-    homepage = https://github.com/Sirrix-AG/TrustedGRUB2;
+    homepage = "https://github.com/Sirrix-AG/TrustedGRUB2";
     license = licenses.gpl3Plus;
     platforms = platforms.gnu ++ platforms.linux;
   };

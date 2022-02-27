@@ -1,14 +1,15 @@
-{ stdenv, fetchurl, cmake, pkgconfig, gettext
+{ lib, stdenv, fetchurl, cmake, pkg-config, gettext
 , dbus, dbus-glib, libgaminggear, libgudev, lua
+, harfbuzz
 }:
 
 stdenv.mkDerivation rec {
-  name = "roccat-tools-${version}";
-  version = "5.8.0";
+  pname = "roccat-tools";
+  version = "5.9.0";
 
   src = fetchurl {
-    url = "mirror://sourceforge/roccat/${name}.tar.bz2";
-    sha256 = "0fr1ibgsyx756fz43hxq0cik51rkq1ymgimw8mz2d0jy63d7h48q";
+    url = "mirror://sourceforge/roccat/${pname}-${version}.tar.bz2";
+    sha256 = "12j02rzbz3iqxprz8cj4kcfcdgnqlva142ci177axqmckcq6crvg";
   };
 
   postPatch = ''
@@ -20,10 +21,8 @@ stdenv.mkDerivation rec {
     }' libroccat/roccat_helper.c
   '';
 
-  nativeBuildInputs = [ cmake pkgconfig gettext ];
+  nativeBuildInputs = [ cmake pkg-config gettext ];
   buildInputs = [ dbus dbus-glib libgaminggear libgudev lua ];
-
-  enableParallelBuilding = true;
 
   cmakeFlags = [
     "-DUDEVDIR=\${out}/lib/udev/rules.d"
@@ -32,10 +31,12 @@ stdenv.mkDerivation rec {
     "-DLIBDIR=lib"
   ];
 
+  NIX_CFLAGS_COMPILE = [ "-I${harfbuzz.dev}/include/harfbuzz" ];
+
   meta = {
     description = "Tools to configure ROCCAT devices";
-    homepage = http://roccat.sourceforge.net/;
-    platforms = stdenv.lib.platforms.linux;
-    license = stdenv.lib.licenses.gpl2Plus;
+    homepage = "http://roccat.sourceforge.net/";
+    platforms = lib.platforms.linux;
+    license = lib.licenses.gpl2Plus;
   };
 }

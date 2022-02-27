@@ -1,54 +1,74 @@
-{ stdenv, fetchFromGitHub, pantheon, substituteAll, meson, ninja, pkgconfig
-, vala, libgee, granite, gtk3, switchboard, pciutils, gobject-introspection }:
+{ lib
+, stdenv
+, fetchFromGitHub
+, nix-update-script
+, meson
+, ninja
+, pkg-config
+, vala
+, libgee
+, libgtop
+, libhandy
+, granite
+, gtk3
+, switchboard
+, fwupd
+, appstream
+}:
 
 stdenv.mkDerivation rec {
   pname = "switchboard-plug-about";
-  version = "2.5.2";
+  version = "6.0.1";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = pname;
     rev = version;
-    sha256 = "11diwz2aj45yqkxdija8ny0sgm0wl2905gl3799cdl12ss9ffndp";
+    sha256 = "0c075ac7iqz4hqbp2ph0cwyhiq0jn6c1g1jjfhygjbssv3vvd268";
   };
 
-  passthru = {
-    updateScript = pantheon.updateScript {
-      repoName = pname;
-    };
-  };
+  patches = [
+    # Introduces a wallpaper meson flag.
+    # The wallpapaper path does not exist on NixOS, let's just remove the wallpaper.
+    # https://github.com/elementary/switchboard-plug-about/pull/236
+    ./add-wallpaper-option.patch
+  ];
 
   nativeBuildInputs = [
-    gobject-introspection
     meson
     ninja
-    pkgconfig
+    pkg-config
     vala
   ];
 
   buildInputs = [
+    appstream
+    fwupd
     granite
     gtk3
     libgee
+    libgtop
+    libhandy
     switchboard
   ];
 
-  patches = [
-    (substituteAll {
-      src = ./lspci-path.patch;
-      inherit pciutils;
-    })
-    ./remove-update-button.patch
+  mesonFlags = [
+    # This option is introduced in add-wallpaper-option.patch
+    "-Dwallpaper=false"
   ];
 
-  PKG_CONFIG_SWITCHBOARD_2_0_PLUGSDIR = "${placeholder ''out''}/lib/switchboard";
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = "pantheon.${pname}";
+    };
+  };
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Switchboard About Plug";
-    homepage = https://github.com/elementary/witchboard-plug-about;
+    homepage = "https://github.com/elementary/switchboard-plug-about";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
-    maintainers = pantheon.maintainers;
+    maintainers = teams.pantheon.members;
   };
 
 }

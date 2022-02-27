@@ -1,26 +1,26 @@
 { elk6Version
 , enableUnfree ? true
-, stdenv
+, lib, stdenv
 , fetchurl
 , makeWrapper
 , jre_headless
-, utillinux
+, util-linux, gnugrep, coreutils
 , autoPatchelfHook
 , zlib
 }:
 
-with stdenv.lib;
+with lib;
 
 stdenv.mkDerivation (rec {
   version = elk6Version;
-  name = "elasticsearch-${optionalString (!enableUnfree) "oss-"}${version}";
+  pname = "elasticsearch${optionalString (!enableUnfree) "-oss"}";
 
   src = fetchurl {
-    url = "https://artifacts.elastic.co/downloads/elasticsearch/${name}.tar.gz";
+    url = "https://artifacts.elastic.co/downloads/elasticsearch/${pname}-${version}.tar.gz";
     sha256 =
       if enableUnfree
-      then "1qh6iz3qhw8zcvxfss5w3h89zarwvk6dp5bbbag7c30kh94gkqvv"
-      else "13v8qpslanfn5w81qvbg0aqh510yfbl3x59kisvdkz9ifhjbcavi";
+      then "1hkcgqsrnnx3zjpgar4424mxfaxrx0zbrp7n7n0dlbhphshwnkmd"
+      else "1pglg60aigy31xmpfchnxcc04nd18zwc3av4m0kyp00yk5mnlyqm";
   };
 
   patches = [ ./es-home-6.x.patch ];
@@ -35,7 +35,8 @@ stdenv.mkDerivation (rec {
       "ES_CLASSPATH=\"\$ES_CLASSPATH:$out/\$additional_classpath_directory/*\""
   '';
 
-  buildInputs = [ makeWrapper jre_headless utillinux ]
+  nativeBuildInputs = [ makeWrapper ];
+  buildInputs = [ jre_headless util-linux ]
              ++ optional enableUnfree zlib;
 
   installPhase = ''
@@ -45,7 +46,7 @@ stdenv.mkDerivation (rec {
     chmod -x $out/bin/*.*
 
     wrapProgram $out/bin/elasticsearch \
-      --prefix PATH : "${utillinux}/bin/" \
+      --prefix PATH : "${makeBinPath [ util-linux gnugrep coreutils ]}" \
       --set JAVA_HOME "${jre_headless}"
 
     wrapProgram $out/bin/elasticsearch-plugin --set JAVA_HOME "${jre_headless}"
@@ -61,7 +62,7 @@ stdenv.mkDerivation (rec {
   };
 } // optionalAttrs enableUnfree {
   dontPatchELF = true;
-  nativeBuildInputs = [ autoPatchelfHook ];
+  nativeBuildInputs = [ makeWrapper autoPatchelfHook ];
   runtimeDependencies = [ zlib ];
   postFixup = ''
     for exe in $(find $out/modules/x-pack-ml/platform/linux-x86_64/bin -executable -type f); do

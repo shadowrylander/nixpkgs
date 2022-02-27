@@ -1,34 +1,66 @@
-{ stdenv, fetchFromGitHub, autoreconfHook, umockdev, gobject-introspection
-, pkgconfig, glib, systemd, libgudev, vala }:
+{ stdenv
+, lib
+, docbook-xsl-nons
+, fetchurl
+, glib
+, gobject-introspection
+, gtk-doc
+, libgudev
+, libpcap
+, meson
+, ninja
+, pkg-config
+, python3
+, systemd
+, usbutils
+, vala
+, which
+}:
 
 stdenv.mkDerivation rec {
-  name = "umockdev-${version}";
-  version = "0.12.1";
+  pname = "umockdev";
+  version = "0.17.6";
 
-  outputs = [ "bin" "out" "dev" "doc" ];
+  outputs = [ "bin" "out" "dev" "devdoc" ];
 
-  src = fetchFromGitHub {
-    owner  = "martinpitt";
-    repo   = "umockdev";
-    rev    = version;
-    sha256 = "0wnmz4jh04mvqzjnqvxrah969gg4x4v8d6ip61zc7jpbwnqb2fpg";
+  src = fetchurl {
+    url = "https://github.com/martinpitt/umockdev/releases/download/${version}/${pname}-${version}.tar.xz";
+    sha256 = "sha256-X60zN3orHU8lOfRVCfbHTdrleKxB7ILCIGvXSZLdoSk=";
   };
 
-  # autoreconfHook complains if we try to build the documentation
-  postPatch = ''
-    echo 'EXTRA_DIST =' > docs/gtk-doc.make
-  '';
+  nativeBuildInputs = [
+    docbook-xsl-nons
+    gobject-introspection
+    gtk-doc
+    meson
+    ninja
+    pkg-config
+    vala
+  ];
 
-  buildInputs = [ glib systemd libgudev ];
+  buildInputs = [
+    glib
+    systemd
+    libgudev
+    libpcap
+  ];
 
-  nativeBuildInputs = [ autoreconfHook pkgconfig vala gobject-introspection ];
+  checkInputs = [
+    python3
+    which
+    usbutils
+  ];
 
-  enableParallelBuilding = true;
+  mesonFlags = [
+    "-Dgtk_doc=true"
+  ];
 
-  meta = with stdenv.lib; {
+  doCheck = true;
+
+  meta = with lib; {
     description = "Mock hardware devices for creating unit tests";
-    license = licenses.lgpl2;
-    maintainers = with maintainers; [ ndowens ];
+    license = licenses.lgpl21Plus;
+    maintainers = with maintainers; [ flokli ];
     platforms = with platforms; linux;
   };
 }

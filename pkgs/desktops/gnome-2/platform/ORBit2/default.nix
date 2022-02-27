@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, pkgconfig, glib, libIDL, libintl }:
+{ lib, stdenv, fetchurl, pkg-config, glib, libIDL, libintl }:
 
 stdenv.mkDerivation rec {
   name = "ORBit2-${minVer}.19";
@@ -9,7 +9,7 @@ stdenv.mkDerivation rec {
     sha256 = "0l3mhpyym9m5iz09fz0rgiqxl2ym6kpkwpsp1xrr4aa80nlh1jam";
   };
 
-  nativeBuildInputs = [ pkgconfig libintl ];
+  nativeBuildInputs = [ pkg-config libintl ];
   propagatedBuildInputs = [ glib libIDL ];
 
   outputs = [ "out" "dev" ];
@@ -22,8 +22,16 @@ stdenv.mkDerivation rec {
     moveToOutput "bin/orbit2-config" "$dev"
   '';
 
-  meta = with stdenv.lib; {
-    homepage    = https://projects.gnome.org/ORBit2/;
+  # Parallel build fails due to missing internal library dependency:
+  #    libtool --tag=CC   --mode=link gcc ... -o orbit-name-server-2 ...
+  #    ld: cannot find libname-server-2.a: No such file or directory
+  # It happens because orbit-name-server-2 should have libname-server-2.a
+  # in _DEPENDENCIES but does not. Instead of fixing it and regenerating
+  # Makefile.in let's just disable parallel build.
+  enableParallelBuilding = false;
+
+  meta = with lib; {
+    homepage    = "https://developer-old.gnome.org/ORBit2/";
     description = "A CORBA 2.4-compliant Object Request Broker";
     platforms   = platforms.unix;
     maintainers = with maintainers; [ lovek323 ];

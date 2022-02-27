@@ -1,11 +1,11 @@
-{stdenv, fetchurl, ocaml, findlib, easy-format}:
+{lib, stdenv, fetchurl, ocaml, findlib, easy-format}:
 let
   pname = "biniou";
   version = "1.0.9";
   webpage = "http://mjambon.com/${pname}.html";
 in
 
-assert stdenv.lib.versionAtLeast (stdenv.lib.getVersion ocaml) "3.11";
+assert lib.versionAtLeast (lib.getVersion ocaml) "3.11";
 
 stdenv.mkDerivation rec {
 
@@ -16,19 +16,22 @@ stdenv.mkDerivation rec {
     sha256 = "14j3hrhbjqxbizr1pr8fcig9dmfzhbjjwzwyc99fcsdic67w8izb";
   };
 
-  buildInputs = [ ocaml findlib easy-format ];
+  nativeBuildInputs = [ ocaml findlib ];
+  buildInputs = [ easy-format ];
+
+  strictDeps = true;
 
   createFindlibDestdir = true;
 
-  makeFlags = "PREFIX=$(out)";
+  makeFlags = [ "PREFIX=$(out)" ];
 
   preBuild = ''
     mkdir $out/bin
   '';
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "A binary data format designed for speed, safety, ease of use and backward compatibility as protocols evolve";
-    homepage = "${webpage}";
+    homepage = webpage;
     license = licenses.bsd3;
     maintainers = [ maintainers.vbgl ];
     platforms = ocaml.meta.platforms or [];

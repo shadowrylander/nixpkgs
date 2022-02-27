@@ -1,8 +1,8 @@
 # Test whether fast reboots via kexec work.
 
-import ./make-test.nix ({ pkgs, ...} : {
+import ./make-test-python.nix ({ pkgs, lib, ...} : {
   name = "kexec";
-  meta = with pkgs.stdenv.lib.maintainers; {
+  meta = with lib.maintainers; {
     maintainers = [ eelco ];
   };
 
@@ -11,9 +11,12 @@ import ./make-test.nix ({ pkgs, ...} : {
 
   testScript =
     ''
-      $machine->waitForUnit("multi-user.target");
-      $machine->execute("systemctl kexec &");
-      $machine->{connected} = 0;
-      $machine->waitForUnit("multi-user.target");
+      machine.wait_for_unit("multi-user.target")
+      machine.succeed('kexec --load /run/current-system/kernel --initrd /run/current-system/initrd --command-line "$(</proc/cmdline)"')
+      machine.execute("systemctl kexec >&2 &", check_return=False)
+      machine.connected = False
+      machine.connect()
+      machine.wait_for_unit("multi-user.target")
+      machine.shutdown()
     '';
 })

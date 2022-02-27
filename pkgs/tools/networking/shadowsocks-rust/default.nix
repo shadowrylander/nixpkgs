@@ -1,27 +1,35 @@
-{ stdenv, fetchFromGitHub, rustPlatform, pkgconfig, openssl, libsodium, Security }:
+{ lib, stdenv, fetchFromGitHub, rustPlatform, CoreServices, libiconv }:
 
 rustPlatform.buildRustPackage rec {
   pname = "shadowsocks-rust";
-  version = "1.7.0";
+  version = "1.13.5";
 
   src = fetchFromGitHub {
     rev = "v${version}";
     owner = "shadowsocks";
     repo = pname;
-    sha256 = "0mqjm54mp6c9mfdl3gf01v9vm2rjll8fw63n6j4qgv01y4hrsm4f";
+    sha256 = "sha256-0TKAchPDjB7YKJO2JqBwJPZITWXDQbjPbRN8amilJ6E=";
   };
 
-  cargoSha256 = "1m0p40z6qx6s0r1x6apz56n2s4ppn8b2cff476xrfhp6s1j046q7";
+  cargoSha256 = "sha256-LBLUNBXsaGfviUUleoYIFf/vrbejKYwB9Lqetx3Agxc=";
 
-  buildInputs = [ openssl libsodium ]
-    ++ stdenv.lib.optionals stdenv.isDarwin [ Security ];
-  nativeBuildInputs = [ pkgconfig ];
+  RUSTC_BOOTSTRAP = 1;
 
-  # tries to read /etc/resolv.conf, hence fails in sandbox
-  doCheck = false;
+  buildInputs = lib.optionals stdenv.isDarwin [ CoreServices libiconv ];
 
-  meta = with stdenv.lib; {
-    homepage = https://github.com/shadowsocks/shadowsocks-rust;
+  # all of these rely on connecting to www.example.com:80
+  checkFlags = [
+    "--skip=http_proxy"
+    "--skip=tcp_tunnel"
+    "--skip=udp_tunnel"
+    "--skip=udp_relay"
+    "--skip=socks4_relay_connect"
+    "--skip=socks5_relay_aead"
+    "--skip=socks5_relay_stream"
+  ];
+
+  meta = with lib; {
+    homepage = "https://github.com/shadowsocks/shadowsocks-rust";
     description = "A Rust port of shadowsocks";
     license = licenses.mit;
     maintainers = [ maintainers.marsam ];

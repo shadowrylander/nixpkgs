@@ -4,22 +4,24 @@
 , numpy
 , six
 , scipy
-, smart_open
-, scikitlearn, testfixtures, unittest2
+, smart-open
+, scikit-learn, testfixtures, unittest2
+, isPy3k
 }:
 
 buildPythonPackage rec {
   pname = "gensim";
-  version = "3.7.2";
+  version = "4.1.2";
+  disabled = !isPy3k;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "1la4y935sdah8ywa7krwy80hcl4n2k8cdx4ncy3dg3y2mdg3vq24";
+    sha256 = "1932c257de4eccbb64cc40d46e8577a25f5f47b94b96019a969fb36150f11d15";
   };
 
-  propagatedBuildInputs = [ smart_open numpy six scipy ];
+  propagatedBuildInputs = [ smart-open numpy six scipy ];
 
-  checkInputs = [ scikitlearn testfixtures unittest2 ];
+  checkInputs = [ scikit-learn testfixtures unittest2 ];
 
   # Two tests fail.
   #
@@ -34,7 +36,7 @@ buildPythonPackage rec {
 
   meta = {
     description = "Topic-modelling library";
-    homepage = https://radimrehurek.com/gensim/;
+    homepage = "https://radimrehurek.com/gensim/";
     license = lib.licenses.lgpl21;
     maintainers = with lib.maintainers; [ jyp ];
   };

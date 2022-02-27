@@ -1,4 +1,4 @@
-{ stdenv, rustc }:
+{ lib, stdenv, rustc, minimalContent ? true }:
 
 stdenv.mkDerivation {
   name = "rust-src";
@@ -6,6 +6,20 @@ stdenv.mkDerivation {
   phases = [ "unpackPhase" "installPhase" ];
   installPhase = ''
     mv src $out
-    rm -rf $out/{ci,doc,driver,etc,grammar,llvm,rt,rtstartup,rustllvm,test,tools,vendor}
+    rm -rf $out/{${lib.concatStringsSep "," ([
+      "ci"
+      "doc"
+      "etc"
+      "grammar"
+      "llvm-project"
+      "llvm-emscripten"
+      "rtstartup"
+      "rustllvm"
+      "test"
+      "vendor"
+    ] ++ lib.optionals minimalContent [
+      "tools"
+      "stdarch"
+    ])}}
   '';
 }

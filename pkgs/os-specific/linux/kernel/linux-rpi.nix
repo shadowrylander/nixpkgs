@@ -1,35 +1,58 @@
-{ stdenv, lib, buildPackages, fetchFromGitHub, perl, buildLinux, ... } @ args:
+{ stdenv, lib, buildPackages, fetchFromGitHub, perl, buildLinux, rpiVersion, ... } @ args:
 
 let
-  modDirVersion = "4.14.98";
-  tag = "1.20190215";
+  # NOTE: raspberrypifw & raspberryPiWirelessFirmware should be updated with this
+  modDirVersion = "5.10.92";
+  tag = "1.20220118";
+  rev = "650082a559a570d6c9d2739ecc62843d6f951059";
 in
-lib.overrideDerivation (buildLinux (args // rec {
+lib.overrideDerivation (buildLinux (args // {
   version = "${modDirVersion}-${tag}";
   inherit modDirVersion;
 
   src = fetchFromGitHub {
     owner = "raspberrypi";
     repo = "linux";
-    rev = "raspberrypi-kernel_${tag}-1";
-    sha256 = "1gc4x7p82m2v1jhahhyl7qfdkflj71ly6p0fpc1vf9sk13hbwgj2";
+    inherit rev;
+    sha256 = "sha256-OSDx9dzqm8JnLUvdiv1aKqhRz80uWqfjXLd7m6ycXME=";
   };
 
   defconfig = {
-    "armv6l-linux" = "bcmrpi_defconfig";
-    "armv7l-linux" = "bcm2709_defconfig";
-    "aarch64-linux" = "bcmrpi3_defconfig";
-  }.${stdenv.hostPlatform.system} or (throw "linux_rpi not supported on '${stdenv.hostPlatform.system}'");
+    "1" = "bcmrpi_defconfig";
+    "2" = "bcm2709_defconfig";
+    "3" = if stdenv.hostPlatform.isAarch64 then "bcmrpi3_defconfig" else "bcm2709_defconfig";
+    "4" = "bcm2711_defconfig";
+  }.${toString rpiVersion};
 
   features = {
     efiBootStub = false;
   } // (args.features or {});
 
-  extraMeta.hydraPlatforms = [ "aarch64-linux" ];
-})) (oldAttrs: {
+  extraConfig = ''
+    # ../drivers/gpu/drm/ast/ast_mode.c:851:18: error: initialization of 'void (*)(struct drm_crtc *, struct drm_atomic_state *)' from incompatible pointer type 'void (*)(struct drm_crtc *, struct drm_crtc_state *)' [-Werror=incompatible-pointer-types]
+    #   851 |  .atomic_flush = ast_crtc_helper_atomic_flush,
+    #       |                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # ../drivers/gpu/drm/ast/ast_mode.c:851:18: note: (near initialization for 'ast_crtc_helper_funcs.atomic_flush')
+    DRM_AST n
+    # ../drivers/gpu/drm/amd/amdgpu/../display/amdgpu_dm/amdgpu_dm.c: In function 'amdgpu_dm_atomic_commit_tail':
+    # ../drivers/gpu/drm/amd/amdgpu/../display/amdgpu_dm/amdgpu_dm.c:7757:4: error: implicit declaration of function 'is_hdr_metadata_different' [-Werror=implicit-function-declaration]
+    #  7757 |    is_hdr_metadata_different(old_con_state, new_con_state);
+    #       |    ^~~~~~~~~~~~~~~~~~~~~~~~~
+    DRM_AMDGPU n
+  '';
+
+  extraMeta = if (rpiVersion < 3) then {
+    platforms = with lib.platforms; [ arm ];
+    hydraPlatforms = [];
+  } else {
+    platforms = with lib.platforms; [ arm aarch64 ];
+    hydraPlatforms = [ "aarch64-linux" ];
+  };
+} // (args.argsOverride or {}))) (oldAttrs: {
   postConfigure = ''
     # The v7 defconfig has this set to '-v7' which screws up our modDirVersion.
     sed -i $buildRoot/.config -e 's/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=""/'
+    sed -i $buildRoot/include/config/auto.conf -e 's/^CONFIG_LOCALVERSION=.*/CONFIG_LOCALVERSION=""/'
   '';
 
   # Make copies of the DTBs named after the upstream names so that U-Boot finds them.
@@ -41,8 +64,8 @@ lib.overrideDerivation (buildLinux (args // rec {
       cp -v "$dtbDir/$1" "$dtbDir/$2"
     }
   '' + lib.optionalString (lib.elem stdenv.hostPlatform.system ["armv6l-linux"]) ''
-    copyDTB bcm2708-rpi-0-w.dtb bcm2835-rpi-zero.dtb
-    copyDTB bcm2708-rpi-0-w.dtb bcm2835-rpi-zero-w.dtb
+    copyDTB bcm2708-rpi-zero-w.dtb bcm2835-rpi-zero.dtb
+    copyDTB bcm2708-rpi-zero-w.dtb bcm2835-rpi-zero-w.dtb
     copyDTB bcm2708-rpi-b.dtb bcm2835-rpi-a.dtb
     copyDTB bcm2708-rpi-b.dtb bcm2835-rpi-b.dtb
     copyDTB bcm2708-rpi-b.dtb bcm2835-rpi-b-rev2.dtb
@@ -53,8 +76,11 @@ lib.overrideDerivation (buildLinux (args // rec {
   '' + lib.optionalString (lib.elem stdenv.hostPlatform.system ["armv7l-linux"]) ''
     copyDTB bcm2709-rpi-2-b.dtb bcm2836-rpi-2-b.dtb
   '' + lib.optionalString (lib.elem stdenv.hostPlatform.system ["armv7l-linux" "aarch64-linux"]) ''
+    copyDTB bcm2710-rpi-zero-2.dtb bcm2837-rpi-zero-2.dtb
     copyDTB bcm2710-rpi-3-b.dtb bcm2837-rpi-3-b.dtb
+    copyDTB bcm2710-rpi-3-b-plus.dtb bcm2837-rpi-3-a-plus.dtb
     copyDTB bcm2710-rpi-3-b-plus.dtb bcm2837-rpi-3-b-plus.dtb
     copyDTB bcm2710-rpi-cm3.dtb bcm2837-rpi-cm3.dtb
+    copyDTB bcm2711-rpi-4-b.dtb bcm2838-rpi-4-b.dtb
   '';
 })

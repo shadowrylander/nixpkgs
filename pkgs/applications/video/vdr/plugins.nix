@@ -1,7 +1,8 @@
-{ stdenv, fetchurl, fetchgit, vdr, ffmpeg_2, alsaLib, fetchFromGitHub
+{ lib, stdenv, fetchurl, fetchgit, vdr, alsa-lib, fetchFromGitHub
 , libvdpau, libxcb, xcbutilwm, graphicsmagick, libav, pcre, xorgserver, ffmpeg
-, libiconv, boost, libgcrypt, perl, utillinux, groff, libva, xorg, ncurses }:
-let
+, libiconv, boost, libgcrypt, perl, util-linux, groff, libva, xorg, ncurses
+, callPackage
+}: let
   mkPlugin = name: stdenv.mkDerivation {
     name = "vdr-${vdr.version}-${name}";
     inherit (vdr) src;
@@ -11,22 +12,24 @@ let
   };
 in {
 
+  xineliboutput = callPackage ./xineliboutput {};
+
   skincurses = (mkPlugin "skincurses").overrideAttrs(oldAttr: {
     buildInputs = oldAttr.buildInputs ++ [ ncurses ];
   });
 
-  inherit (stdenv.lib.genAttrs [
+  inherit (lib.genAttrs [
     "epgtableid0" "hello" "osddemo" "pictures" "servicedemo" "status" "svdrpdemo"
   ] mkPlugin);
 
   femon = stdenv.mkDerivation rec {
-
-    name = "vdr-femon-2.4.0";
+    pname = "vdr-femon";
+    version = "2.4.0";
 
     buildInputs = [ vdr ];
 
     src = fetchurl {
-      url = "http://www.saunalahti.fi/~rahrenbe/vdr/femon/files/${name}.tgz";
+      url = "http://www.saunalahti.fi/~rahrenbe/vdr/femon/files/${pname}-${version}.tgz";
       sha256 = "1hra1xslj8s68zbyr8zdqp8yap0aj1p6rxyc6cwy1j122kwcnapp";
     };
 
@@ -34,8 +37,8 @@ in {
 
     makeFlags = [ "DESTDIR=$(out)" ];
 
-    meta = with stdenv.lib; {
-      homepage = http://www.saunalahti.fi/~rahrenbe/vdr/femon/;
+    meta = with lib; {
+      homepage = "http://www.saunalahti.fi/~rahrenbe/vdr/femon/";
       description = "DVB Frontend Status Monitor plugin for VDR";
       maintainers = [ maintainers.ck3d ];
       license = licenses.gpl2;
@@ -45,12 +48,12 @@ in {
   };
 
   vaapidevice = stdenv.mkDerivation {
-
-    name = "vdr-vaapidevice-0.7.0";
+    pname = "vdr-vaapidevice";
+    version = "20190525";
 
     buildInputs = [
       vdr libxcb xcbutilwm ffmpeg
-      alsaLib
+      alsa-lib
       libvdpau # vdpau
       libva # va-api
     ] ++ (with xorg; [ libxcb libX11 ]);
@@ -58,18 +61,20 @@ in {
     makeFlags = [ "DESTDIR=$(out)" ];
 
     postPatch = ''
-      substituteInPlace softhddev.c --replace /usr/bin/X ${xorgserver}/bin/X
+      substituteInPlace vaapidev.c --replace /usr/bin/X ${xorgserver}/bin/X
+      # https://github.com/rofafor/vdr-plugin-vaapidevice/issues/5
+      substituteInPlace Makefile --replace libva libva-x11
     '';
 
     src = fetchFromGitHub {
       owner = "pesintta";
       repo = "vdr-plugin-vaapidevice";
-      sha256 = "072y61fpkh3i2dragg0nsd4g3malgwxkwpdrb1ykdljyzf52s5hs";
-      rev = "c99afc23a53e6d91f9afaa99af59b30e68e626a8";
+      sha256 = "1gwjp15kjki9x5742fhaqk3yc2bbma74yp2vpn6wk6kj46nbnwp6";
+      rev = "d19657bae399e79df107e316ca40922d21393f80";
     };
 
-    meta = with stdenv.lib; {
-      homepage = https://github.com/pesintta/vdr-plugin-vaapidevice;
+    meta = with lib; {
+      homepage = "https://github.com/pesintta/vdr-plugin-vaapidevice";
       description = "VDR SoftHDDevice Plug-in (with VA-API VPP additions)";
       maintainers = [ maintainers.ck3d ];
       license = licenses.gpl2;
@@ -80,7 +85,8 @@ in {
 
 
   markad = stdenv.mkDerivation rec {
-    name = "vdr-markad-2017-03-13";
+    pname = "vdr-markad";
+    version = "unstable-2017-03-13";
 
     src = fetchgit {
       url = "git://projects.vdr-developer.org/vdr-plugin-markad.git";
@@ -114,8 +120,8 @@ in {
 
     installFlags = buildFlags;
 
-    meta = with stdenv.lib; {
-      homepage = https://projects.vdr-developer.org/projects/plg-markad;
+    meta = with lib; {
+      homepage = "https://projects.vdr-developer.org/projects/plg-markad";
       description = "Ein Programm zum automatischen Setzen von Schnittmarken bei Werbeeinblendungen während einer Sendung.";
       maintainers = [ maintainers.ck3d ];
       license = licenses.gpl2;
@@ -126,11 +132,12 @@ in {
 
   epgsearch = stdenv.mkDerivation rec {
     pname = "vdr-epgsearch";
-    version = "2.4.0";
+    version = "2.4.1";
 
-    src = fetchurl {
-      url = "https://projects.vdr-developer.org/git/vdr-plugin-epgsearch.git/snapshot/vdr-plugin-epgsearch-${version}.tar.bz2";
-      sha256 = "0xfgn17vicyjwdf0rbkrik4q16mnfi305d4wmi8f0qk825pa0z3y";
+    src = fetchgit {
+      url = "git://projects.vdr-developer.org/vdr-plugin-epgsearch.git";
+      sha256 = "sha256-UlbPCkUFN0Gyxjw9xq2STFTDZRVcPPNjadSQd4o2o9U=";
+      rev = "v${version}";
     };
 
     postPatch = ''
@@ -141,7 +148,7 @@ in {
 
     nativeBuildInputs = [
       perl # for pod2man and pos2html
-      utillinux
+      util-linux
       groff
     ];
 
@@ -161,8 +168,8 @@ in {
 
     outputs = [ "out" "man" ];
 
-    meta = with stdenv.lib; {
-      homepage = http://winni.vdr-developer.org/epgsearch;
+    meta = with lib; {
+      homepage = "http://winni.vdr-developer.org/epgsearch";
       description = "Searchtimer and replacement of the VDR program menu";
       maintainers = [ maintainers.ck3d ];
       license = licenses.gpl2;
@@ -171,25 +178,23 @@ in {
 
   };
 
-  vnsiserver = let
-    name = "vnsiserver";
+  vnsiserver = stdenv.mkDerivation rec {
+    pname = "vdr-vnsiserver";
     version = "1.8.0";
-  in stdenv.mkDerivation {
-    name = "vdr-${name}-${version}";
 
     buildInputs = [ vdr ];
 
     installFlags = [ "DESTDIR=$(out)" ];
 
     src = fetchFromGitHub {
-      repo = "vdr-plugin-${name}";
+      repo = "vdr-plugin-vnsiserver";
       owner = "FernetMenta";
       rev = "v${version}";
       sha256 = "0n7idpxqx7ayd63scl6xwdx828ik4kb2mwz0c30cfjnmnxxd45lw";
     };
 
-    meta = with stdenv.lib; {
-      homepage = https://github.com/FernetMenta/vdr-plugin-vnsiserver;
+    meta = with lib; {
+      homepage = "https://github.com/FernetMenta/vdr-plugin-vnsiserver";
       description = "VDR plugin to handle KODI clients.";
       maintainers = [ maintainers.ck3d ];
       license = licenses.gpl2;
@@ -198,8 +203,9 @@ in {
 
   };
 
-  text2skin = stdenv.mkDerivation rec {
-    name = "vdr-text2skin-1.3.4-20170702";
+  text2skin = stdenv.mkDerivation {
+    pname = "vdr-text2skin";
+    version = "1.3.4-20170702";
 
     src = fetchgit {
       url = "git://projects.vdr-developer.org/vdr-plugin-text2skin.git";
@@ -221,10 +227,10 @@ in {
       mkdir -p $out/lib/vdr
     '';
 
-    installPhase = ":";
+    dontInstall = true;
 
-    meta = with stdenv.lib; {
-      homepage = https://projects.vdr-developer.org/projects/plg-text2skin;
+    meta = with lib; {
+      homepage = "https://projects.vdr-developer.org/projects/plg-text2skin";
       description = "VDR Text2Skin Plugin";
       maintainers = [ maintainers.ck3d ];
       license = licenses.gpl2;
@@ -303,7 +309,6 @@ in {
 
   in stdenv.mkDerivation rec {
     pname = "vdr-fritzbox";
-
     version = "1.5.3";
 
     src = fetchFromGitHub {
@@ -324,8 +329,8 @@ in {
 
     installFlags = [ "DESTDIR=$(out)" ];
 
-    meta = with stdenv.lib; {
-      homepage = https://github.com/jowi24/vdr-fritz;
+    meta = with lib; {
+      homepage = "https://github.com/jowi24/vdr-fritz";
       description = "A plugin for VDR to access AVMs Fritz Box routers";
       maintainers = [ maintainers.ck3d ];
       license = licenses.gpl2;

@@ -1,31 +1,34 @@
-{ stdenv, buildPackages, fetchgit, fetchpatch, perl, buildLinux, ... } @ args:
+{ lib
+, fetchpatch
+, kernel
+, date ? "2022-01-12"
+, commit ? "0e6eb60f8be14b02e0a76cb330f4b22c80ec82e9"
+, diffHash ? "091w4r7h93s5rv8hk65aix7l0rr4bd504mv998j7x360bqlb7vpi"
+, kernelPatches # must always be defined in bcachefs' all-packages.nix entry because it's also a top-level attribute supplied by callPackage
+, argsOverride ? {}
+, ...
+} @ args:
 
-buildLinux (args // rec {
-  version = "5.0.2019.04.04";
-  modDirVersion = "5.0.0";
+# NOTE: bcachefs-tools should be updated simultaneously to preserve compatibility
+(kernel.override ( args // {
+  argsOverride = {
+    version = "${kernel.version}-bcachefs-unstable-${date}";
 
-  src = fetchgit {
-    url = "https://evilpiepirate.org/git/bcachefs.git";
-    rev = "d83b992f653d9f742f3f8567dbcfd1f4f72e858f";
-    sha256 = "17xipjhkl4arshyj3riwq4pgl2qqcnlfhaga77a430wy22s7plh2";
-  };
+    extraMeta = {
+      branch = "master";
+      maintainers = with lib.maintainers; [ davidak chiiruno ];
+    };
+  } // argsOverride;
 
-  extraConfig = "BCACHEFS_FS m";
+  kernelPatches = [ {
+      name = "bcachefs-${commit}";
 
-  kernelPatches = [
-    { name = "export-bio_iov_iter_get_pages";
       patch = fetchpatch {
-        name = "export-bio_iov_iter_get_pages.patch";
-        url = "https://evilpiepirate.org/git/bcachefs.git/patch/?id=bd8be01aa04eb9cc33fcdce89ac6e0fac0ae0fcf";
-        sha256 = "0h5z98krx8077wwhiqp3bwc1h4nwnifxsn8mpxr2lcxnqmky3hz0";
-      }; }
-  ];
+        name = "bcachefs-${commit}.diff";
+        url = "https://evilpiepirate.org/git/bcachefs.git/rawdiff/?id=${commit}&id2=v${lib.versions.majorMinor kernel.version}";
+        sha256 = diffHash;
+      };
 
-  extraMeta = {
-    branch = "master";
-    hydraPlatforms = []; # Should the testing kernels ever be built on Hydra?
-    maintainers = with stdenv.lib.maintainers; [ davidak chiiruno ];
-    platforms = [ "x86_64-linux" ];
-  };
-
-} // (args.argsOverride or {}))
+      extraConfig = "BCACHEFS_FS m";
+    } ] ++ kernelPatches;
+}))

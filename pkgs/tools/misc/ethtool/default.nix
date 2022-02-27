@@ -1,19 +1,32 @@
-{ stdenv, fetchurl }:
+{ lib
+, stdenv
+, fetchurl
+, libmnl
+, pkg-config
+}:
 
 stdenv.mkDerivation rec {
-  name = "ethtool-${version}";
-  version = "5.0";
+  pname = "ethtool";
+  version = "5.15";
 
   src = fetchurl {
-    url = "mirror://kernel/software/network/ethtool/${name}.tar.xz";
-    sha256 = "16gfkf001mdid1vjrxwri7fs4iwiy6d4lkrssljr2n13y0xj7m7c";
+    url = "mirror://kernel/software/network/${pname}/${pname}-${version}.tar.xz";
+    sha256 = "sha256-aG/WEQOJ1JwqEg8Aw81d/kPeutqOAh5CcNdLvkUqEW0=";
   };
 
-  meta = with stdenv.lib; {
+  nativeBuildInputs = [
+    pkg-config
+  ];
+
+  buildInputs = [
+    libmnl
+  ];
+
+  meta = with lib; {
     description = "Utility for controlling network drivers and hardware";
-    homepage = https://www.kernel.org/pub/software/network/ethtool/;
-    license = licenses.gpl2;
+    homepage = "https://www.kernel.org/pub/software/network/ethtool/";
+    license = licenses.gpl2Plus;
     platforms = platforms.linux;
-    maintainers = [ maintainers.bjornfor ];
+    maintainers = with maintainers; [ bjornfor ];
   };
 }

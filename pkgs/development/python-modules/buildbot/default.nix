@@ -1,15 +1,21 @@
-{ stdenv, lib, buildPythonPackage, /*fetchPypi,*/ fetchFromGitHub, makeWrapper, isPy3k,
-  python, twisted, jinja2, zope_interface, future, sqlalchemy,
-  sqlalchemy_migrate, dateutil, txaio, autobahn, pyjwt, pyyaml, treq,
-  txrequests, txgithub, pyjade, boto3, moto, mock, python-lz4, setuptoolsTrial,
-  isort, pylint, flake8, buildbot-worker, buildbot-pkg, parameterized,
-  glibcLocales }:
+{ stdenv, lib, buildPythonPackage, fetchPypi, makeWrapper, isPy3k
+, python, twisted, jinja2, zope_interface, sqlalchemy, alembic, python-dateutil
+, txaio, autobahn, pyjwt, pyyaml, unidiff, treq, txrequests, pypugjs, boto3
+, moto, mock, lz4, setuptoolsTrial, isort, pylint, flake8, buildbot-worker
+, buildbot-pkg, buildbot-plugins, parameterized, git, openssh, glibcLocales
+, nixosTests
+}:
 
 let
   withPlugins = plugins: buildPythonPackage {
-    name = "${package.name}-with-plugins";
-    phases = [ "installPhase" "fixupPhase" ];
-    buildInputs = [ makeWrapper ];
+    pname = "${package.pname}-with-plugins";
+    inherit (package) version;
+
+    dontUnpack = true;
+    dontBuild = true;
+    doCheck = false;
+
+    nativeBuildInputs = [ makeWrapper ];
     propagatedBuildInputs = plugins ++ package.propagatedBuildInputs;
 
     installPhase = ''
@@ -25,55 +31,48 @@ let
 
   package = buildPythonPackage rec {
     pname = "buildbot";
-    version = "2.1.0";
+    version = "3.4.1";
 
-    /*src = fetchPypi {
+    src = fetchPypi {
       inherit pname version;
-      sha256 = "1745hj9s0c0fcdjv6w05bma76xqg1fv42v0dslmi4d8yz9phf37w";
-    };*/
-    # Temporarily use GitHub source because PyPi archive is missing some files
-    # needed for the tests to pass. This has been fixed upstream.
-    # See: https://github.com/buildbot/buildbot/commit/30f5927cf9a80f98ed909241a149469dec3ce68d
-    src = fetchFromGitHub {
-      owner = "buildbot";
-      repo = "buildbot";
-      rev = "v${version}";
-      sha256 = "022ybhdvp0hp2z0cwgx7n41jyh56bpxj3fwm4z7ppzj1qhm7lb65";
-    } + "/master";
+      sha256 = "sha256-GmKMqejHjtEiEtlZffze7PGNjVwUKB/ZcvUgJ4DoeDQ=";
+    };
 
     propagatedBuildInputs = [
       # core
       twisted
       jinja2
       zope_interface
-      future
       sqlalchemy
-      sqlalchemy_migrate
-      dateutil
+      alembic
+      python-dateutil
       txaio
       autobahn
       pyjwt
       pyyaml
-
+      unidiff
+    ]
       # tls
-      twisted.extras.tls
-    ];
+      ++ twisted.extras.tls;
 
     checkInputs = [
       treq
       txrequests
-      pyjade
+      pypugjs
       boto3
       moto
       mock
-      python-lz4
+      lz4
       setuptoolsTrial
       isort
       pylint
       flake8
       buildbot-worker
       buildbot-pkg
+      buildbot-plugins.www
       parameterized
+      git
+      openssh
       glibcLocales
     ];
 
@@ -99,12 +98,14 @@ let
 
     passthru = {
       inherit withPlugins;
+      tests.buildbot = nixosTests.buildbot;
+      updateScript = ./update.sh;
     };
 
     meta = with lib; {
-      homepage = http://buildbot.net/;
-      description = "Buildbot is an open-source continuous integration framework for automating software build, test, and release processes";
-      maintainers = with maintainers; [ nand0p ryansydnor ];
+      homepage = "https://buildbot.net/";
+      description = "An open-source continuous integration framework for automating software build, test, and release processes";
+      maintainers = with maintainers; [ ryansydnor lopsided98 ];
       license = licenses.gpl2;
     };
   };

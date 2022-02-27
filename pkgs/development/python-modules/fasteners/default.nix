@@ -1,34 +1,46 @@
-{ stdenv
+{ lib
 , buildPythonPackage
 , fetchPypi
 , six
 , monotonic
+, diskcache
+, more-itertools
 , testtools
-, python
 , isPy3k
+, nose
+, futures ? null
 }:
 
 buildPythonPackage rec {
   pname = "fasteners";
-  version = "0.14.1";
+  version = "0.16.3";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "063y20kx01ihbz2mziapmjxi2cd0dq48jzg587xdsdp07xvpcz22";
+    sha256 = "b1ab4e5adfbc28681ce44b3024421c4f567e705cc3963c732bf1cba3348307de";
   };
 
-  propagatedBuildInputs = [ six monotonic testtools ];
+  propagatedBuildInputs = [
+    six
+    monotonic
+  ];
+
+  checkInputs = [
+    diskcache
+    more-itertools
+    testtools
+    nose
+  ] ++ lib.optionals (!isPy3k) [
+    futures
+  ];
 
   checkPhase = ''
-    ${python.interpreter} -m unittest discover
+    nosetests
   '';
 
-  # Tests are written for Python 3.x only (concurrent.futures)
-  doCheck = isPy3k;
-
-  meta = with stdenv.lib; {
-    description = "Fasteners";
-    homepage = https://github.com/harlowja/fasteners;
+  meta = with lib; {
+    description = "A python package that provides useful locks";
+    homepage = "https://github.com/harlowja/fasteners";
     license = licenses.asl20;
   };
 

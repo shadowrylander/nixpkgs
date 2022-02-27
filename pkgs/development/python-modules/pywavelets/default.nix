@@ -1,6 +1,7 @@
 { lib
 , buildPythonPackage
 , fetchPypi
+, isPy27
 , cython
 , nose
 , pytest
@@ -9,11 +10,12 @@
 
 buildPythonPackage rec {
   pname = "PyWavelets";
-  version = "1.0.3";
+  version = "1.2.0";
+  disabled = isPy27;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "a12c7a6258c0015d2c75d88b87393ee015494551f049009e8b63eafed2d78efc";
+    sha256 = "6cbd69b047bb4e00873097472133425f5f08a4e6bc8b3f0ae709274d4d5e9a8d";
   };
 
   checkInputs = [ nose pytest ];
@@ -23,14 +25,24 @@ buildPythonPackage rec {
   propagatedBuildInputs = [ numpy ];
 
   # Somehow nosetests doesn't run the tests, so let's use pytest instead
+  doCheck = false; # tests use relative paths, which fail to resolve
   checkPhase = ''
     py.test pywt/tests
   '';
 
-  meta = {
+  # ensure compiled modules are present
+  pythonImportsCheck = [
+    "pywt"
+    "pywt._extensions._cwt"
+    "pywt._extensions._dwt"
+    "pywt._extensions._pywt"
+    "pywt._extensions._swt"
+  ];
+
+  meta = with lib; {
     description = "Wavelet transform module";
-    homepage = https://github.com/PyWavelets/pywt;
-    license = lib.licenses.mit;
+    homepage = "https://github.com/PyWavelets/pywt";
+    license = licenses.mit;
   };
 
 }

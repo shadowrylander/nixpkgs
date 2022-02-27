@@ -1,33 +1,62 @@
-{ stdenv, buildPythonPackage, fetchPypi
-, setuptools_scm, entrypoints, secretstorage
-, pytest, pytest-flake8 }:
+{ lib
+, stdenv
+, buildPythonPackage
+, fetchPypi
+, pythonOlder
+, setuptools-scm
+, importlib-metadata
+, dbus-python
+, jeepney
+, secretstorage
+, pytestCheckHook
+}:
 
 buildPythonPackage rec {
   pname = "keyring";
-  version = "18.0.1";
+  version = "23.5.0";
+  disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "67d6cc0132bd77922725fae9f18366bb314fd8f95ff4d323a4df41890a96a838";
+    hash = "sha256-kBJQjhQagL0cC2d41cYQ3Z+MRk11rGd0JIUAUD+XL7k=";
   };
 
-  nativeBuildInputs = [ setuptools_scm ];
+  nativeBuildInputs = [
+    setuptools-scm
+  ];
 
-  checkInputs = [ pytest pytest-flake8 ];
+  propagatedBuildInputs = [
+    # this should be optional, however, it has a different API
+    importlib-metadata # see https://github.com/jaraco/keyring/issues/503#issuecomment-798973205
 
-  propagatedBuildInputs = [ entrypoints ] ++ stdenv.lib.optional stdenv.isLinux secretstorage;
+    dbus-python
+    jeepney
+    secretstorage
+  ];
 
-  doCheck = !stdenv.isDarwin;
+  pythonImportsCheck = [
+    "keyring"
+    "keyring.backend"
+  ];
 
-  checkPhase = ''
-    py.test
-  '';
+  checkInputs = [
+    pytestCheckHook
+  ];
 
-  meta = with stdenv.lib; {
+  disabledTests = [
+    # E       ValueError: too many values to unpack (expected 1)
+    "test_entry_point"
+  ];
+
+  disabledTestPaths = [
+    "tests/backends/test_macOS.py"
+  ];
+
+  meta = with lib; {
     description = "Store and access your passwords safely";
-    homepage    = "https://pypi.python.org/pypi/keyring";
-    license     = licenses.psfl;
-    maintainers = with maintainers; [ lovek323 ];
+    homepage    = "https://github.com/jaraco/keyring";
+    license     = licenses.mit;
+    maintainers = with maintainers; [ lovek323 dotlambda ];
     platforms   = platforms.unix;
   };
 }

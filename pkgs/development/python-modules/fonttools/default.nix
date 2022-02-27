@@ -1,37 +1,83 @@
-{ buildPythonPackage
-, fetchPypi
-, numpy
-, pytest
-, pytestrunner
+{ lib
+, buildPythonPackage
+, fetchFromGitHub
+, pythonOlder
+, brotlipy
+, zopfli
+, lxml
+, scipy
+, munkres
+, unicodedata2
+, sympy
+, reportlab
+, sphinx
+, pytestCheckHook
 , glibcLocales
 }:
 
 buildPythonPackage rec {
   pname = "fonttools";
-  version = "3.39.0";
+  version = "4.29.0";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "0hgv83b4nhk2bl33xa41x0xvsl2b138p974ywkglzckp1123a7z2";
-    extension = "zip";
+  # Bump to 3.7 when https://github.com/fonttools/fonttools/pull/2417 is merged
+  disabled = pythonOlder "3.6";
+
+  src = fetchFromGitHub {
+    owner  = pname;
+    repo   = pname;
+    rev    = version;
+    sha256 = "LnkpTEpZbbRAyqGPJXdfpHjh4t7n6LkjZGLhirVNl7E=";
   };
 
-  buildInputs = [
-    numpy
-  ];
+  # all dependencies are optional, but
+  # we run the checks with them
 
   checkInputs = [
-    pytest
-    pytestrunner
-    glibcLocales
+    pytestCheckHook
+    # etree extra
+    lxml
+    # woff extra
+    brotlipy
+    zopfli
+    # interpolatable extra
+    scipy
+    munkres
+    # symfont
+    sympy
+    # pens
+    reportlab
+    sphinx
+  ] ++ lib.optionals (pythonOlder "3.9") [
+    # unicode extra
+    unicodedata2
   ];
 
   preCheck = ''
-    export LC_ALL="en_US.UTF-8"
+    # tests want to execute the "fonttools" executable from $PATH
+    export PATH="$out/bin:$PATH"
   '';
 
-  meta = {
-    homepage = https://github.com/fonttools/fonttools;
+  # Timestamp tests have timing issues probably related
+  # to our file timestamp normalization
+  disabledTests = [
+    "test_recalc_timestamp_ttf"
+    "test_recalc_timestamp_otf"
+    "test_ttcompile_timestamp_calcs"
+  ];
+
+  disabledTestPaths = [
+    # avoid test which depend on fs and matplotlib
+    # fs and matplotlib were removed to prevent strong cyclic dependencies
+    "Tests/misc/plistlib_test.py"
+    "Tests/pens"
+    "Tests/ufoLib"
+  ];
+
+
+  meta = with lib; {
+    homepage = "https://github.com/fonttools/fonttools";
     description = "A library to manipulate font files from Python";
+    license = licenses.mit;
+    maintainers = [ maintainers.sternenseemann ];
   };
 }

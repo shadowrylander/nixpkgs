@@ -1,31 +1,45 @@
-{
-  stdenv, pythonPackages, openssl,
-
+{ lib
+, python3
+, openssl
   # Many Salt modules require various Python modules to be installed,
   # passing them in this array enables Salt to find them.
-  extraInputs ? []
+, extraInputs ? []
 }:
 
-pythonPackages.buildPythonApplication rec {
+let
+  py = python3.override {
+    packageOverrides = self: super: {
+      # Incompatible with pyzmq 22
+      pyzmq = super.pyzmq.overridePythonAttrs (oldAttrs: rec {
+        version = "21.0.2";
+        src = oldAttrs.src.override {
+          inherit version;
+          sha256 = "CYwTxhmJE8KgaQI1+nTS5JFhdV9mtmO+rsiWUVVMx5w=";
+        };
+      });
+   };
+  };
+in
+py.pkgs.buildPythonApplication rec {
   pname = "salt";
-  version = "2019.2.0";
+  version = "3004";
 
-  src = pythonPackages.fetchPypi {
+  src = py.pkgs.fetchPypi {
     inherit pname version;
-    sha256 = "1kgn3lway0zwwysyzpphv05j4xgxk92dk4rv1vybr2527wmvp5an";
+    sha256 = "PVNWG8huAU3KLsPcmBB5vgTVXqBHiQyr3iXlsQv6WxM=";
   };
 
-  propagatedBuildInputs = with pythonPackages; [
+  propagatedBuildInputs = with py.pkgs; [
+    distro
     jinja2
     markupsafe
     msgpack
-    pycrypto
+    psutil
+    pycryptodomex
     pyyaml
     pyzmq
     requests
-    tornado_4
-  ] ++ stdenv.lib.optional (!pythonPackages.isPy3k) [
-    futures
+    tornado
   ] ++ extraInputs;
 
   patches = [ ./fix-libcrypto-loading.patch ];
@@ -33,6 +47,8 @@ pythonPackages.buildPythonApplication rec {
   postPatch = ''
     substituteInPlace "salt/utils/rsax931.py" \
       --subst-var-by "libcrypto" "${openssl.out}/lib/libcrypto.so"
+    substituteInPlace requirements/base.txt \
+      --replace contextvars ""
   '';
 
   # The tests fail due to socket path length limits at the very least;
@@ -40,10 +56,11 @@ pythonPackages.buildPythonApplication rec {
   # as is it rather long.
   doCheck = false;
 
-  meta = with stdenv.lib; {
-    homepage = https://saltstack.com/;
+  meta = with lib; {
+    homepage = "https://saltproject.io/";
+    changelog = "https://docs.saltproject.io/en/latest/topics/releases/${version}.html";
     description = "Portable, distributed, remote execution and configuration management system";
-    maintainers = with maintainers; [ aneeshusa ];
+    maintainers = with maintainers; [ Flakebi ];
     license = licenses.asl20;
   };
 }

@@ -1,10 +1,10 @@
-{lib, buildPythonPackage, fetchPypi, isPy3k, incremental, ipaddress, twisted
+{ lib, stdenv, python, buildPythonPackage, pythonOlder, fetchPypi, isPy3k, incremental, ipaddress, twisted
 , automat, zope_interface, idna, pyopenssl, service-identity, pytest, mock, lsof
 , GeoIP}:
 
 buildPythonPackage rec {
   pname = "txtorcon";
-  version = "19.0.0";
+  version = "21.1.0";
 
   checkInputs = [ pytest mock lsof GeoIP ];
   propagatedBuildInputs = [
@@ -15,19 +15,22 @@ buildPythonPackage rec {
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "0fxzhsc62bhmr730vj9pzallmw56gz6iykvl28a5agrycm0bfc9p";
+    sha256 = "aebf0b9ec6c69a029f6b61fd534e785692e28fdcd2fd003ce3cc132b9393b7d6";
   };
 
-  # Skip a failing test until fixed upstream:
-  # https://github.com/meejah/txtorcon/issues/250
+  # Based on what txtorcon tox.ini will automatically test, allow back as far
+  # as Python 3.5.
+  disabled = pythonOlder "3.5";
+
+  doCheck = !(stdenv.isDarwin && stdenv.isAarch64);
   checkPhase = ''
-    pytest --ignore=test/test_util.py .
+    ${python.interpreter} -m twisted.trial -j $NIX_BUILD_CORES ./test
   '';
 
   meta = {
     description = "Twisted-based Tor controller client, with state-tracking and configuration abstractions";
-    homepage = https://github.com/meejah/txtorcon;
-    maintainers = with lib.maintainers; [ jluttine ];
+    homepage = "https://github.com/meejah/txtorcon";
+    maintainers = with lib.maintainers; [ jluttine exarkun ];
     license = lib.licenses.mit;
   };
 }

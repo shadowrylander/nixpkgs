@@ -1,6 +1,6 @@
-{ stdenv, fetchurl
-, buildPackages
-, pkgconfig, which, makeWrapper
+{ lib, stdenv, fetchurl
+, buildPackages, pkgsHostHost
+, pkg-config, which, makeWrapper
 , zlib, bzip2, libpng, gnumake, glib
 
 , # FreeType supports LCD filtering (colloquially referred to as sub-pixel rendering).
@@ -9,14 +9,50 @@
   useEncumberedCode ? true
 }:
 
-let
-  inherit (stdenv.lib) optional optionalString;
 
-in stdenv.mkDerivation rec {
+stdenv.mkDerivation rec {
   pname = "freetype";
-  version = "2.10.0";
+  version = "2.11.1";
 
-  meta = with stdenv.lib; {
+  src = fetchurl {
+    url = "mirror://savannah/${pname}/${pname}-${version}.tar.xz";
+    sha256 = "sha256-MzOufP2ohCnJenrmO30BqzmAdsO2cYLpYOVoQFDyxcg=";
+  };
+
+  propagatedBuildInputs = [ zlib bzip2 libpng ]; # needed when linking against freetype
+
+  # dependence on harfbuzz is looser than the reverse dependence
+  nativeBuildInputs = [ pkg-config which makeWrapper ]
+    # FreeType requires GNU Make, which is not part of stdenv on FreeBSD.
+    ++ lib.optional (!stdenv.isLinux) gnumake;
+
+  patches = [
+    ./enable-table-validation.patch
+  ] ++ lib.optional useEncumberedCode ./enable-subpixel-rendering.patch;
+
+  outputs = [ "out" "dev" ];
+
+  configureFlags = [ "--bindir=$(dev)/bin" "--enable-freetype-config" ];
+
+  # native compiler to generate building tool
+  CC_BUILD = "${buildPackages.stdenv.cc}/bin/cc";
+
+  # The asm for armel is written with the 'asm' keyword.
+  CFLAGS = lib.optionalString stdenv.isAarch32 "-std=gnu99";
+
+  enableParallelBuilding = true;
+
+  doCheck = true;
+
+  postInstall = glib.flattenInclude + ''
+    substituteInPlace $dev/bin/freetype-config \
+      --replace ${buildPackages.pkg-config} ${pkgsHostHost.pkg-config}
+
+    wrapProgram "$dev/bin/freetype-config" \
+      --set PKG_CONFIG_PATH "$PKG_CONFIG_PATH:$dev/lib/pkgconfig"
+  '';
+
+  meta = with lib; {
     description = "A font rendering engine";
     longDescription = ''
       FreeType is a portable and efficient library for rendering fonts. It
@@ -25,48 +61,9 @@ in stdenv.mkDerivation rec {
       autofit which can be used instead of hinting instructions included in
       fonts.
     '';
-    homepage = https://www.freetype.org/;
+    homepage = "https://www.freetype.org/";
     license = licenses.gpl2Plus; # or the FreeType License (BSD + advertising clause)
     platforms = platforms.all;
     maintainers = with maintainers; [ ttuegel ];
   };
-
-  src = fetchurl {
-    url = "mirror://savannah/${pname}/${pname}-${version}.tar.bz2";
-    sha256 = "01mybx78n3n9dhzylbrdy42wxdwfn8rp514qdkzjy6b5ij965k7w";
-  };
-
-  propagatedBuildInputs = [ zlib bzip2 libpng ]; # needed when linking against freetype
-  # dependence on harfbuzz is looser than the reverse dependence
-  nativeBuildInputs = [ pkgconfig which makeWrapper ]
-    # FreeType requires GNU Make, which is not part of stdenv on FreeBSD.
-    ++ optional (!stdenv.isLinux) gnumake;
-
-  patches =
-    [ ./enable-table-validation.patch
-    ] ++
-    optional useEncumberedCode ./enable-subpixel-rendering.patch;
-
-  outputs = [ "out" "dev" ];
-
-  configureFlags = [ "--disable-static" "--bindir=$(dev)/bin" "--enable-freetype-config" ];
-
-  # native compiler to generate building tool
-  CC_BUILD = "${buildPackages.stdenv.cc}/bin/cc";
-
-  # The asm for armel is written with the 'asm' keyword.
-  CFLAGS = optionalString stdenv.isAarch32 "-std=gnu99";
-
-  enableParallelBuilding = true;
-
-  doCheck = true;
-
-  postInstall = glib.flattenInclude + ''
-    substituteInPlace $dev/bin/freetype-config \
-      --replace ${buildPackages.pkgconfig} ${pkgconfig}
-
-    wrapProgram "$dev/bin/freetype-config" \
-      --set PKG_CONFIG_PATH "$PKG_CONFIG_PATH:$dev/lib/pkgconfig"
-  '';
-
 }

@@ -1,7 +1,12 @@
-{ stdenv, fetchsvn, nettools, libgcrypt, openssl, openresolv, perl, gawk, makeWrapper }:
+{ lib, stdenv, fetchsvn
+, makeWrapper, pkg-config
+, gawk, gnutls, libgcrypt, nettools, openresolv, perl
+, opensslSupport ? false, openssl # Distributing this is a GPL violation.
+}:
 
-stdenv.mkDerivation rec {
-  name = "vpnc-0.5.3-post-r550";
+stdenv.mkDerivation {
+  pname = "vpnc";
+  version = "0.5.3-post-r550";
   src = fetchsvn {
     url = "https://svn.unix-ag.uni-kl.de/vpnc";
     rev = "550";
@@ -13,17 +18,28 @@ stdenv.mkDerivation rec {
     rm -r $sourceRoot/{trunk,branches,tags}
   '';
 
-  patches = [ ./makefile.patch ./no_default_route_when_netmask.patch ];
+  patches = [ ./no_default_route_when_netmask.patch ];
 
   # The `etc/vpnc/vpnc-script' script relies on `which' and on
   # `ifconfig' as found in net-tools (not GNU Inetutils).
   propagatedBuildInputs = [ nettools ];
 
-  buildInputs = [libgcrypt perl makeWrapper openssl ];
+  nativeBuildInputs = [ makeWrapper ]
+    ++ lib.optional (!opensslSupport) pkg-config;
+  buildInputs = [ libgcrypt perl ]
+    ++ (if opensslSupport then [ openssl ] else [ gnutls ]);
+
+  makeFlags = [
+    "PREFIX=$(out)"
+    "ETCDIR=$(out)/etc/vpnc"
+    "SCRIPT_PATH=$(out)/etc/vpnc/vpnc-script"
+  ] ++ lib.optional opensslSupport "OPENSSL_GPL_VIOLATION=yes";
+
+  postPatch = ''
+    patchShebangs makeman.pl
+  '';
 
   preConfigure = ''
-    sed -i 's|^#OPENSSL|OPENSSL|g' Makefile
-
     substituteInPlace "vpnc-script" \
       --replace "which" "type -P" \
       --replace "awk" "${gawk}/bin/awk" \
@@ -31,9 +47,6 @@ stdenv.mkDerivation rec {
 
     substituteInPlace "config.c" \
       --replace "/etc/vpnc/vpnc-script" "$out/etc/vpnc/vpnc-script"
-
-    substituteInPlace "pcf2vpnc" \
-      --replace "/usr/bin/perl" "${perl}/bin/perl"
   '';
 
   postInstall = ''
@@ -47,11 +60,10 @@ stdenv.mkDerivation rec {
     cp README nortel.txt ChangeLog $out/share/doc/vpnc/
   '';
 
-  meta = {
-    homepage = https://www.unix-ag.uni-kl.de/~massar/vpnc/;
+  meta = with lib; {
+    homepage = "https://www.unix-ag.uni-kl.de/~massar/vpnc/";
     description = "Virtual private network (VPN) client for Cisco's VPN concentrators";
-    license = stdenv.lib.licenses.gpl2Plus;
-
-    platforms = stdenv.lib.platforms.linux;
+    license = if opensslSupport then licenses.unfree else licenses.gpl2Plus;
+    platforms = platforms.linux;
   };
 }

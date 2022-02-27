@@ -1,38 +1,42 @@
-{ stdenv, fetchurl, pkgconfig, boost
+{ lib, stdenv, fetchurl, pkg-config, boost, nixosTests
 , openssl, systemd, lua, luajit, protobuf
 , enableProtoBuf ? false
 }:
-assert enableProtoBuf -> protobuf != null;
-
-with stdenv.lib;
 
 stdenv.mkDerivation rec {
-  name = "pdns-recursor-${version}";
-  version = "4.1.12";
+  pname = "pdns-recursor";
+  version = "4.6.0";
 
   src = fetchurl {
     url = "https://downloads.powerdns.com/releases/pdns-recursor-${version}.tar.bz2";
-    sha256 = "1j5hrpz4c9dqd30piqd8xyjmirdxp4dy71nx9rwq8l4i4nc0l774";
+    sha256 = "1wmwkw8x39rall3673cngz0vpgc1z5vx29qy5r6mkg5fk29ma1nz";
   };
 
-  nativeBuildInputs = [ pkgconfig ];
+  nativeBuildInputs = [ pkg-config ];
   buildInputs = [
     boost openssl systemd
     lua luajit
-  ] ++ optional enableProtoBuf protobuf;
+  ] ++ lib.optional enableProtoBuf protobuf;
 
   configureFlags = [
     "--enable-reproducible"
-    "--with-systemd"
+    "--enable-systemd"
   ];
 
   enableParallelBuilding = true;
 
-  meta = {
+  passthru.tests = {
+    inherit (nixosTests) pdns-recursor ncdns;
+  };
+
+  meta = with lib; {
     description = "A recursive DNS server";
-    homepage = https://www.powerdns.com/;
+    homepage = "https://www.powerdns.com/";
     platforms = platforms.linux;
-    license = licenses.gpl2;
+    badPlatforms = [
+      "i686-linux"  # a 64-bit time_t is needed
+    ];
+    license = licenses.gpl2Only;
     maintainers = with maintainers; [ rnhmjoj ];
   };
 }

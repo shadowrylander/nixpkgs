@@ -1,23 +1,56 @@
-{ stdenv, fetchFromGitHub, pythonPackages, mopidy }:
+{ lib
+, fetchFromGitHub
+, python3
+, mopidy
+}:
 
-pythonPackages.buildPythonApplication rec {
+python3.pkgs.buildPythonApplication rec {
   pname = "mopidy-youtube";
-  version = "2.0.2";
+  version = "3.4";
+
+  disabled = python3.pythonOlder "3.7";
 
   src = fetchFromGitHub {
-    owner = "mopidy";
-    repo = "mopidy-youtube";
+    owner = "natumbri";
+    repo = pname;
     rev = "v${version}";
-    sha256 = "06r3ikyg2ch5n7fbn3sgj04hk6icpfpk1r856qch41995k3bbfg7";
+    sha256 = "0lm6nn926qkrwzvj64yracdixfrnv5zk243msjskrnlzkhgk01rk";
   };
 
-  propagatedBuildInputs = with pythonPackages; [ mopidy pafy ];
+  propagatedBuildInputs = with python3.pkgs; [
+    beautifulsoup4
+    cachetools
+    pykka
+    requests
+    youtube-dl
+    ytmusicapi
+  ] ++ [
+    mopidy
+  ];
 
-  doCheck = false;
+  checkInputs = with python3.pkgs; [
+    vcrpy
+    pytestCheckHook
+  ];
 
-  meta = with stdenv.lib; {
+  disabledTests = [
+    # Test requires a YouTube API key
+    "test_get_default_config"
+  ];
+
+  disabledTestPaths = [
+    # Fails with an import error
+    "tests/test_backend.py"
+  ];
+
+  pythonImportsCheck = [
+    "mopidy_youtube"
+  ];
+
+  meta = with lib; {
     description = "Mopidy extension for playing music from YouTube";
+    homepage = "https://github.com/natumbri/mopidy-youtube";
     license = licenses.asl20;
-    maintainers = [ maintainers.spwhitt ];
+    maintainers = with maintainers; [ spwhitt ];
   };
 }

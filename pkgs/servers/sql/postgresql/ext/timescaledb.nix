@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, cmake, postgresql, openssl }:
+{ lib, stdenv, fetchFromGitHub, cmake, postgresql, openssl, libkrb5 }:
 
 # # To enable on NixOS:
 # config.services.postgresql = {
@@ -7,25 +7,29 @@
 # }
 
 stdenv.mkDerivation rec {
-  name = "timescaledb-${version}";
-  version = "1.2.2";
+  pname = "timescaledb";
+  version = "2.6.0";
 
   nativeBuildInputs = [ cmake ];
-  buildInputs = [ postgresql openssl ];
+  buildInputs = [ postgresql openssl libkrb5 ];
 
   src = fetchFromGitHub {
-    owner  = "timescale";
-    repo   = "timescaledb";
-    rev    = "refs/tags/${version}";
-    sha256 = "1fb1ab07jmgd1drinl25mbhwx966f75c7i7nh3ah0xf3cbk298xr";
+    owner = "timescale";
+    repo = "timescaledb";
+    # some branches are named like tags which confuses git
+    rev = "refs/tags/${version}";
+    sha256 = "sha256-OiY7u7n78k+LsXo/B463p02tw5Fmq/OiVcLcZVutUdA=";
   };
+
+  cmakeFlags = [ "-DSEND_TELEMETRY_DEFAULT=OFF" "-DREGRESS_CHECKS=OFF" "-DTAP_CHECKS=OFF" ]
+    ++ lib.optionals stdenv.isDarwin [ "-DLINTER=OFF" ];
 
   # Fix the install phase which tries to install into the pgsql extension dir,
   # and cannot be manually overridden. This is rather fragile but works OK.
-  patchPhase = ''
+  postPatch = ''
     for x in CMakeLists.txt sql/CMakeLists.txt; do
       substituteInPlace "$x" \
-        --replace 'DESTINATION "''${PG_SHAREDIR}/extension"' "DESTINATION \"$out/share/extension\""
+        --replace 'DESTINATION "''${PG_SHAREDIR}/extension"' "DESTINATION \"$out/share/postgresql/extension\""
     done
 
     for x in src/CMakeLists.txt src/loader/CMakeLists.txt tsl/src/CMakeLists.txt; do
@@ -34,18 +38,13 @@ stdenv.mkDerivation rec {
     done
   '';
 
-  postInstall = ''
-    # work around an annoying bug, by creating $out/bin, so buildEnv doesn't freak out later
-    # see https://github.com/NixOS/nixpkgs/issues/22653
-
-    mkdir -p $out/bin
-  '';
-
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Scales PostgreSQL for time-series data via automatic partitioning across time and space";
-    homepage    = https://www.timescale.com/;
-    maintainers = with maintainers; [ volth ];
-    platforms   = postgresql.meta.platforms;
-    license     = licenses.asl20;
+    homepage = "https://www.timescale.com/";
+    changelog = "https://github.com/timescale/timescaledb/raw/${version}/CHANGELOG.md";
+    maintainers = with maintainers; [ volth marsam ];
+    platforms = postgresql.meta.platforms;
+    license = licenses.asl20;
+    broken = versionOlder postgresql.version "12";
   };
 }

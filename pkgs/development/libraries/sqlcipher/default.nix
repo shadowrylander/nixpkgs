@@ -1,30 +1,42 @@
-{ stdenv, lib, fetchFromGitHub, openssl, tcl, readline ? null, ncurses ? null }:
-
-assert readline != null -> ncurses != null;
+{ stdenv, lib, fetchFromGitHub, openssl, tcl, installShellFiles, buildPackages, readline, ncurses, zlib, sqlite }:
 
 stdenv.mkDerivation rec {
-  name = "sqlcipher-${version}";
-  version = "4.1.0";
+  pname = "sqlcipher";
+  version = "4.5.0";
 
   src = fetchFromGitHub {
     owner = "sqlcipher";
     repo = "sqlcipher";
     rev = "v${version}";
-    sha256 = "0w0f4pg3jfzismpgqnbf60bjbbll2ang48216bc4m20mm2dpp5ar";
+    sha256 = "sha256-MFuFyKvOOrDrq9cDPQlNK6/YHSkaRX4qbw/44m5CRh4=";
   };
 
-  buildInputs = [ readline ncurses openssl tcl ];
+  nativeBuildInputs = [ installShellFiles tcl ];
+  buildInputs = [ readline ncurses openssl zlib ];
+  depsBuildBuild = [ buildPackages.stdenv.cc ];
 
-  configureFlags = [ "--enable-threadsafe" "--disable-tcl" ];
+  configureFlags = [
+    "--enable-threadsafe"
+    "--with-readline-inc=-I${lib.getDev readline}/include"
+  ];
 
-  CFLAGS = [ "-DSQLITE_ENABLE_COLUMN_METADATA=1" "-DSQLITE_SECURE_DELETE=1" "-DSQLITE_ENABLE_UNLOCK_NOTIFY=1" "-DSQLITE_HAS_CODEC" ];
-  LDFLAGS = lib.optional (readline != null) "-lncurses";
+  CFLAGS = [
+    # We want feature parity with sqlite
+    sqlite.NIX_CFLAGS_COMPILE
+    "-DSQLITE_HAS_CODEC"
+  ];
 
-  doCheck = false; # fails. requires tcl?
+  BUILD_CC = "$(CC_FOR_BUILD)";
 
-  meta = with stdenv.lib; {
-    homepage = http://sqlcipher.net/;
-    description = "Full Database Encryption for SQLite";
+  TCLLIBDIR = "${placeholder "out"}/lib/tcl${lib.versions.majorMinor tcl.version}";
+
+  postInstall = ''
+    installManPage sqlcipher.1
+  '';
+
+  meta = with lib; {
+    homepage = "https://www.zetetic.net/sqlcipher/";
+    description = "SQLite extension that provides 256 bit AES encryption of database files";
     platforms = platforms.unix;
     license = licenses.bsd3;
   };

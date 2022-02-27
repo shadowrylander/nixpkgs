@@ -1,32 +1,39 @@
 { pkgs
 , buildPythonPackage
 , fetchPypi
-, python
+, azure-mgmt-core
 , azure-mgmt-common
+, isPy3k
 }:
 
 
 buildPythonPackage rec {
-  version = "2.1.0";
+  version = "20.1.0";
   pname = "azure-mgmt-resource";
+  disabled = !isPy3k;
 
   src = fetchPypi {
     inherit pname version;
     extension = "zip";
-    sha256 = "aef8573066026db04ed3e7c5e727904e42f6462b6421c2e8a3646e4c4f8128be";
+    sha256 = "4fbb2158320e0bdd367882642f266a6dfb3b4b8610792b3afbbca39089f212d7";
   };
 
-  postInstall = ''
-    echo "__import__('pkg_resources').declare_namespace(__name__)" >> "$out/lib/${python.libPrefix}"/site-packages/azure/__init__.py
-    echo "__import__('pkg_resources').declare_namespace(__name__)" >> "$out/lib/${python.libPrefix}"/site-packages/azure/mgmt/__init__.py
-  '';
+  propagatedBuildInputs = [
+    azure-mgmt-common
+    azure-mgmt-core
+  ];
 
-  propagatedBuildInputs = [ azure-mgmt-common ];
+  # has no tests
+  doCheck = false;
+
+  pythonNamespaces = [ "azure.mgmt" ];
+
+  pythonImportsCheck = [ "azure.mgmt.resource" ];
 
   meta = with pkgs.lib; {
     description = "Microsoft Azure SDK for Python";
-    homepage = "https://azure.microsoft.com/en-us/develop/python/";
-    license = licenses.asl20;
-    maintainers = with maintainers; [ olcai ];
+    homepage = "https://github.com/Azure/azure-sdk-for-python";
+    license = licenses.mit;
+    maintainers = with maintainers; [ olcai maxwilson jonringer ];
   };
 }

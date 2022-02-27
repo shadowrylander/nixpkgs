@@ -1,34 +1,64 @@
-{ stdenv, fetchFromGitHub, pantheon, pkgconfig, meson, python3, ninja, vala
-, desktop-file-utils, gettext, libxml2, gtk3, granite, libgee, bamf, libcanberra
-, libcanberra-gtk3, gnome-desktop, mutter, clutter, plank, gobject-introspection
-, elementary-icon-theme, elementary-settings-daemon, wrapGAppsHook }:
+{ lib
+, stdenv
+, fetchFromGitHub
+, fetchpatch
+, nix-update-script
+, pkg-config
+, meson
+, python3
+, ninja
+, vala
+, desktop-file-utils
+, gettext
+, libxml2
+, gtk3
+, granite
+, libgee
+, bamf
+, libcanberra-gtk3
+, gnome-desktop
+, mutter
+, clutter
+, elementary-icon-theme
+, gnome-settings-daemon
+, wrapGAppsHook
+, gexiv2
+}:
 
 stdenv.mkDerivation rec {
   pname = "gala";
-  version = "unstable-2019-02-09"; # Is tracking https://github.com/elementary/gala/commits/stable/juno
+  version = "6.3.0";
 
   src = fetchFromGitHub {
     owner = "elementary";
     repo = pname;
-    rev = "1a96644c6aac405927499dacb308dea13512e919";
-    sha256 = "1zi7xyzhsypf52zzfwf7dwcxgd0skxbsssv1vsxgmswszg23p7i3";
+    rev = version;
+    sha256 = "sha256-f/WDm9/+lXgplg9tGpct4f+1cOhKgdypwiDRBhewRGw=";
   };
 
-  passthru = {
-    updateScript = pantheon.updateScript {
-      repoName = pname;
-      versionPolicy = "master";
-    };
-  };
+  patches = [
+    ./plugins-dir.patch
+    # Session crashes when switching windows with Alt+Tab
+    # https://github.com/elementary/gala/issues/1312
+    (fetchpatch {
+      url = "https://github.com/elementary/gala/commit/cc83db8fe398feae9f3e4caa8352b65f0c8c96d4.patch";
+      sha256 = "sha256-CPO3EHIzqHAV6ZLHngivCdsD8je8CK/NHznfxSEkhzc=";
+    })
+    # WindowSwitcher: Clear indicator background
+    # https://github.com/elementary/gala/pull/1318
+    (fetchpatch {
+      url = "https://github.com/elementary/gala/commit/cce53acffecba795b6cc48916d4621a47996d2c9.patch";
+      sha256 = "sha256-5aTZE6poo4sQMTLfk9Nhw4G4BW8i9dvpWktizRIS58Q=";
+    })
+  ];
 
   nativeBuildInputs = [
     desktop-file-utils
     gettext
-    gobject-introspection
     libxml2
     meson
     ninja
-    pkgconfig
+    pkg-config
     python3
     vala
     wrapGAppsHook
@@ -38,29 +68,39 @@ stdenv.mkDerivation rec {
     bamf
     clutter
     elementary-icon-theme
+    gnome-settings-daemon
+    gexiv2
     gnome-desktop
-    elementary-settings-daemon
     granite
     gtk3
-    libcanberra
     libcanberra-gtk3
     libgee
     mutter
-    plank
   ];
 
-  patches = [ ./plugins-dir.patch ];
+  mesonFlags = [
+    # TODO: enable this and remove --builtin flag from session-settings
+    # https://github.com/NixOS/nixpkgs/pull/140429
+    "-Dsystemd=false"
+  ];
 
   postPatch = ''
     chmod +x build-aux/meson/post_install.py
     patchShebangs build-aux/meson/post_install.py
   '';
 
-  meta =  with stdenv.lib; {
+  passthru = {
+    updateScript = nix-update-script {
+      attrPath = "pantheon.${pname}";
+    };
+  };
+
+  meta = with lib; {
     description = "A window & compositing manager based on mutter and designed by elementary for use with Pantheon";
-    homepage = https://github.com/elementary/gala;
+    homepage = "https://github.com/elementary/gala";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
-    maintainers = pantheon.maintainers;
+    maintainers = teams.pantheon.members;
+    mainProgram = "gala";
   };
 }

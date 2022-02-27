@@ -1,21 +1,76 @@
-{ stdenv, fetchurl, pythonPackages }:
+{ lib
+, fetchFromGitHub
+, installShellFiles
+, python3Packages
+, pandoc
+}:
 
-pythonPackages.buildPythonApplication rec {
-  name = "httpie-1.0.2";
+python3Packages.buildPythonApplication rec {
+  pname = "httpie";
+  version = "3.0.2";
 
-  src = fetchurl {
-    url = "mirror://pypi/h/httpie/${name}.tar.gz";
-    sha256 = "1ax22jh5lpjywpj7lsl072wdhr1pxiqzmxhyph5diwxxzs2nqrzw";
+  src = fetchFromGitHub {
+    owner = "httpie";
+    repo = "httpie";
+    rev = version;
+    sha256 = "sha256-s3IFzEUQmPBocgspVGx1nINkUamsi7tzwW37IqdBMxo=";
   };
 
-  propagatedBuildInputs = with pythonPackages; [ pygments requests ];
+  nativeBuildInputs = [
+    installShellFiles
+    pandoc
+  ];
 
-  doCheck = false;
+  propagatedBuildInputs = with python3Packages; [
+    charset-normalizer
+    defusedxml
+    multidict
+    pygments
+    requests
+    requests-toolbelt
+    setuptools
+  ];
 
-  meta = {
+  checkInputs = with python3Packages; [
+    mock
+    pytest
+    pytest-httpbin
+    pytestCheckHook
+    responses
+  ];
+
+  postInstall = ''
+    # install completions
+    installShellCompletion --bash \
+      --name http.bash extras/httpie-completion.bash
+    installShellCompletion --fish \
+      --name http.fish extras/httpie-completion.fish
+
+    # convert the docs/README.md file
+    pandoc --standalone -f markdown -t man docs/README.md -o docs/http.1
+    installManPage docs/http.1
+  '';
+
+  pytestFlagsArray = [
+    "httpie"
+    "tests"
+  ];
+
+  disabledTests = [
+    "test_chunked"
+    "test_verbose_chunked"
+    "test_multipart_chunked"
+    "test_request_body_from_file_by_path_chunked"
+    # Part of doctest
+    "httpie.encoding.detect_encoding"
+  ];
+
+  pythonImportsCheck = [ "httpie" ];
+
+  meta = with lib; {
     description = "A command line HTTP client whose goal is to make CLI human-friendly";
-    homepage = https://httpie.org/;
-    license = stdenv.lib.licenses.bsd3;
-    maintainers = with stdenv.lib.maintainers; [ antono relrod schneefux ];
+    homepage = "https://httpie.org/";
+    license = licenses.bsd3;
+    maintainers = with maintainers; [ antono relrod schneefux SuperSandro2000 ];
   };
 }

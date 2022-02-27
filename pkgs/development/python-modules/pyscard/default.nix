@@ -1,38 +1,48 @@
-{ stdenv, fetchPypi, fetchpatch, buildPythonPackage, swig, pcsclite, PCSC }:
+{ lib, stdenv, fetchpatch, fetchPypi, buildPythonPackage, swig, pcsclite, PCSC }:
+
+let
+  # Package does not support configuring the pcsc library.
+  withApplePCSC = stdenv.isDarwin;
+in
 
 buildPythonPackage rec {
-  version = "1.9.8";
+  version = "2.0.2";
   pname = "pyscard";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "15fh00z1an6r5j7hrz3jlq0rb3jygwf3x4jcwsa008bv8vpcg7gm";
+    sha256 = "05de0579c42b4eb433903aa2fb327d4821ebac262434b6584da18ed72053fd9e";
   };
 
-  postPatch = ''
-    sed -e 's!"libpcsclite\.so\.1"!"${stdenv.lib.getLib pcsclite}/lib/libpcsclite.so.1"!' \
-        -i smartcard/scard/winscarddll.c
-  '';
-
-  NIX_CFLAGS_COMPILE = "-isystem ${stdenv.lib.getDev pcsclite}/include/PCSC/";
-
   patches = [
-    # Fixes darwin tests
-    # See: https://github.com/LudovicRousseau/pyscard/issues/77
+    # present in master - remove after 2.0.2
     (fetchpatch {
-      url = "https://github.com/LudovicRousseau/pyscard/commit/62e675028086c75656444cc21d563d9f08ebf8e7.patch";
-      sha256 = "1lr55npcpc8j750vf7vaisqyk18d5f00l7nii2lvawg4sssjaaf7";
+      name = "darwin-typo-test-fix.patch";
+      url = "https://github.com/LudovicRousseau/pyscard/commit/ce842fcc76fd61b8b6948d0b07306d82ad1ec12a.patch";
+      sha256 = "0wsaj87wp9d2vnfzwncfxp2w95m0zhr7zpkmg5jccn06z52ihis3";
     })
   ];
 
-  propagatedBuildInputs = [ pcsclite ];
-  buildInputs = stdenv.lib.optional stdenv.isDarwin PCSC;
+  postPatch = if withApplePCSC then ''
+    substituteInPlace smartcard/scard/winscarddll.c \
+      --replace "/System/Library/Frameworks/PCSC.framework/PCSC" \
+                "${PCSC}/Library/Frameworks/PCSC.framework/PCSC"
+  '' else ''
+    substituteInPlace smartcard/scard/winscarddll.c \
+      --replace "libpcsclite.so.1" \
+                "${lib.getLib pcsclite}/lib/libpcsclite${stdenv.hostPlatform.extensions.sharedLibrary}"
+  '';
+
+  NIX_CFLAGS_COMPILE = lib.optionalString (! withApplePCSC)
+    "-I ${lib.getDev pcsclite}/include/PCSC";
+
+  propagatedBuildInputs = if withApplePCSC then [ PCSC ] else [ pcsclite ];
   nativeBuildInputs = [ swig ];
 
-  meta = {
-    homepage = https://pyscard.sourceforge.io/;
+  meta = with lib; {
+    homepage = "https://pyscard.sourceforge.io/";
     description = "Smartcard library for python";
-    license = stdenv.lib.licenses.lgpl21;
-    maintainers = with stdenv.lib.maintainers; [ layus ];
+    license = licenses.lgpl21;
+    maintainers = with maintainers; [ layus ];
   };
 }

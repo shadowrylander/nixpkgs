@@ -1,9 +1,9 @@
-{ stdenv, fetchFromGitHub, cmake }:
+{ lib, stdenv, fetchFromGitHub, cmake, fmt_8 }:
 
 let
   generic = { version, sha256 }:
     stdenv.mkDerivation {
-      name = "spdlog-${version}";
+      pname = "spdlog";
       inherit version;
 
       src = fetchFromGitHub {
@@ -14,19 +14,33 @@ let
       };
 
       nativeBuildInputs = [ cmake ];
+      # spdlog <1.3 uses a bundled version of fmt
+      propagatedBuildInputs = lib.optional (lib.versionAtLeast version "1.3") fmt_8;
 
-      cmakeFlags = [ "-DSPDLOG_BUILD_EXAMPLES=OFF" ];
+      cmakeFlags = [
+        "-DSPDLOG_BUILD_SHARED=${if stdenv.hostPlatform.isStatic then "OFF" else "ON"}"
+        "-DSPDLOG_BUILD_STATIC=${if stdenv.hostPlatform.isStatic then "ON" else "OFF"}"
+        "-DSPDLOG_BUILD_EXAMPLE=OFF"
+        "-DSPDLOG_BUILD_BENCH=OFF"
+        "-DSPDLOG_BUILD_TESTS=ON"
+        "-DSPDLOG_FMT_EXTERNAL=ON"
+      ];
 
-      outputs = [ "out" "doc" ];
+      outputs = [ "out" "doc" ]
+        # spdlog <1.4 is header only, no need to split libraries and headers
+        ++ lib.optional (lib.versionAtLeast version "1.4") "dev";
 
       postInstall = ''
         mkdir -p $out/share/doc/spdlog
         cp -rv ../example $out/share/doc/spdlog
       '';
 
-      meta = with stdenv.lib; {
-        description    = "Very fast, header only, C++ logging library.";
-        homepage       = https://github.com/gabime/spdlog;
+      doCheck = true;
+      preCheck = "export LD_LIBRARY_PATH=$(pwd)\${LD_LIBRARY_PATH:+:}$LD_LIBRARY_PATH";
+
+      meta = with lib; {
+        description    = "Very fast, header only, C++ logging library";
+        homepage       = "https://github.com/gabime/spdlog";
         license        = licenses.mit;
         maintainers    = with maintainers; [ obadz ];
         platforms      = platforms.all;
@@ -35,8 +49,8 @@ let
 in
 {
   spdlog_1 = generic {
-    version = "1.2.1";
-    sha256 = "0gdj8arfz4r9419zbcxk9y9nv47qr7kyjjzw9m3ijgmn2pmxk88n";
+    version = "1.9.2";
+    sha256 = "sha256-GSUdHtvV/97RyDKy8i+ticnSlQCubGGWHg4Oo+YAr8Y=";
   };
 
   spdlog_0 = generic {

@@ -3,7 +3,7 @@
 with lib;
 
 buildGoPackage rec {
-  name = "kube-aws-${version}";
+  pname = "kube-aws";
   version = "0.9.4";
 
   goPackagePath = "github.com/coreos/kube-aws";
@@ -22,14 +22,14 @@ buildGoPackage rec {
     go generate ./core/root/config
   )'';
 
-  buildFlagsArray = ''
-    -ldflags=-X github.com/coreos/kube-aws/core/controlplane/cluster.VERSION=v${version}
-  '';
+  ldflags = [
+    "-X github.com/coreos/kube-aws/core/controlplane/cluster.VERSION=v${version}"
+  ];
 
   meta = {
     description = "Tool for deploying kubernetes on aws using coreos";
     license = licenses.asl20;
-    homepage = https://github.com/coreos/coreos-kubernetes;
+    homepage = "https://github.com/coreos/coreos-kubernetes";
     maintainers = with maintainers; [offline];
     platforms = with platforms; unix;
   };

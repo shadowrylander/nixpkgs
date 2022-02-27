@@ -1,10 +1,16 @@
 { fetchurl
+, lib
 , stdenv
-, ocaml, isabelle, cvc3, perl, wget, which
+, ocaml
+, isabelle
+, cvc3
+, perl
+, wget
+, which
 }:
 
 stdenv.mkDerivation rec {
-  name = "tlaps-${version}";
+  pname = "tlaps";
   version = "1.4.3";
   src = fetchurl {
     url = "https://tla.msr-inria.inria.fr/tlaps/dist/current/tlaps-${version}.tar.gz";
@@ -12,8 +18,6 @@ stdenv.mkDerivation rec {
   };
 
   buildInputs = [ ocaml isabelle cvc3 perl wget which ];
-
-  phases = [ "unpackPhase" "installPhase" ];
 
   installPhase = ''
     mkdir -pv "$out"
@@ -45,10 +49,10 @@ stdenv.mkDerivation rec {
       and scalable to large system specifications. It provides a
       consistent abstraction over the various “backend” verifiers.
     '';
-    homepage    = https://tla.msr-inria.inria.fr/tlaps/content/Home.html;
-    license     = stdenv.lib.licenses.bsd2;
-    platforms   = stdenv.lib.platforms.unix;
-    maintainers = [ stdenv.lib.maintainers.badi ];
+    homepage = "https://tla.msr-inria.inria.fr/tlaps/content/Home.html";
+    license = lib.licenses.bsd2;
+    platforms = lib.platforms.unix;
+    maintainers = [ ];
   };
 
 }

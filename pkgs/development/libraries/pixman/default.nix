@@ -1,26 +1,28 @@
-{ stdenv, fetchurl, fetchpatch, pkgconfig, libpng, glib /*just passthru*/ }:
+{ lib, stdenv, fetchurl, pkg-config, libpng, glib /*just passthru*/ }:
 
 stdenv.mkDerivation rec {
-  name = "pixman-${version}";
-  version = "0.38.0";
+  pname = "pixman";
+  version = "0.38.4";
 
   src = fetchurl {
-    url = "mirror://xorg/individual/lib/${name}.tar.bz2";
-    sha256 = "1a1nnkjv0rqdj26847r0saly0kzckjfp4y3ly30bvpjxi7vy6s5p";
+    url = "mirror://xorg/individual/lib/${pname}-${version}.tar.bz2";
+    sha256 = "0l0m48lnmdlmnaxn2021qi5cj366d9fzfjxkqgcj9bs14pxbgaw4";
   };
 
-  nativeBuildInputs = [ pkgconfig ];
+  separateDebugInfo = !stdenv.hostPlatform.isStatic;
+
+  nativeBuildInputs = [ pkg-config ];
 
   buildInputs = [ libpng ];
 
-  configureFlags = stdenv.lib.optional stdenv.isAarch32 "--disable-arm-iwmmxt";
+  configureFlags = lib.optional stdenv.isAarch32 "--disable-arm-iwmmxt";
 
   doCheck = true;
 
   postInstall = glib.flattenInclude;
 
-  meta = with stdenv.lib; {
-    homepage = http://pixman.org;
+  meta = with lib; {
+    homepage = "http://pixman.org";
     description = "A low-level library for pixel manipulation";
     license = licenses.mit;
     platforms = platforms.all;

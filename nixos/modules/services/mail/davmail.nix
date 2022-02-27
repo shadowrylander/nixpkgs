@@ -7,7 +7,7 @@ let
   cfg = config.services.davmail;
 
   configType = with types;
-    either (either (attrsOf configType) str) (either int bool) // {
+    oneOf [ (attrsOf configType) str int bool ] // {
       description = "davmail config type (str, int, bool or attribute set thereof)";
     };
 
@@ -42,7 +42,7 @@ in
           and <link xlink:href="http://davmail.sourceforge.net/advanced.html"/>
           for details on supported values.
         '';
-        example = literalExample ''
+        example = literalExpression ''
           {
             davmail.allowRemote = true;
             davmail.imapPort = 55555;

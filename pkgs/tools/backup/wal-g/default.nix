@@ -1,25 +1,34 @@
-{ stdenv, buildGoPackage, fetchFromGitHub, brotli }:
+{ lib, buildGoModule, fetchFromGitHub, brotli, libsodium }:
 
-buildGoPackage rec {
-  name = "wal-g-${version}";
-  version = "0.2.0";
+buildGoModule rec {
+  pname = "wal-g";
+  version = "1.1";
 
   src = fetchFromGitHub {
-    owner  = "wal-g";
-    repo   = "wal-g";
-    rev    = "v${version}";
-    sha256 = "08lk7by1anxpd9v97xbf9443kk4n1w63zaar2nz86w8i3k3b4id9";
+    owner = "wal-g";
+    repo = "wal-g";
+    rev = "v${version}";
+    sha256 = "1hiym5id310rvw7vr8wir2vpf0p5qz71rx6v5i2gpjqml7c97cls";
   };
 
-  buildInputs = [ brotli ];
+  vendorSha256 = "09z9x20zna1czhfpl47i98r8163a266mnr6xi17npjsfdvsjkppn";
 
-  doCheck = true;
+  buildInputs = [ brotli libsodium ];
 
-  goPackagePath = "github.com/wal-g/wal-g";
-  meta = {
-    inherit (src.meta) homepage;
-    license = stdenv.lib.licenses.asl20;
-    description = "An archival restoration tool for Postgres";
-    maintainers = [ stdenv.lib.maintainers.ocharles ];
+  subPackages = [ "main/pg" ];
+
+  tags = [ "brotli" "libsodium" ];
+
+  ldflags = [ "-s" "-w" "-X github.com/wal-g/wal-g/cmd/pg.WalgVersion=${version}" "-X github.com/wal-g/wal-g/cmd/pg.GitRevision=${src.rev}" ];
+
+  postInstall = ''
+    mv $out/bin/pg $out/bin/wal-g
+  '';
+
+  meta = with lib; {
+    homepage = "https://github.com/wal-g/wal-g";
+    license = licenses.asl20;
+    description = "An archival restoration tool for PostgreSQL";
+    maintainers = with maintainers; [ marsam ];
   };
 }

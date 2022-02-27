@@ -1,39 +1,50 @@
-{ stdenv, fetchurl }:
+{ lib
+, stdenv
+, fetchurl
+}:
 
-stdenv.mkDerivation rec {
-  name = "wallabag-${version}";
-  version = "2.3.7";
+# Point the environment variable $WALLABAG_DATA to a data directory
+# that contains the folder `app/config` which must be a clone of
+# wallabag's configuration files with your customized `parameters.yml`.
+# These need to be updated every package upgrade.
+#
+# After a package upgrade, empty the `var/cache` folder or unexpected
+# error will occur.
 
-  # remember to rm -r var/cache/* after a rebuild or unexpected errors will occur
+let
+  pname = "wallabag";
+  version = "2.4.3";
+in
+stdenv.mkDerivation {
+  inherit pname version;
 
   src = fetchurl {
     url = "https://static.wallabag.org/releases/wallabag-release-${version}.tar.gz";
-    sha256 = "1kv2jy47darj6lysyxyaw5d5z5kwqdalbpv0hsg8i7zav09dw8z2";
+    hash = "sha256-u6TflAzxoaxjLhNMv5ua+NPBv4kxGycgz2QXnhtDHTo=";
   };
 
-  outputs = [ "out" ];
-
-  patches = [ ./wallabag-data.patch ]; # exposes $WALLABAG_DATA
+  patches = [
+    ./wallabag-data.patch # exposes $WALLABAG_DATA
+  ];
 
   dontBuild = true;
 
   installPhase = ''
-    mkdir $out/
+    mkdir $out
     cp -R * $out/
   '';
 
-  meta = with stdenv.lib; {
-    description = "Web page archiver";
+  meta = with lib; {
+    description = "wallabag is a self hostable application for saving web pages";
     longDescription = ''
-      wallabag is a self hostable application for saving web pages.
-
-      Point the environment variable $WALLABAG_DATA to a data directory that contains the folder `app/config` which must be a clone of wallabag's configuration files with your customized `parameters.yml`. These need to be updated every package upgrade.
-      After a package upgrade, empty the `var/cache` folder.
+      wallabag is a self-hostable PHP application allowing you to not
+      miss any content anymore. Click, save and read it when you can.
+      It extracts content so that you can read it when you have time.
     '';
     license = licenses.mit;
-    homepage = http://wallabag.org;
+    homepage = "http://wallabag.org";
+    changelog = "https://github.com/wallabag/wallabag/releases/tag/${version}";
     maintainers = with maintainers; [ schneefux ];
     platforms = platforms.all;
   };
 }
-

@@ -1,75 +1,88 @@
-{ stdenv, fetchFromGitHub, cmake, makeWrapper
-, boost, python3, eigen
+{ lib, stdenv, fetchFromGitHub, cmake
+, boost, python3, eigen, python3Packages
 , icestorm, trellis
+, llvmPackages
 
-# TODO(thoughtpolice) Currently the GUI build seems broken at runtime on my
-# laptop (and over a remote X server on my server...), so mark it broken for
-# now, with intent to fix later.
 , enableGui ? false
-, qtbase
+, wrapQtAppsHook ? null
+, qtbase ? null
+, OpenGL ? null
 }:
 
 let
   boostPython = boost.override { python = python3; enablePython = true; };
-
-  # This is a massive hack. For now, Trellis doesn't really support
-  # installation through an already-built package; you have to build it once to
-  # get the tools, then reuse the build directory to build nextpnr -- the
-  # 'install' phase doesn't install everything it needs.  This will be fixed in
-  # the future but for now we can do this horrific thing.
-  trellisRoot = trellis.overrideAttrs (_: {
-    installPhase = ''
-      mkdir -p $out
-      cp *.so ..
-      cd ../../.. && cp -R trellis database $out/
-    '';
-  });
 in
 stdenv.mkDerivation rec {
-  name = "nextpnr-${version}";
-  version = "2019.04.19";
+  pname = "nextpnr";
+  version = "2022.01.03";
 
-  src = fetchFromGitHub {
-    owner  = "yosyshq";
-    repo   = "nextpnr";
-    rev    = "5344bc3b65f4e06f983db781e9a82d30b3f1512b";
-    sha256 = "1y14jpa948cwk0i19bsfqh7yxsxkgskm4xym4z179sjcvcdvrn3a";
-  };
+  srcs = [
+    (fetchFromGitHub {
+      owner = "YosysHQ";
+      repo  = "nextpnr";
+      rev   = "089ca8258e6f4dc93f8d39594c1109a8578cdc98";
+      hash  = "sha256-N8kX/+fN8Qe+qme8RFlZyYQ/3p1WBkt0ztUwjJIQCIw=";
+      name  = "nextpnr";
+    })
+    (fetchFromGitHub {
+      owner  = "YosysHQ";
+      repo   = "nextpnr-tests";
+      rev    = "ccc61e5ec7cc04410462ec3196ad467354787afb";
+      sha256 = "sha256-VT0JfpRLgfo2WG+eoMdE0scPM5nKZZ/v1XlkeDNcQCU=";
+      name   = "nextpnr-tests";
+    })
+  ];
 
-  nativeBuildInputs = [ cmake makeWrapper ];
+  sourceRoot = "nextpnr";
+
+  nativeBuildInputs
+     = [ cmake ]
+    ++ (lib.optional enableGui wrapQtAppsHook);
   buildInputs
-     = [ boostPython python3 eigen ]
-    ++ (stdenv.lib.optional enableGui qtbase);
+     = [ boostPython python3 eigen python3Packages.apycula ]
+    ++ (lib.optional enableGui qtbase)
+    ++ (lib.optional stdenv.cc.isClang llvmPackages.openmp);
 
-  enableParallelBuilding = true;
   cmakeFlags =
-    [ "-DARCH=generic;ice40;ecp5"
-      "-DICEBOX_ROOT=${icestorm}/share/icebox"
-      "-DTRELLIS_ROOT=${trellisRoot}/trellis"
+    [ "-DCURRENT_GIT_VERSION=${lib.substring 0 7 (lib.elemAt srcs 0).rev}"
+      "-DARCH=generic;ice40;ecp5;gowin"
+      "-DBUILD_TESTS=ON"
+      "-DICESTORM_INSTALL_PREFIX=${icestorm}"
+      "-DTRELLIS_INSTALL_PREFIX=${trellis}"
+      "-DTRELLIS_LIBDIR=${trellis}/lib/trellis"
+      "-DGOWIN_BBA_EXECUTABLE=${python3Packages.apycula}/bin/gowin_bba"
       "-DUSE_OPENMP=ON"
-    ] ++ (stdenv.lib.optional (!enableGui) "-DBUILD_GUI=OFF");
+      # warning: high RAM usage
+      "-DSERIALIZE_CHIPDBS=OFF"
+    ]
+    ++ (lib.optional enableGui "-DBUILD_GUI=ON")
+    ++ (lib.optional (enableGui && stdenv.isDarwin)
+        "-DOPENGL_INCLUDE_DIR=${OpenGL}/Library/Frameworks");
 
-  # Fix the version number. This is a bit stupid (and fragile) in practice
-  # but works ok. We should probably make this overrideable upstream.
   patchPhase = with builtins; ''
-    substituteInPlace ./CMakeLists.txt \
-      --replace 'git log -1 --format=%h' 'echo ${substring 0 11 src.rev}'
+    # use PyPy for icestorm if enabled
+    substituteInPlace ./ice40/CMakeLists.txt \
+      --replace ''\'''${PYTHON_EXECUTABLE}' '${icestorm.pythonInterp}'
   '';
 
-  postInstall = stdenv.lib.optionalString enableGui ''
-    for x in generic ice40 ecp5; do
-      wrapProgram $out/bin/nextpnr-$x \
-        --prefix QT_PLUGIN_PATH : "${qtbase}/${qtbase.qtPluginPrefix}"
-    done
+  preBuild = ''
+    ln -s ../nextpnr-tests tests
   '';
 
-  meta = with stdenv.lib; {
+  doCheck = true;
+
+  postFixup = lib.optionalString enableGui ''
+    wrapQtApp $out/bin/nextpnr-generic
+    wrapQtApp $out/bin/nextpnr-ice40
+    wrapQtApp $out/bin/nextpnr-ecp5
+    wrapQtApp $out/bin/nextpnr-gowin
+  '';
+
+  meta = with lib; {
     description = "Place and route tool for FPGAs";
-    homepage    = https://github.com/yosyshq/nextpnr;
+    homepage    = "https://github.com/yosyshq/nextpnr";
     license     = licenses.isc;
-    platforms   = platforms.linux;
-    maintainers = with maintainers; [ thoughtpolice ];
-
-    broken = enableGui;
+    platforms   = platforms.all;
+    maintainers = with maintainers; [ thoughtpolice emily ];
   };
 }

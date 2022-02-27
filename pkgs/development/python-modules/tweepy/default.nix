@@ -1,21 +1,49 @@
-{ lib, buildPythonPackage, fetchPypi, fetchpatch, requests, six, requests_oauthlib }:
+{ lib
+, aiohttp
+, buildPythonPackage
+, fetchFromGitHub
+, oauthlib
+, requests
+, pythonOlder
+, vcrpy
+, pytestCheckHook
+, requests_oauthlib
+}:
 
 buildPythonPackage rec {
   pname = "tweepy";
-  version = "3.7.0";
+  version = "4.5.0";
+  format = "setuptools";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "fe85a79f58a01dd335968523b91c5fce760e7fe78bf25a6e71c72204fe499d0b";
+  disabled = pythonOlder "3.6";
+
+  src = fetchFromGitHub {
+    owner = pname;
+    repo = pname;
+    rev = "v${version}";
+    sha256 = "sha256-mRpYPuj2B/kEaaeZlNYYnViGxWiK1xtWfDObHNduIK8=";
   };
 
-  doCheck = false;
-  propagatedBuildInputs = [ requests six requests_oauthlib ];
+  propagatedBuildInputs = [
+    aiohttp
+    oauthlib
+    requests
+    requests_oauthlib
+  ];
+
+  checkInputs = [
+    pytestCheckHook
+    vcrpy
+  ];
+
+  pythonImportsCheck = [
+    "tweepy"
+  ];
 
   meta = with lib; {
-    homepage = https://github.com/tweepy/tweepy;
-    description = "Twitter library for python";
+    homepage = "https://github.com/tweepy/tweepy";
+    description = "Twitter library for Python";
     license = licenses.mit;
-    maintainers = with maintainers; [ garbas ];
+    maintainers = with maintainers; [ ];
   };
 }

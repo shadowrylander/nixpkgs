@@ -1,8 +1,8 @@
-{ stdenv, buildGoPackage, fetchFromGitHub }:
+{ lib, buildGoPackage, fetchFromGitHub }:
 
 buildGoPackage rec {
-  name = "mustache-go-${version}";
-  version = "1.0.1";
+  pname = "mustache-go";
+  version = "1.3.0";
 
   goPackagePath = "github.com/cbroglie/mustache";
 
@@ -10,13 +10,14 @@ buildGoPackage rec {
     owner = "cbroglie";
     repo = "mustache";
     rev = "v${version}";
-    sha256 = "1aywj4fijsv66n6gjiz3l8g1vg0fqzwbf8dcdcgfsvsdb056p90v";
+    sha256 = "sha256-Z33hHOcx2K34v3j/qFD1VqeuUaqH0jqoMsVZQnLFx4U=";
   };
 
-  meta = with stdenv.lib; {
-    homepage = https://github.com/cbroglie/mustache;
+  meta = with lib; {
+    homepage = "https://github.com/cbroglie/mustache";
     description = "The mustache template language in Go";
     license = [ licenses.mit ];
-    maintainers = [ maintainers.Zimmi48 ];
+    maintainers = with maintainers; [ Zimmi48 ];
+    mainProgram = "mustache";
   };
 }

@@ -1,74 +1,91 @@
-{ fetchPypi
-, lib
-, buildPythonPackage
-, isPy3k
-, appdirs
+{ lib
+, aiohttp
+, aioresponses
 , attrs
+, buildPythonPackage
 , cached-property
 , defusedxml
+, fetchFromGitHub
+, freezegun
+, httpx
 , isodate
 , lxml
-, requests
-, requests_toolbelt
-, six
-, pytz
-, tornado
-, aiohttp
-# test dependencies
-, freezegun
 , mock
+, platformdirs
 , pretend
-, pytest_3
-, pytestcov
+, pytest-asyncio
+, pytest-httpx
+, pytestCheckHook
+, pythonOlder
+, pytz
+, requests
+, requests-toolbelt
+, requests-file
 , requests-mock
-, aioresponses
+, xmlsec
 }:
 
 buildPythonPackage rec {
   pname = "zeep";
-  version = "3.3.1";
+  version = "4.1.0";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "f58328e36264a2fda2484dd20bb1695f4102a9cc918178d60c4d7cf8339c65d0";
+  disabled = pythonOlder "3.6";
+
+  src = fetchFromGitHub {
+    owner = "mvantellingen";
+    repo = "python-zeep";
+    rev = version;
+    sha256 = "sha256-fJLr2LJpbNQTl183R56G7sJILfm04R39qpJxLogQLoo=";
   };
 
   propagatedBuildInputs = [
-    appdirs
     attrs
     cached-property
     defusedxml
+    httpx
     isodate
     lxml
-    requests
-    requests_toolbelt
-    six
+    platformdirs
     pytz
-
-    # optional requirements
-    tornado
-  ] ++ lib.optional isPy3k aiohttp;
+    requests
+    requests-file
+    requests-toolbelt
+    xmlsec
+  ];
 
   checkInputs = [
+    aiohttp
+    aioresponses
     freezegun
     mock
     pretend
-    pytestcov
-    pytest_3
+    pytest-asyncio
+    pytest-httpx
+    pytestCheckHook
     requests-mock
-  ] ++ lib.optional isPy3k aioresponses;
+  ];
 
-  checkPhase = ''
-    runHook preCheck
-    # ignored tests requires xmlsec python module
-    HOME=$(mktemp -d) pytest tests --ignore tests/test_wsse_signature.py
-    runHook postCheck
+  preCheck = ''
+    export HOME=$(mktemp -d);
   '';
 
+  disabledTests = [
+    # lxml.etree.XMLSyntaxError: Extra content at the end of the document, line 2, column 64
+    "test_mime_content_serialize_text_xml"
+    # Tests are outdated
+    "test_load"
+    "test_load_cache"
+    "test_post"
+  ];
+
+  pythonImportsCheck = [
+    "zeep"
+  ];
+
   meta = with lib; {
-    homepage = http://docs.python-zeep.org;
+    description = "Python SOAP client";
+    homepage = "http://docs.python-zeep.org";
     license = licenses.mit;
-    description = "A modern/fast Python SOAP client based on lxml / requests";
     maintainers = with maintainers; [ rvl ];
   };
 }

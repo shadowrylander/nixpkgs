@@ -1,33 +1,44 @@
-{ stdenv, fetchFromGitHub, cmake, gettext, msgpack, libtermkey, libiconv
-, libuv, lua, ncurses, pkgconfig
-, unibilium, xsel, gperf
+{ lib, stdenv, fetchFromGitHub, cmake, gettext, msgpack, libtermkey, libiconv
+, libuv, lua, ncurses, pkg-config
+, unibilium, gperf
 , libvterm-neovim
-, withJemalloc ? true, jemalloc
+, tree-sitter
 , glibcLocales ? null, procps ? null
 
 # now defaults to false because some tests can be flaky (clipboard etc)
 , doCheck ? false
+, nodejs ? null, fish ? null, python3 ? null
 }:
 
-with stdenv.lib;
+with lib;
 
 let
   neovimLuaEnv = lua.withPackages(ps:
-    (with ps; [ mpack lpeg luabitop ]
+    (with ps; [ lpeg luabitop mpack ]
     ++ optionals doCheck [
         nvim-client luv coxpcall busted luafilesystem penlight inspect
       ]
     ));
+
+  pyEnv = python3.withPackages(ps: with ps; [ pynvim msgpack ]);
+
+  # FIXME: this is verry messy and strange.
+  # see https://github.com/NixOS/nixpkgs/pull/80528
+  luv = lua.pkgs.luv;
+  luvpath = with builtins ; if stdenv.isDarwin
+    then "${luv.libluv}/lib/lua/${lua.luaversion}/libluv.${head (match "([0-9.]+).*" luv.version)}.dylib"
+    else "${luv}/lib/lua/${lua.luaversion}/luv.so";
+
 in
   stdenv.mkDerivation rec {
-    name = "neovim-unwrapped-${version}";
-    version = "0.3.4";
+    pname = "neovim-unwrapped";
+    version = "0.6.1";
 
     src = fetchFromGitHub {
       owner = "neovim";
       repo = "neovim";
       rev = "v${version}";
-      sha256 = "07ncvgp6xfhiwc6hd7qf7zk28n3yj47p26qj1ji29vqkwnk28y3s";
+      sha256 = "sha256-0XCW047WopPr3pRTy9rF3Ff6MvNRHT4FletzOERD41A=";
     };
 
     patches = [
@@ -37,19 +48,22 @@ in
       ./system_rplugin_manifest.patch
     ];
 
-    enableParallelBuilding = true;
+    dontFixCmake = true;
+
+    inherit lua;
 
     buildInputs = [
+      gperf
       libtermkey
       libuv
+      libvterm-neovim
+      luv.libluv
       msgpack
       ncurses
-      libvterm-neovim
-      unibilium
-      gperf
       neovimLuaEnv
-    ] ++ optional withJemalloc jemalloc
-      ++ optional stdenv.isDarwin libiconv
+      tree-sitter
+      unibilium
+    ] ++ optional stdenv.isDarwin libiconv
       ++ optionals doCheck [ glibcLocales procps ]
     ;
 
@@ -64,7 +78,14 @@ in
     nativeBuildInputs = [
       cmake
       gettext
-      pkgconfig
+      pkg-config
+    ];
+
+    # extra programs test via `make functionaltest`
+    checkInputs = [
+      fish
+      nodejs
+      pyEnv      # for src/clint.py
     ];
 
 
@@ -76,27 +97,26 @@ in
     disallowedReferences = [ stdenv.cc ];
 
     cmakeFlags = [
-      "-DLUA_PRG=${neovimLuaEnv}/bin/lua"
       "-DGPERF_PRG=${gperf}/bin/gperf"
+      "-DLUA_PRG=${neovimLuaEnv.interpreter}"
+      "-DLIBLUV_LIBRARY=${luvpath}"
+      "-DUSE_BUNDLED=OFF"
     ]
     ++ optional doCheck "-DBUSTED_PRG=${neovimLuaEnv}/bin/busted"
+    ++ optional (!lua.pkgs.isLuaJIT) "-DPREFER_LUA=ON"
     ;
 
     # triggers on buffer overflow bug while running tests
     hardeningDisable = [ "fortify" ];
 
-    preConfigure = stdenv.lib.optionalString stdenv.isDarwin ''
-      export DYLD_LIBRARY_PATH=${jemalloc}/lib
+    preConfigure = lib.optionalString stdenv.isDarwin ''
       substituteInPlace src/nvim/CMakeLists.txt --replace "    util" ""
     '';
 
-    postInstall = stdenv.lib.optionalString stdenv.isLinux ''
-      sed -i -e "s|'xsel|'${xsel}/bin/xsel|g" $out/share/nvim/runtime/autoload/provider/clipboard.vim
-    '' + stdenv.lib.optionalString (withJemalloc && stdenv.isDarwin) ''
-      install_name_tool -change libjemalloc.1.dylib \
-                ${jemalloc}/lib/libjemalloc.1.dylib \
-                $out/bin/nvim
-    '';
+    # For treesitter plugins, libstdc++.so.6, or equivalent will be needed
+    NIX_LDFLAGS =
+      lib.optionals stdenv.cc.isGNU [ "-lstdc++"]
+      ++ lib.optionals stdenv.cc.isClang [ "-lc++" ];
 
     # export PATH=$PWD/build/bin:${PATH}
     shellHook=''
@@ -113,17 +133,15 @@ in
           modifications to the core source
         - Improve extensibility with a new plugin architecture
       '';
-      homepage    = https://www.neovim.io;
+      homepage    = "https://www.neovim.io";
+      mainProgram = "nvim";
       # "Contributions committed before b17d96 by authors who did not sign the
       # Contributor License Agreement (CLA) remain under the Vim license.
       # Contributions committed after b17d96 are licensed under Apache 2.0 unless
       # those contributions were copied from Vim (identified in the commit logs
       # by the vim-patch token). See LICENSE for details."
       license = with licenses; [ asl20 vim ];
-      maintainers = with maintainers; [ manveru garbas rvolosatovs ];
+      maintainers = with maintainers; [ manveru rvolosatovs ma27 ];
       platforms   = platforms.unix;
-      # `lua: bad light userdata pointer`
-      # https://nix-cache.s3.amazonaws.com/log/9ahcb52905d9d417zsskjpc331iailpq-neovim-unwrapped-0.2.2.drv
-      broken = stdenv.isAarch64;
     };
   }

@@ -1,21 +1,21 @@
-{ stdenv, fetchFromGitHub, cmake }:
+{ lib, stdenv, fetchFromGitHub, cmake }:
 stdenv.mkDerivation rec {
-  name = "vulkan-headers-${version}";
-  version = "1.1.106";
+  pname = "vulkan-headers";
+  version = "1.2.198.0";
 
-  buildInputs = [ cmake ];
+  nativeBuildInputs = [ cmake ];
 
   src = fetchFromGitHub {
     owner = "KhronosGroup";
     repo = "Vulkan-Headers";
     rev = "sdk-${version}";
-    sha256 = "0idw7q715ikj575qmspvgq2gzc6c1sj581b8z3xnv6wz9qbzrmsd";
+    sha256 = "sha256-SvC0AX1wIZWLzws3ZS8Wi8fbNUw1+An/PRlFIfNj24Y=";
   };
 
-  meta = with stdenv.lib; {
+  meta = with lib; {
     description = "Vulkan Header files and API registry";
-    homepage    = https://www.lunarg.com;
-    platforms   = platforms.linux;
+    homepage    = "https://www.lunarg.com";
+    platforms   = platforms.unix;
     license     = licenses.asl20;
     maintainers = [ maintainers.ralith ];
   };

@@ -1,14 +1,11 @@
-{ stdenv, fetchurl, openssl }:
+{ lib, stdenv, fetchurl, openssl }:
 
-with stdenv;
-with stdenv.lib;
-
-mkDerivation rec {
-  name = "wraith-${version}";
-  version = "1.4.7";
+stdenv.mkDerivation rec {
+  pname = "wraith";
+  version = "1.4.10";
   src = fetchurl {
     url = "mirror://sourceforge/wraithbotpack/wraith-v${version}.tar.gz";
-    sha256 = "0h6liac5y7im0jfm2sj18mibvib7d1l727fjs82irsjj1v9kif3j";
+    sha256 = "1h8159g6wh1hi69cnhqkgwwwa95fa6z1zrzjl219mynbf6vjjzkw";
   };
   hardeningDisable = [ "format" ];
   buildInputs = [ openssl ];
@@ -25,7 +22,7 @@ mkDerivation rec {
     ln -s wraith $out/bin/hub
   '';
 
-  meta = {
+  meta = with lib; {
     description = "An IRC channel management bot written purely in C/C++";
     longDescription = ''
       Wraith is an IRC channel management bot written purely in C/C++. It has
@@ -40,7 +37,7 @@ mkDerivation rec {
       The binary will not run when moved onto non-NixOS systems; use patchelf
       to fix its runtime dependenices.
     '';
-    homepage = http://wraith.botpack.net/;
+    homepage = "https://wraith.botpack.net/";
     license = licenses.gpl2Plus;
     maintainers = with maintainers; [ elitak ];
     platforms = platforms.linux;

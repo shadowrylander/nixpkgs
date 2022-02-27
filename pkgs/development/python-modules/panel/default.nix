@@ -1,49 +1,52 @@
 { lib
 , buildPythonPackage
 , fetchPypi
+, bleach
 , bokeh
 , param
 , pyviz-comms
 , markdown
 , pyct
 , testpath
-, pytest
-, scipy
-, plotly
-, altair
-, vega_datasets
-, hvplot
+, tqdm
+, nodejs
 }:
 
 buildPythonPackage rec {
   pname = "panel";
-  version = "0.4.0";
+  version = "0.12.6";
 
+  format = "wheel";
+
+  # We fetch a wheel because while we can fetch the node
+  # artifacts using npm, the bundling invoked in setup.py
+  # tries to fetch even more artifacts
   src = fetchPypi {
-    inherit pname version;
-    sha256 = "21fc6729909dba4ba8c9a84b7fadd293322cc2594d15ac73b0f66a5ceffd1f98";
+    inherit pname version format;
+    hash = "sha256-ARAbBM0QYZlZqV51lMRoEZEQH1jlHRhlon3nfTi7dnM=";
   };
 
-  postPatch = ''
-    substituteInPlace setup.py \
-      --replace "testpath<0.4" "testpath"
-  '';
-
   propagatedBuildInputs = [
+    bleach
     bokeh
     param
     pyviz-comms
     markdown
     pyct
     testpath
+    tqdm
   ];
 
   # infinite recursion in test dependencies (hvplot)
   doCheck = false;
 
+  passthru = {
+    inherit nodejs; # For convenience
+  };
+
   meta = with lib; {
     description = "A high level dashboarding library for python visualization libraries";
-    homepage = http://pyviz.org;
+    homepage = "https://pyviz.org";
     license = licenses.bsd3;
     maintainers = [ maintainers.costrouc ];
   };

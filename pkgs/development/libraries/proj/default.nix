@@ -1,20 +1,50 @@
-{ stdenv, fetchurl }:
+{ lib
+, stdenv
+, fetchFromGitHub
+, cmake
+, pkg-config
+, sqlite
+, libtiff
+, curl
+, gtest
+}:
 
-stdenv.mkDerivation {
-  name = "proj-5.2.0";
+stdenv.mkDerivation rec {
+  pname = "proj";
+  version = "8.2.1";
 
-  src = fetchurl {
-    url = https://download.osgeo.org/proj/proj-5.2.0.tar.gz;
-    sha256 = "0q3ydh2j8qhwlxmnac72pg69rw2znbi5b6k5wama8qmwzycr94gg";
+  src = fetchFromGitHub {
+    owner = "OSGeo";
+    repo = "PROJ";
+    rev = version;
+    hash = "sha256-tnaIqYKgYHY1Tg33jsKYn9QL8YUobgXKbQsodoCXNys=";
   };
 
-  doCheck = stdenv.is64bit;
+  outputs = [ "out" "dev"];
 
-  meta = with stdenv.lib; {
+  nativeBuildInputs = [ cmake pkg-config ];
+
+  buildInputs = [ sqlite libtiff curl ];
+
+  checkInputs = [ gtest ];
+
+  cmakeFlags = [
+    "-DUSE_EXTERNAL_GTEST=ON"
+    "-DRUN_NETWORK_DEPENDENT_TESTS=OFF"
+  ];
+
+  preCheck = ''
+    export HOME=$TMPDIR
+    export TMP=$TMPDIR
+  '';
+
+  doCheck = true;
+
+  meta = with lib; {
     description = "Cartographic Projections Library";
-    homepage = https://proj4.org;
+    homepage = "https://proj.org/";
     license = licenses.mit;
-    platforms = platforms.linux ++ platforms.darwin;
-    maintainers = with maintainers; [ vbgl ];
+    platforms = platforms.unix;
+    maintainers = with maintainers; [ vbgl dotlambda ];
   };
 }

@@ -1,28 +1,38 @@
 { lib
 , buildPythonPackage
+, pythonOlder
 , fetchPypi
-, nose
+, importlib-metadata
 , pyyaml
+, python
 }:
 
 buildPythonPackage rec {
-  pname = "Markdown";
-  version = "2.6.10";
+  pname = "markdown";
+  version = "3.3.6";
+
+  disabled = pythonOlder "3.6";
 
   src = fetchPypi {
-    extension = "zip";
-    inherit pname version;
-    sha256 = "cfa536d1ee8984007fcecc5a38a493ff05c174cb74cb2341dafd175e6bc30851";
+    pname = "Markdown";
+    inherit version;
+    sha256 = "sha256-dt+K4yKU7Dnc+JNAOCiC36Epdfh/RcPtHs2x6M78cAY=";
   };
 
-  # error: invalid command 'test'
-#   doCheck = false;
+  propagatedBuildInputs = lib.optionals (pythonOlder "3.10") [
+    importlib-metadata
+  ];
 
-  checkInputs = [ nose pyyaml ];
+  checkInputs = [ pyyaml ];
 
-  meta = {
-    description = "A Python implementation of John Gruber’s Markdown with Extension support";
-    homepage = https://github.com/Python-Markdown/markdown;
-    license = lib.licenses.bsd3;
+  checkPhase = ''
+    ${python.interpreter} -m unittest discover
+  '';
+
+  meta = with lib; {
+    description = "A Python implementation of John Gruber's Markdown with Extension support";
+    homepage = "https://github.com/Python-Markdown/markdown";
+    license = licenses.bsd3;
+    maintainers = with maintainers; [ dotlambda ];
   };
 }

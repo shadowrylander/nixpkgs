@@ -1,39 +1,36 @@
-{ stdenv
+{ lib
 , buildPythonPackage
-, fetchPypi
+, fetchFromGitHub
 , paramiko
 , selectors2
 , lxml
-, libxml2
-, libxslt
-, nose
-, rednose
+, pytestCheckHook
 }:
 
 buildPythonPackage rec {
   pname = "ncclient";
-  version = "0.6.4";
+  version = "0.6.12";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "47d5af7398f16d609eebd02be2ecbd997b364032b5dc6d4927c810ea24f39080";
+  src = fetchFromGitHub {
+    owner = pname;
+    repo = pname;
+    rev = "v${version}";
+    sha256 = "1sjvqaxb54nmqljiw5bg1423msa9rg015wiix9fsm6djk3wpklmk";
   };
 
-  checkInputs = [ nose rednose ];
-
   propagatedBuildInputs = [
-    paramiko lxml libxml2 libxslt selectors2
+    paramiko
+    lxml
   ];
 
-  checkPhase = ''
-    nosetests test --rednose --verbosity=3 --with-coverage --cover-package ncclient
-  '';
+  checkInputs = [
+    pytestCheckHook
+  ];
 
-  #Unfortunately the test hangs at te end
-  doCheck = false;
+  pythonImportsCheck = [ "ncclient" ];
 
-  meta = with stdenv.lib; {
-    homepage = http://ncclient.org/;
+  meta = with lib; {
+    homepage = "https://github.com/ncclient/ncclient";
     description = "Python library for NETCONF clients";
     license = licenses.asl20;
     maintainers = with maintainers; [ xnaveira ];
