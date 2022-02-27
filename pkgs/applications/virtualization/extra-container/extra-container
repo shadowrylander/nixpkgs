@@ -1,0 +1,813 @@
+#!/usr/bin/env bash
+
+set -eo pipefail
+shopt -s nullglob
+
+case $1 in
+    ""|help|-h|--help)
+        echo "Usage:"
+        echo
+        echo "extra-container create <container-config-file>"
+        echo "                       [--attr|-A attrPath]"
+        echo "                       [--nixpkgs-path|--nixos-path path]"
+        echo "                       [--start|-s | --restart-changed|-r]"
+        echo "                       [--ssh]"
+        echo "                       [--build-args arg...]"
+        echo
+        echo "    <container-config-file> is a NixOS config file with container"
+        echo "    definitions like 'containers.mycontainer = { ... }'"
+        echo
+        echo "    --attr | -A attrPath"
+        echo "      Select an attribute from the config expression"
+        echo
+        echo "    --nixpkgs-path"
+        echo "      A nix expression that returns a path to the nixpkgs source"
+        echo "      to use for building the containers"
+        echo
+        echo "    --nixos-path"
+        echo "      Like '--nixpkgs-path', but for directly specifying the NixOS source"
+        echo
+        echo "    --start | -s"
+        echo "      Start all created containers"
+        echo "      Update running containers that have changed or restart them if '--restart-changed' was specified"
+        echo
+        echo "    --update-changed | -u"
+        echo "      Update running containers with a changed system configuration by running"
+        echo "      'switch-to-configuration' inside the container."
+        echo "      Restart containers with a changed container configuration"
+        echo
+        echo "    --restart-changed | -r"
+        echo "      Restart running containers that have changed"
+        echo
+        echo "    --ssh"
+        echo "      Generate SSH keys in /tmp and enable container SSH access."
+        echo "      The key files remain after exit and are reused on subsequent runs."
+        echo "      Unlocks the function 'cssh' in 'extra-container shell'."
+        echo "      Requires container option 'privateNetwork = true'."
+        echo
+        echo "    --build-args arg..."
+        echo "      All following args are passed to nix-build."
+        echo
+        echo "    Example:"
+        echo "      extra-container create mycontainers.nix --restart-changed"
+        echo
+        echo "      extra-container create mycontainers.nix --nixpkgs-path \\"
+        echo "        'fetchTarball https://nixos.org/channels/nixos-unstable/nixexprs.tar.xz'"
+        echo
+        echo "      extra-container create mycontainers.nix --start --build-args --builders 'ssh://worker - - 8'"
+        echo
+        echo "echo <container-config> | extra-container create"
+        echo "    Read the container config from stdin"
+        echo
+        echo "    Example:"
+        echo "      extra-container create --start <<EOF"
+        echo "        { containers.hello = { enableTun = true; config = {}; }; }"
+        echo "      EOF"
+        echo
+        echo "extra-container create --expr|-E <container-config>"
+        echo "    Provide container config as an argument"
+        echo
+        echo "extra-container create <store-path>"
+        echo "    Create containers from <store-path>/etc"
+        echo
+        echo "    Examples:"
+        echo "      Create from nixos system derivation"
+        echo "      extra-container create /nix/store/9h..27-nixos-system-foo-18.03"
+        echo
+        echo "      Create from nixos etc derivation"
+        echo "      extra-container create /nix/store/32..9j-etc"
+        echo
+        echo "extra-container shell ..."
+        echo "    Start a container shell session."
+        echo "    See the README for a complete documentation."
+        echo "    Supports all arguments from 'create'"
+        echo
+        echo "    Extra arguments:"
+        echo "      --run <cmd> <arg>..."
+        echo "        Run command in shell session and exit"
+        echo "        Must be the last option given"
+        echo "      --no-destroy|-n"
+        echo "        Do not destroy shell container before and after running"
+        echo "      --destroy|-d"
+        echo "        If running inside an existing shell session, force container to"
+        echo "        be destroyed before and after running"
+        echo
+        echo "    Example:"
+        echo "      extra-container shell -E '{ containers.demo.config = {}; }'"
+        echo
+        echo "extra-container build ..."
+        echo "    Build the container config and print the resulting NixOS system etc path"
+        echo
+        echo "    This command can be used like 'create', but options related"
+        echo "    to starting are not supported"
+        echo
+        echo "extra-container list"
+        echo "    List all extra containers"
+        echo
+        echo "extra-container restart <container>..."
+        echo "    Fixes the broken restart command of nixos-container (nixpkgs issue #43652)"
+        echo
+        echo "extra-container destroy <container>..."
+        echo
+        echo "extra-container destroy --all|-a"
+        echo "    Destroy all extra containers"
+        echo
+        echo "extra-container <cmd> <arg>..."
+        echo "    All other commands are forwarded to nixos-container"
+        exit 0
+        ;;
+esac
+
+# Run as root if needed
+#------------------------------------------------------------------------------
+
+if [[ $EUID != 0 ]]; then
+    exec sudo PATH="$PATH" NIX_PATH="$NIX_PATH" "${BASH_SOURCE[0]}" "$@"
+fi
+
+# Operating system specific setup
+#------------------------------------------------------------------------------
+
+errEcho() {
+    >&2 echo "$*"
+}
+
+[[ -e /run/booted-system/nixos-version ]] && isNixOS=1 || isNixOS=
+
+if [[ $isNixOS ]]; then
+    mutableServicesDir=/etc/systemd-mutable/system
+else
+    # This is the canonical way to check for systemd
+    # https://www.freedesktop.org/software/systemd/man/sd_booted.html
+    if [[ ! -e /run/systemd/system ]]; then
+        errEcho "extra-container requires systemd"
+        exit 1
+    fi
+    if ! type -P machinectl > /dev/null; then
+        errEcho "extra-container requires machinectl to be installed"
+        exit 1
+    fi
+    if [[ ! -e /nix/var/nix/profiles/default ]]; then
+        errEcho "extra-container requires a multi-user nix installation."
+        exit 1
+    fi
+
+    mutableServicesDir=/usr/lib/systemd/system
+
+    # For nixos-container on non-NixOS systems https://github.com/NixOS/nix/issues/599#issuecomment-153885553
+    # The value of 'LOCALE_ARCHIVE' is inserted by the builder (./default.nix)
+    if [[ ! -v LOCALE_ARCHIVE ]]; then
+        export LOCALE_ARCHIVE=
+    fi
+
+    # Work around https://github.com/NixOS/nixpkgs/issues/28833
+    createOsReleaseFile() {
+        if [[ ! -f /etc/static/os-release ]]; then
+            mkdir -p /etc/static
+            echo "# added by extra-container" > /etc/static/os-release
+        fi
+    }
+fi
+
+# Parse and run command
+#------------------------------------------------------------------------------
+
+tmpDir=
+onlyBuild=
+shell=
+list=
+restart=
+destroy=
+
+case $1 in
+    create|add)
+        shift
+        ;;
+    build)
+        onlyBuild=1
+        shift
+        ;;
+    shell)
+        shell=1
+        shift
+        ;;
+    list)
+        list=1
+        ;;
+    restart)
+        restart=1
+        shift
+        ;;
+    destroy)
+        destroy=1
+        shift
+        ;;
+    *)
+        exec nixos-container "$@"
+        ;;
+esac
+
+# Value is replaced by builder (./default.nix)
+evalConfig=$(cd "${BASH_SOURCE[0]%/*}" && pwd)/eval-config.nix
+
+buildContainers() {
+    local containerCfg=$1
+    local tmpDir=$2
+    local nixosPath=$3
+
+    local attrExpr=
+    if [[ $attr ]]; then
+        attrExpr=".\${''$attr''}"
+    fi
+    NIX_PATH=$NIX_PATH:pwd=$PWD nix-build --out-link $tmpDir/result "${buildArgs[@]}" -E \
+    " let cfg = ($containerCfg)$attrExpr;
+      in (import $evalConfig {
+         nixosPath = $nixosPath;
+         systemConfig = cfg;
+      }).config.system.build.etc
+    " >/dev/null
+}
+
+restartContainers() {
+    local services=$(getServiceNames $*)
+
+    # `systemctl restart <container>` is broken (https://github.com/NixOS/nixpkgs/issues/43652),
+    # so use a workaraound
+    systemctl stop $services
+    # Retry terminating the container machines until the command succeeds
+    # or the machines have disappeared
+    for ((i = 1;; i++)); do
+        local failed=
+        local output
+        output=$(machinectl terminate $* 2>&1) || failed=1
+        if [[ ! $failed || $output == *no*machine*known* ]]; then
+            break
+        fi
+        echo $output
+        if ((i == 20)); then
+            errEcho "Failed to stop containers."
+            exit 1
+        fi
+        sleep 0.001
+    done
+    systemctl start $services
+}
+
+updateContainers() {
+    for container in $*; do
+        local confFile=/etc/containers/$container.conf
+        local systemPath=$(grep -ohP "(?<=^SYSTEM_PATH=).*" $confFile)
+        # Shift output 2 spaces to the right
+        echo "  Updating $container"
+        nixos-container run $container -- bash -lc "${systemPath}/bin/switch-to-configuration test" |& sed 's/^/  /' || true
+        echo
+    done
+}
+
+getContainers() {
+    for service in $mutableServicesDir/container@?*.service; do
+        getContainerName $service
+    done
+}
+
+getContainerName() {
+    [[ $1 =~ container@(.+)\.service ]]
+    echo ${BASH_REMATCH[1]}
+}
+
+getServiceNames() {
+    for container in $*; do
+        echo "container@$container.service "
+    done
+}
+
+makeGCRootsPath() {
+    # Use gcroots/auto instead of gcroots/per-user/root because
+    # stale links in per-user are not automatically removed.
+    # This avoids cluttering the gcroots dir in case containers
+    # are manually removed.
+    echo /nix/var/nix/gcroots/auto/extra-container-$1
+}
+
+# The key is reused between extra-container sessions
+makeSSHKey() {
+    local keyDir=/tmp/extra-container-ssh
+    sshKey=$keyDir/key
+    if [[ ! (-d $keyDir && $(stat -c '%a%U' $keyDir) == 700root &&
+                 -f $sshKey && -f $sshKey.pub) ]]; then
+        if [[ -e $keyDir ]]; then
+            rm -rf $keyDir
+        fi
+        mkdir -m 700 $keyDir
+        ssh-keygen -t ed25519 -P '' -C none -f $sshKey > /dev/null
+    fi
+    chmod 600 $sshKey
+}
+
+makeTmpDir() {
+    if [[ ! $tmpDir ]]; then
+        tmpDir=$(mktemp -d /tmp/extra-container.XXX)
+    fi
+}
+
+atExit() {
+    origExitCode=$?
+    set +e
+    if [[ $startShellEnv && $destroy ]]; then
+        [[ $runCommand ]] || echo "Destroying container."
+        destroyContainers $shellContainer
+    fi
+    if [[ $tmpDir ]]; then
+        rm -rf $tmpDir
+    fi
+    exit $origExitCode
+}
+trap atExit EXIT
+
+# Command 'list extra containers'
+#------------------------------------------------------------------------------
+
+if [[ $list ]]; then
+    getContainers
+    exit 0
+fi
+
+# Command 'restart container'
+#------------------------------------------------------------------------------
+
+if [[ $restart ]]; then
+    restartContainers $*
+    exit 0
+fi
+
+# Command 'destroy containers'
+#------------------------------------------------------------------------------
+
+systemctlIgnoreNotLoaded() {
+    local failed=
+    output=$(systemctl "$@" 2>&1) || failed=1
+    if [[ $failed ]]; then
+        if [[ $output == *not\ loaded* ]]; then
+            unitLoaded=
+        else
+            return 1
+        fi
+    fi
+}
+
+destroyContainers() {
+    if [[ ! $1 ]]; then
+        errEcho "No container name specified"
+        exit 1
+    fi
+
+    if [[ $1 == --all || $1 == -a ]]; then
+        containers=$(getContainers)
+    else
+        containers="$*"
+    fi
+
+    if [[ ! -e /etc/containers ]]; then
+        # No containers installed. The containers dir is needed by the code below.
+        return
+    fi
+
+    local needDaemonReload=
+
+    for container in $containers; do
+        service=container@${container}.service
+        serviceFile=${mutableServicesDir}/$service
+        confFile=/etc/containers/$container.conf
+
+        # Signal 'stop' before killing so that the killed container doesn't restart
+        local output
+        local unitLoaded=1
+        if ! systemctlIgnoreNotLoaded stop --no-block $service; then
+            errEcho "Stopping $service failed with: $output"
+        fi
+        if [[ $unitLoaded ]]; then
+            if ! systemctlIgnoreNotLoaded kill $service; then
+                errEcho "Killing $service failed with: $output"
+            fi
+        fi
+
+        if [[ -L $serviceFile ]]; then
+            rm $serviceFile
+            needDaemonReload=1
+        fi
+        local gcRootsPath=$(makeGCRootsPath $container)
+        rm -f $gcRootsPath
+        rm -f $gcRootsPath.conf
+
+        # Remove declarative container confFile, otherwise `nixos-container` fails
+        # with 'cannot destroy declarative container'
+        rm -f $confFile
+        # Create dummy confFile, otherwise `nixos-container` stops before
+        # destroying the container completely
+        touch $confFile
+
+        # Remove immutable attribute from nested container var/empty files so that
+        # the container directory can be deleted
+        varempty=$(echo /var/lib/containers/$container/var/lib/containers/*/var/empty)
+        if [[ $varempty ]]; then chattr -i $varempty; fi
+
+        nixos-container destroy $container || true
+    done
+    if [[ $needDaemonReload ]]; then
+        systemctl daemon-reload
+    fi
+}
+
+if [[ $destroy ]]; then
+    destroyContainers "$@"
+    exit 0
+fi
+
+# Commands 'create', 'shell'
+#------------------------------------------------------------------------------
+
+start=
+update=
+restart=
+ssh=
+containerExpr=
+attr=
+nixpkgsPath=
+nixosPath=
+buildArgs=()
+runCommand=()
+
+destroy=1
+forceDestroy=
+
+args=()
+while [[ $# > 0 ]]; do
+    arg="$1"
+    shift
+    case $arg in
+        --start|-s)
+            start=1
+            ;;
+        --update-changed|-u)
+            update=1
+            ;;
+        --restart-changed|-r)
+            restart=1
+            ;;
+        --ssh)
+            ssh=1
+            ;;
+        --expr|-E)
+            containerExpr="$1"
+            shift
+            ;;
+        --attr|-A)
+            attr="$1"
+            shift
+            ;;
+        --nixpkgs-path)
+            nixpkgsPath="$1"
+            shift
+            ;;
+        --nixos-path)
+            nixosPath="$1"
+            shift
+            ;;
+        --build-args)
+            buildArgs=()
+            # Add all following args until --run
+            while [[ $# > 0 && $1 != --run ]]; do
+                buildArgs+=("$1")
+                shift
+            done
+            ;;
+        --run)
+            runCommand=("$@")
+            break
+            ;;
+        --no-destroy|-n)
+            destroy=
+            ;;
+        --destroy|-d)
+            destroy=1
+            forceDestroy=1
+            ;;
+        *)
+            args+=("$arg")
+            ;;
+    esac
+done
+set -- "${args[@]}"
+
+if [[ ! $containerExpr ]]; then
+    arg=${1:-}
+    shift || true
+fi
+if [[ $# > 0 ]]; then
+    errEcho "Error: Unhandled arguments: $*"
+    exit 1
+fi
+
+## 1. Build containers if needed
+
+if [[ $ssh ]]; then
+    makeSSHKey
+fi
+# This env var is read by ./eval-config.nix while building
+export extraContainerSSH=$ssh
+
+needToBuildContainers() {
+    [[ $containerExpr || ! $1 || -f $1 || -e $1/default.nix ]]
+}
+
+if needToBuildContainers "$arg"; then
+    if [[ ! $containerExpr ]]; then
+        if [[ ! $arg || $arg == - ]]; then
+            # Read container cfg from stdin
+            if [[ $shell ]]; then
+                errEcho "Reading container config from STDIN is not supported for command 'shell'"
+                exit 1
+            fi
+            read -d '' containerExpr || true
+        else
+            containerExpr="import ''$(realpath "$arg")''"
+        fi
+    fi
+    if [[ ! $nixosPath ]]; then
+        if [[ $nixpkgsPath ]]; then
+            nixosPath="\"\${toString ($nixpkgsPath)}/nixos\""
+        else
+            nixosPath="<nixpkgs/nixos>"
+        fi
+    fi
+    makeTmpDir
+    errEcho "Building containers..."
+    buildContainers "$containerExpr" $tmpDir "$nixosPath"
+    nixosSystemEtc=$tmpDir/result/etc
+
+    if [[ $onlyBuild ]]; then
+        realpath $tmpDir/result
+        exit 0
+    fi
+else
+    nixosSystemEtc="$arg/etc"
+    if [[ ! -e $nixosSystemEtc ]]; then
+        errEcho "$nixosSystemEtc doesn't exist"
+        exit 1
+    fi
+fi
+
+## 2. Gather containers
+
+services=$(echo $nixosSystemEtc/systemd/system/container@?*.service)
+if [[ ! $services ]]; then
+    errEcho "No container services in $nixosSystemEtc/systemd/system"
+    exit 0
+fi
+allContainers=()
+for service in $services; do
+    allContainers+=($(getContainerName $service))
+done
+allContainers=($(printf '%s\n' ${allContainers[@]} | sort))
+
+
+## 3. Shell related setup
+
+startShellEnv=
+makeStartInterruptible=
+if [[ $shell ]]; then
+    if (( ${#allContainers[@]} > 1 )); then
+        errEcho "Command 'shell' requires only one container to be defined"
+        exit 1
+    fi
+    shellContainer=${allContainers[0]}
+
+    [[ $shellContainer == $runningShellContainer ]] && insideContainerShell=1 || insideContainerShell=
+
+    if [[ $runCommand || ! $insideContainerShell ]]; then
+        startShellEnv=1
+    fi
+    if [[ $insideContainerShell && ! $forceDestroy ]]; then
+        destroy=
+    fi
+    if [[ $startShellEnv && ! $runCommand ]]; then
+        makeStartInterruptible=1
+    fi
+    if [[ $destroy ]]; then
+        destroyContainers $shellContainer
+    fi
+    start=1
+fi
+
+## 4. Install containers
+
+confWithoutSystem() {
+    sed /^SYSTEM_PATH=/d $1
+}
+
+isContainerUnchanged() {
+    [[ -e $serviceDest && \
+       -e $confDest && \
+       $(realpath $service) == $(realpath $serviceDest) ]] || return 1
+
+    if [[ $(realpath $confFile) != $(realpath $confDest) ]]; then
+        if [[ $(confWithoutSystem $confFile) == $(confWithoutSystem $confDest) ]]; then
+            onlySystemChangedContainers+=($container)
+        fi
+        return 1
+    fi
+}
+
+checkInstallationSuccess() {
+    if [[ $isNixOS ]]; then
+        service=container@$1.service
+        # If ExecStart points to the generic 'container_-start' script of the
+        # 'container@.service' service template, the installation of the
+        # container service file failed.
+        if [[ $(systemctl show -p ExecStart $service) == */bin/container_-start*  ]]; then
+            errEcho
+            errEcho 'Container service installation failed.'
+            errEcho 'Please add the following to your NixOS configuration'
+            errEcho 'to enable dynamically installing systemd units:'
+            errEcho 'boot.extraSystemdUnitPaths = [ "/etc/systemd-mutable/system" ];'
+            errEcho
+            errEcho 'See also: https://github.com/erikarvstedt/extra-container/#install'
+            exit 1
+        fi
+    fi
+}
+
+echo
+echo "Installing containers:"
+
+mkdir -p $mutableServicesDir /etc/containers /nix/var/nix/gcroots/auto/
+if [[ ! $isNixOS ]]; then createOsReleaseFile; fi
+
+changedContainers=()
+onlySystemChangedContainers=()
+for container in ${allContainers[@]} ; do
+    service=$nixosSystemEtc/systemd/system/container@$container.service
+    serviceDest=$mutableServicesDir/$(basename $service)
+    confFile=$nixosSystemEtc/containers/$container.conf
+    confDest=/etc/containers/$(basename $confFile)
+
+    if isContainerUnchanged; then
+        echo "$container (unchanged, skipped)"
+    else
+        echo "$container"
+        changedContainers+=($container)
+
+        if [[ ! -e $confFile ]]; then
+            errEcho "Unexpected error: $confFile doesn't exist"
+            exit 1
+        fi
+
+        ln -sf $(realpath $service) $serviceDest
+        ln -sf $(realpath $confFile) $confDest
+        gcRootsPath=$(makeGCRootsPath $container)
+        ln -sf $serviceDest $gcRootsPath
+        ln -sf $confDest $gcRootsPath.conf
+    fi
+done
+
+if [[ $changedContainers ]]; then
+    systemctl daemon-reload
+    checkInstallationSuccess ${changedContainers[0]}
+fi
+
+## 3. Setup shell
+
+if [[ $makeStartInterruptible ]]; then
+    # When starting a shell, continue the script when container starting gets interrupted.
+    # This way, the user can interrupt waiting for the startup of all services
+    # and interact with the starting container.
+    trap handleShell SIGINT
+fi
+
+handleShell() {
+    trap - SIGINT
+
+    export containerIp=$(nixos-container show-ip $shellContainer 2> /dev/null) || containerIp=
+    export runningShellContainer=$shellContainer
+    extraContainerCmd() {
+        if [[ $# > 0 ]]; then
+            nixos-container run $name -- "$@" | cat;
+        else
+            nixos-container root-login $name
+        fi
+    }
+    if [[ $extraContainerSSH ]]; then
+        makeTmpDir
+        export sshKey
+        export sshControlPath=$tmpDir/ssh-connection
+        extraContainerSSHCmd() {
+            ssh -i $sshKey -o ConnectTimeout=2 \
+                -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR \
+                -o ControlMaster=auto -o ControlPath="$sshControlPath" -o ControlPersist=60 \
+                root@$ip "$@"
+        }
+        export -f extraContainerSSHCmd
+
+    fi
+    extraContainerHelp() {
+        if [[ $ip ]]; then
+            echo "Container address: $ip (\$ip)"
+        fi
+        echo "Container filesystem: /var/lib/containers/$name"
+        echo
+        echo 'Run "c COMMAND" to execute a command in the container'
+        echo 'Run "c" to start a shell session inside the container'
+        if [[ $extraContainerSSH ]]; then
+            echo 'Run "cssh" for SSH'
+        fi
+    }
+    export -f extraContainerCmd extraContainerHelp
+
+    defineShortcuts='
+      function h() { extraContainerHelp; }
+      function c() { extraContainerCmd "$@"; }
+      export -f h c
+      if [[ $extraContainerSSH ]]; then
+        function cssh() { extraContainerSSHCmd "$@"; }
+        export -f cssh
+      fi
+      export name=$runningShellContainer
+      export ip=$containerIp
+    '
+
+    if [[ $runCommand ]]; then
+        eval "$defineShortcuts"
+        echo "Running command."
+        "${runCommand[0]}" "${runCommand[@]:1}"
+    else
+        echo 'Starting shell.'
+        echo 'Enter "h" for documentation.'
+        # Start interactive, non-login shell.
+        # Contrary to what is stated in the manual, bash --rcfile sources
+        # /etc/profile (and consequently .bashrc) before evaluating the custom rcfile.
+        # This allows us to start a shell with prompt and aliases set up and add extra
+        # features via --rcfile.
+        bash --rcfile <(
+            # Prevent aliases from overriding the helper functions
+            echo "unalias h c cssh 2>/dev/null; $defineShortcuts"
+            # Use PATH from the current calling environment
+            printf 'export PATH=%q' "$PATH"
+        )
+    fi
+
+    # Needed when called from the SIGINT handler
+    exit 0
+}
+
+## 4. Start/restart containers
+
+echo
+
+if [[ $start || $update || $restart ]]; then
+    toStart=()
+    toRestart=()
+    # systemctl is-active fails when some containers are not active
+    statuses=($(systemctl is-active $(getServiceNames ${allContainers[@]}))) || true
+    for i in ${!statuses[@]}; do
+        if [[ ${statuses[$i]} == active ]]; then
+            runningContainers+=(${allContainers[$i]})
+        else
+            toStart+=(${allContainers[$i]})
+        fi
+    done
+
+    if [[ $start && ((${#toStart[@]} != 0)) ]]; then
+        echo "Starting containers:"
+        printf '%s\n' ${toStart[@]}
+        echo
+        systemctl start $(getServiceNames ${toStart[@]})
+    fi
+
+    # Update or restart changed containers that are running
+    toRestart=($(comm -12 <(printf '%s\n' ${runningContainers[@]} | sort) \
+                          <(printf '%s\n' ${changedContainers[@]})))
+    if ((${#toRestart[@]} != 0)); then
+        if [[ ! $restart ]]; then
+            toUpdate=($(comm -12 <(printf '%s\n' ${toRestart[@]}) \
+                                 <(printf '%s\n' ${onlySystemChangedContainers[@]})))
+            toRestart=($(comm -23 <(printf '%s\n' ${toRestart[@]}) \
+                                  <(printf '%s\n' ${toUpdate[@]})))
+            if ((${#toUpdate[@]} != 0)); then
+                echo "Updating containers:"
+                printf '%s\n' ${toUpdate[@]}
+                echo
+                updateContainers ${toUpdate[@]}
+            fi
+        fi
+        if ((${#toRestart[@]} != 0)); then
+            echo "Restarting containers:"
+            printf '%s\n' ${toRestart[@]}
+            echo
+            restartContainers ${toRestart[@]}
+        fi
+    fi
+fi
+
+if [[ $startShellEnv ]]; then
+    handleShell
+fi

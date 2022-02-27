@@ -12,7 +12,7 @@
 
     installPhase = ''
         mkdir --parents "$out/bin"
-        cp ${src}/bin/mdsh "$out/bin/"
+        cp "$src/bin/mdsh" "$out/bin/"
     '';
 
     # meta = with lib; {

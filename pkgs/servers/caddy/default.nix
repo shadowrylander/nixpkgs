@@ -1,18 +1,35 @@
-{ lib, buildGoModule, fetchFromGitHub, nixosTests }:
-let
-  version = "2.4.6";
-  dist = fetchFromGitHub {
-    owner = "caddyserver";
-    repo = "dist";
-    rev = "v${version}";
-    sha256 = "sha256-EXs+LNb87RWkmSWvs8nZIVqRJMutn+ntR241gqI7CUg=";
-  };
-in
-buildGoModule {
-  pname = "caddy";
-  inherit version;
+{ lib, fetchFromGitHub, buildGoModule }:
 
-  subPackages = [ "cmd/caddy" ];
+with lib;
+
+let
+  imports = flip concatMapStrings [
+    "github.com/mholt/caddy-l4@latest"
+    "github.com/abiosoft/caddy-yaml@latest"
+    "github.com/caddy-dns/cloudflare@latest"
+  ] (pkg: "\t\t\t_ \"${pkg}\"\n");
+
+	main = ''
+		package main
+
+		import (
+			caddycmd "github.com/caddyserver/caddy/v2/cmd"
+
+			_ "github.com/caddyserver/caddy/v2/modules/standard"
+${imports}
+		)
+
+		func main() {
+			caddycmd.Main()
+		}
+	'';
+
+
+in buildGoModule rec {
+	pname = "caddy";
+	version = "2.4.6";
+  runVend = true;
+	subPackages = [ "cmd/caddy" ];
 
   src = fetchFromGitHub {
     owner = "caddyserver";
@@ -23,19 +40,25 @@ buildGoModule {
 
   vendorSha256 = "sha256-NomgHqIiugSISbEtvIbJDn5GRn6Dn72adLPkAvLbUQU=";
 
-  postInstall = ''
-    install -Dm644 ${dist}/init/caddy.service ${dist}/init/caddy-api.service -t $out/lib/systemd/system
+	overrideModAttrs = (_: {
+		preBuild    = "echo '${main}' > cmd/caddy/main.go";
+		postInstall = "cp go.sum go.mod $out/ && ls $out/";
+	});
 
-    substituteInPlace $out/lib/systemd/system/caddy.service --replace "/usr/bin/caddy" "$out/bin/caddy"
-    substituteInPlace $out/lib/systemd/system/caddy-api.service --replace "/usr/bin/caddy" "$out/bin/caddy"
-  '';
+	postPatch = ''
+		echo '${main}' > cmd/caddy/main.go
+		cat cmd/caddy/main.go
+	'';
 
-  passthru.tests = { inherit (nixosTests) caddy; };
+	postConfigure = ''
+		cp vendor/go.sum ./
+		cp vendor/go.mod ./
+	'';
 
-  meta = with lib; {
-    homepage = "https://caddyserver.com";
-    description = "Fast, cross-platform HTTP/2 web server with automatic HTTPS";
-    license = licenses.asl20;
+	meta = {
+		homepage = https://caddyserver.com;
+		description = "Fast, cross-platform HTTP/2 web server with automatic HTTPS";
+		license = licenses.asl20;
     maintainers = with maintainers; [ Br1ght0ne ];
-  };
+	};
 }

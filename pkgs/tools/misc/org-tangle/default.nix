@@ -1,4 +1,4 @@
-{ stdenv, fetchGit }: with builtins; let
+{ stdenv }: with builtins; let
     function = "tangle";
     pname = "org-${function}";
 in stdenv.mkDerivation rec {
@@ -14,7 +14,7 @@ in stdenv.mkDerivation rec {
 
     installPhase = ''
         mkdir --parents "$out/bin"
-        cp ${src}/${pname}.sh "$out/bin/${pname}"
+        cp "$src/${pname}.sh" "$out/bin/${pname}"
         chmod +x "$out/bin/${pname}"
     '';
 }
