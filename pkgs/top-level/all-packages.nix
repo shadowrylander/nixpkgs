@@ -97,6 +97,14 @@ with pkgs;
 
   tests = callPackages ../test {};
 
+  ### Mine
+
+  flk = callPackage ../development/interpreters/flk {  };
+
+  mbsh = callPackage ../development/interpreters/mbsh {  };
+
+  j-settings = callPackage ../tools/misc/j-settings {  };
+
   ### Nixpkgs maintainer tools
 
   nix-generate-from-cpan = callPackage ../../maintainers/scripts/nix-generate-from-cpan.nix { };
