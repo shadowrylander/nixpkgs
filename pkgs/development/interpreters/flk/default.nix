@@ -10,8 +10,8 @@
     };
 
     installPhase = ''
-        mkdir --parents "$out/bin"
-        cp ./docs/flk "$out/bin/"
+        mkdir --parents $out/bin
+        cp ./docs/flk $out/bin/
     '';
 
     meta = with lib; {
