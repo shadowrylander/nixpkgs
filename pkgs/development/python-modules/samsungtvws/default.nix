@@ -5,12 +5,12 @@
 
 buildPythonPackage rec {
   pname = "samsungtvws";
-  version = "2.0.0";
+  version = "2.2.0";
   disabled = isPy27;
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-F9Q5gEKS9aYz/FYj1x1EIP2rfjCcxfqqacYV16rJCgs=";
+    sha256 = "sha256-yTRRcY3PTmhNku7kfrG2ff1i4hEow6JaiBvq0Ic19uI=";
   };
 
   propagatedBuildInputs = [

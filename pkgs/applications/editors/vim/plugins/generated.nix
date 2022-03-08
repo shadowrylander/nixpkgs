@@ -1928,6 +1928,18 @@ final: prev:
     meta.homepage = "https://github.com/vim-scripts/emodeline/";
   };
 
+  everforest = buildVimPluginFrom2Nix {
+    pname = "everforest";
+    version = "2022-02-20";
+    src = fetchFromGitHub {
+      owner = "sainnhe";
+      repo = "everforest";
+      rev = "7c5e520962a57f7cd42bb0b9eab268795375d26e";
+      sha256 = "IBDWDvSpUHHgE2zslYfvznHyQmisbRZsF0D80YqcKto=";
+    };
+    meta.homepage = "https://github.com/sainnhe/everforest/";
+  };
+
   falcon = buildVimPluginFrom2Nix {
     pname = "falcon";
     version = "2021-12-19";
@@ -7983,6 +7995,18 @@ final: prev:
       sha256 = "061x58afpl7f17ixp3sal54aymhsn0kyygdbvaqxzanzmrsgp8m7";
     };
     meta.homepage = "https://github.com/ap/vim-css-color/";
+  };
+
+  vim-CtrlXA = buildVimPluginFrom2Nix {
+    pname = "vim-CtrlXA";
+    version = "2021-08-09";
+    src = fetchFromGitHub {
+      owner = "Konfekt";
+      repo = "vim-CtrlXA";
+      rev = "404ea1e055921db5679b3734108d72850d6faa76";
+      sha256 = "10bgyqnwcqly3sxl27np1b690hnj1snqbcvg8pzh4zgdysfgy9xg";
+    };
+    meta.homepage = "https://github.com/Konfekt/vim-CtrlXA/";
   };
 
   vim-cue = buildVimPluginFrom2Nix {
