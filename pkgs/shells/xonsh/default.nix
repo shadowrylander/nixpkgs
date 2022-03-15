@@ -75,7 +75,17 @@ python310Packages.buildPythonApplication rec {
   checkInputs = [ glibcLocales git ] ++
     (with python310Packages; [ pyte pytestCheckHook pytest-mock pytest-subprocess ]);
 
-  propagatedBuildInputs = with python310Packages; [ ply prompt-toolkit pygments bakery ];
+  propagatedBuildInputs = with python310Packages; [
+    ply
+    prompt-toolkit
+    pygments
+    bakery
+    xontrib-sh
+    xontrib-readable-traceback
+    xontrib-pipeliner
+    xonsh-autoxsh
+    xonsh-direnv
+  ];
 
   meta = with lib; {
     description = "A Python-ish, BASHwards-compatible shell";

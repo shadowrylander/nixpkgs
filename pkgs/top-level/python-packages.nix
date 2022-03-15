@@ -1120,6 +1120,8 @@ in {
 
   bacpypes = callPackage ../development/python-modules/bacpypes { };
 
+  backtrace = callPackage ../development/python-modules/backtrace { };
+
   bagit = callPackage ../development/python-modules/bagit { };
 
   bakery = callPackage ../development/python-modules/bakery { };
@@ -10810,6 +10812,16 @@ in {
   xmodem = callPackage ../development/python-modules/xmodem { };
 
   xnd = callPackage ../development/python-modules/xnd { };
+
+  xonsh-autoxsh = callPackage ../development/python-modules/xonsh-autoxsh { };
+
+  xonsh-direnv = callPackage ../development/python-modules/xonsh-direnv { };
+
+  xontrib-pipeliner = callPackage ../development/python-modules/xontrib-pipeliner { };
+
+  xontrib-readable-traceback = callPackage ../development/python-modules/xontrib-readable-traceback { };
+
+  xontrib-sh = callPackage ../development/python-modules/xontrib-sh { };
 
   xpath-expressions = callPackage ../development/python-modules/xpath-expressions { };
 
