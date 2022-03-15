@@ -4,6 +4,11 @@
 , glibcLocales
 , coreutils
 , git
+, fzf
+, fasd
+, direnv
+, zoxide
+, starship
 }:
 
 python310Packages.buildPythonApplication rec {
@@ -74,6 +79,16 @@ python310Packages.buildPythonApplication rec {
 
   checkInputs = [ glibcLocales git ] ++
     (with python310Packages; [ pyte pytestCheckHook pytest-mock pytest-subprocess ]);
+
+  buildInputs = [
+    fzf
+    fasd
+    direnv
+    zoxide
+    starship
+  ];
+
+  nativeBuildInputs = buildInputs;
 
   propagatedBuildInputs = with python310Packages; [
     ply
