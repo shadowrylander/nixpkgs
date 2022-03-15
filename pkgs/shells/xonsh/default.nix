@@ -1,12 +1,12 @@
 { lib
 , fetchFromGitHub
-, python39Packages
+, python310Packages
 , glibcLocales
 , coreutils
 , git
 }:
 
-python39Packages.buildPythonApplication rec {
+python310Packages.buildPythonApplication rec {
   pname = "xonsh";
   version = "0.11.0";
 
@@ -31,12 +31,12 @@ python39Packages.buildPythonApplication rec {
     patchShebangs .
 
     substituteInPlace scripts/xon.sh \
-      --replace 'python' "${python39Packages.python}/bin/python"
+      --replace 'python' "${python310Packages.python}/bin/python"
 
   '';
 
   makeWrapperArgs = [
-    "--prefix PYTHONPATH : ${placeholder "out"}/lib/${python39Packages.python.libPrefix}/site-packages"
+    "--prefix PYTHONPATH : ${placeholder "out"}/lib/${python310Packages.python.libPrefix}/site-packages"
   ];
 
   postInstall = ''
@@ -73,9 +73,9 @@ python39Packages.buildPythonApplication rec {
   '';
 
   checkInputs = [ glibcLocales git ] ++
-    (with python39Packages; [ pyte pytestCheckHook pytest-mock pytest-subprocess ]);
+    (with python310Packages; [ pyte pytestCheckHook pytest-mock pytest-subprocess ]);
 
-  propagatedBuildInputs = with python39Packages; [ ply prompt-toolkit pygments jupyter bakery ];
+  propagatedBuildInputs = with python310Packages; [ ply prompt-toolkit pygments bakery ];
 
   meta = with lib; {
     description = "A Python-ish, BASHwards-compatible shell";
