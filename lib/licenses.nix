@@ -675,6 +675,11 @@ in mkLicense lset) ({
     fullName = "OpenSSL License";
   };
 
+  oreo = {
+    fullName = "Oreo Public License";
+    free = true;
+  };
+
   osl2 = {
     spdxId = "OSL-2.0";
     fullName = "Open Software License 2.0";

@@ -800,6 +800,8 @@ in {
 
   autopep8 = callPackage ../development/python-modules/autopep8 { };
 
+  autoslot = callPackage ../development/python-modules/autoslot { };
+
   avahi = toPythonModule (pkgs.avahi.override {
     inherit python;
     withPython = true;
@@ -1119,6 +1121,8 @@ in {
   bacpypes = callPackage ../development/python-modules/bacpypes { };
 
   bagit = callPackage ../development/python-modules/bagit { };
+
+  bakery = callPackage ../development/python-modules/bakery { };
 
   banal = callPackage ../development/python-modules/banal { };
 
@@ -3904,6 +3908,8 @@ in {
 
   hyppo = callPackage ../development/python-modules/hyppo { };
 
+  hyrule = callPackage ../development/python-modules/hyrule { };
+
   i2c-tools = callPackage ../development/python-modules/i2c-tools {
     inherit (pkgs) i2c-tools;
   };
@@ -5799,6 +5805,8 @@ in {
   ordered-set = callPackage ../development/python-modules/ordered-set { };
 
   orderedset = callPackage ../development/python-modules/orderedset { };
+
+  oreo = callPackage ../development/python-modules/oreo { };
 
   orjson = callPackage ../development/python-modules/orjson { };
 

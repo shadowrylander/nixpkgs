@@ -13,15 +13,15 @@
 
 buildPythonPackage rec {
   pname = "rich";
-  version = "11.0.0";
+  version = "12.0.0";
   format = "pyproject";
   disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
-    owner = "willmcgugan";
+    owner = "syvlorg";
     repo = pname;
-    rev = "v${version}";
-    sha256 = "0vkwar22rv1j6a3kqj3c016j0vnnha0kwi79fkd90ib1n501m7rn";
+    rev = "master";
+    sha256 = "1pag703gc0ga6mw9v033zg2xjk2i2v26q8rj1p2988p78lqibp3p";
   };
 
   nativeBuildInputs = [ poetry-core ];
@@ -43,8 +43,8 @@ buildPythonPackage rec {
 
   meta = with lib; {
     description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal";
-    homepage = "https://github.com/willmcgugan/rich";
+    homepage = "https://github.com/syvlorg/rich";
     license = licenses.mit;
-    maintainers = with maintainers; [ ris ];
+    maintainers = with maintainers; [ syvlorg ];
   };
 }

@@ -11878,6 +11878,18 @@
     githubId = 20063502;
     name = "Sybrand Aarnoutse";
   };
+  sylvorg = {
+    email = "jeet.ray@syvl.org";
+    github = "sylvorg";
+    githubId = 94809170;
+    name = "Jeet Ray";
+  };
+  syvlorg = {
+    email = "jeet.ray@syvl.org";
+    github = "syvlorg";
+    githubId = 94652641;
+    name = "Syvlorg";
+  };
   symphorien = {
     email = "symphorien_nixpkgs@xlumurb.eu";
     matrix = "@symphorien:xlumurb.eu";

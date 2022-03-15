@@ -1,20 +1,20 @@
 { lib
-, python3Packages
+, python39Packages
 , hyDefinedPythonPackages /* Packages like with python.withPackages */
 , ...
 }:
-python3Packages.buildPythonApplication rec {
+python39Packages.buildPythonApplication rec {
   pname = "hy";
-  version = "1.0a1";
+  version = "1.0a4";
 
-  src = python3Packages.fetchPypi {
+  src = python39Packages.fetchPypi {
     inherit pname version;
-    sha256 = "sha256-lCrbvbkeutSNmvvn/eHpTnJwPb5aEH7hWTXYSE+AJmU=";
+    sha256 = "sha256-9RTkXxtxEn+I7Q8jNnVpgya4WjuyBKP52a+rVZvz77k=";
   };
 
-  checkInputs = with python3Packages; [ flake8 pytest ];
+  checkInputs = with python39Packages; [ flake8 pytest ];
 
-  propagatedBuildInputs = with python3Packages; [
+  propagatedBuildInputs = with python39Packages; [
     appdirs
     astor
     clint
@@ -23,7 +23,7 @@ python3Packages.buildPythonApplication rec {
     funcparserlib
     rply
     pygments
-  ] ++ (hyDefinedPythonPackages python3Packages);
+  ] ++ (hyDefinedPythonPackages python39Packages);
 
   # Hy does not include tests in the source distribution from PyPI, so only test executable.
   checkPhase = ''
@@ -34,7 +34,7 @@ python3Packages.buildPythonApplication rec {
     description = "A LISP dialect embedded in Python";
     homepage = "https://hylang.org/";
     license = licenses.mit;
-    maintainers = with maintainers; [ nixy mazurel ];
+    maintainers = with maintainers; [ sylvorg ];
     platforms = platforms.all;
   };
 }
