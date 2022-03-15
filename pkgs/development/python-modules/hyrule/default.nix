@@ -17,10 +17,6 @@ buildPythonPackage rec {
   
   pythonImportsCheck = [ "hyrule" ];
 
-  postPatch = ''
-    substituteInPlace setup.py --replace "hy @ git+https://github.com/hylang/hy@master#egg=hy-1.0" "hy"
-  '';
-
   meta = with lib; {
     description = "A utility library for Hy";
     homepage = "https://github.com/hylang/hyrule";

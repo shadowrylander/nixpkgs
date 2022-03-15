@@ -7,6 +7,8 @@ python39Packages.buildPythonApplication rec {
   pname = "hy";
   version = "1.0a4";
 
+  disabled = python39Packages.pythonOlder "3.7";
+
   src = python39Packages.fetchPypi {
     inherit pname version;
     sha256 = "sha256-9RTkXxtxEn+I7Q8jNnVpgya4WjuyBKP52a+rVZvz77k=";
