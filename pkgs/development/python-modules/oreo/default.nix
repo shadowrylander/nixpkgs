@@ -11,6 +11,7 @@
 , hy
 , hyrule
 , more-itertools
+, nixpkgs
 , rich
 , toolz
 }:
@@ -25,7 +26,7 @@ buildPythonPackage rec {
     owner = "syvlorg";
     repo = pname;
     rev = "main";
-    sha256 = "1xycbdi0xhs453jvbmgisym8pyvgqpsqcv326x9bbwwz1hq4sszs";
+    sha256 = "1s6lrzzfdadn4hx8qkzy1jh9vmlly5k01dwdg4yqk4yqbqlkqfbv";
   };
 
   nativeBuildInputs = [ poetry-core ];
@@ -39,6 +40,7 @@ buildPythonPackage rec {
       hy
       hyrule
       more-itertools
+      nixpkgs
       rich
       toolz
   ];

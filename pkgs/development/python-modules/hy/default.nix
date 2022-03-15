@@ -1,7 +1,8 @@
 { lib
 , pythonOlder
 , buildPythonPackage
-, fetchPypi
+, fetchFromGitHub
+, pytestCheckHook
 , astor
 , colorama
 , funcparserlib
@@ -14,9 +15,11 @@ buildPythonPackage rec {
 
   disabled = pythonOlder "3.7";
 
-  src = fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-9RTkXxtxEn+I7Q8jNnVpgya4WjuyBKP52a+rVZvz77k=";
+  src = fetchFromGitHub {
+    owner = "hylang";
+    repo = pname;
+    rev = version;
+    sha256 = "0l8gl4w19qw7bina0fdfs61rikqx30375w3xvc3zk0w17bgfj71h";
   };
 
   propagatedBuildInputs = [
@@ -27,7 +30,18 @@ buildPythonPackage rec {
     astor
   ];
 
-  doCheck = false;
+  checkInputs = [ pytestCheckHook ];
+
+  disabledTests = [
+    # Don't test the binary
+    "test_bin_hy"
+    "test_hystartup"
+    "est_hy2py_import"
+  ];
+
+  postPatch = ''
+    substituteInPlace setup.py --replace "version=__version__" "version='${version}'"
+  '';
 
   pythonImportsCheck = [ "hy" ];
 

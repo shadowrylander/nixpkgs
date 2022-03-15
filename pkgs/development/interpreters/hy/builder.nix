@@ -7,29 +7,38 @@ python39Packages.buildPythonApplication rec {
   pname = "hy";
   version = "1.0a4";
 
-  disabled = python39Packages.pythonOlder "3.7";
+  disabled = pythonOlder "3.7";
 
-  src = python39Packages.fetchPypi {
-    inherit pname version;
-    sha256 = "sha256-9RTkXxtxEn+I7Q8jNnVpgya4WjuyBKP52a+rVZvz77k=";
+  src = fetchFromGitHub {
+    owner = "hylang";
+    repo = pname;
+    rev = version;
+    sha256 = "0l8gl4w19qw7bina0fdfs61rikqx30375w3xvc3zk0w17bgfj71h";
   };
-
-  checkInputs = with python39Packages; [ flake8 pytest ];
 
   propagatedBuildInputs = with python39Packages; [
     appdirs
-    astor
     clint
     colorama
     fastentrypoints
     funcparserlib
     rply
     pygments
+  ] ++ lib.optionals (pythonOlder "3.9") [
+    astor
   ] ++ (hyDefinedPythonPackages python39Packages);
 
-  # Hy does not include tests in the source distribution from PyPI, so only test executable.
-  checkPhase = ''
-    $out/bin/hy --help > /dev/null
+  checkInputs = with python39Packages; [ pytestCheckHook ];
+
+  disabledTests = [
+    # Don't test the binary
+    "test_bin_hy"
+    "test_hystartup"
+    "est_hy2py_import"
+  ];
+
+  postPatch = ''
+    substituteInPlace setup.py --replace "version=__version__" "version='${version}'"
   '';
 
   meta = with lib; {
