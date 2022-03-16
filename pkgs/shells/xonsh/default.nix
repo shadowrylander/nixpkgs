@@ -4,6 +4,7 @@
 , glibcLocales
 , coreutils
 , git
+, fd
 , fzf
 , fasd
 , direnv
