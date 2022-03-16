@@ -82,12 +82,16 @@ python310Packages.buildPythonApplication rec {
     (with python310Packages; [ pyte pytestCheckHook pytest-mock pytest-subprocess ]);
 
   buildInputs = [
+    assh
+    direnv
+    exa
+    fasd
     fd
     fzf
-    fasd
-    direnv
-    zoxide
+    hub
+    mosh
     starship
+    zoxide
   ];
 
   nativeBuildInputs = buildInputs;
