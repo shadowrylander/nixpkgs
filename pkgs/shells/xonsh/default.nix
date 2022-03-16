@@ -81,6 +81,7 @@ python310Packages.buildPythonApplication rec {
     (with python310Packages; [ pyte pytestCheckHook pytest-mock pytest-subprocess ]);
 
   buildInputs = [
+    fd
     fzf
     fasd
     direnv
