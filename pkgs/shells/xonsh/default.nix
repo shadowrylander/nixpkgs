@@ -90,6 +90,7 @@ python310Packages.buildPythonApplication rec {
     fzf
     hub
     mosh
+    sqlite
     starship
     zoxide
   ];
