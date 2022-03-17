@@ -189,6 +189,14 @@
       </listitem>
       <listitem>
         <para>
+          <link xlink:href="https://github.com/prometheus-pve/prometheus-pve-exporter">prometheus-pve-exporter</link>,
+          a tool that exposes information from the Proxmox VE API for
+          use by Prometheus. Available as
+          <link xlink:href="options.html#opt-services.prometheus.exporters.pve">services.prometheus.exporters.pve</link>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
           <link xlink:href="https://tetrd.app">tetrd</link>, share your
           internet connection from your device to your PC and vice versa
           through a USB cable. Available at
@@ -243,9 +251,27 @@
       </listitem>
       <listitem>
         <para>
+          <link xlink:href="https://github.com/rfjakob/systembus-notify">systembus-notify</link>,
+          allow system level notifications to reach the users. Available
+          as
+          <link xlink:href="opt-services.systembus-notify.enable">services.systembus-notify</link>.
+          Please keep in mind that this service should only be enabled
+          on machines with fully trusted users, as any local user is
+          able to DoS user sessions by spamming notifications.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
           <link xlink:href="https://github.com/audreyt/ethercalc">ethercalc</link>,
           an online collaborative spreadsheet. Available as
           <link xlink:href="options.html#opt-services.ethercalc.enable">services.ethercalc</link>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <link xlink:href="https://nbd.sourceforge.io/">nbd</link>, a
+          Network Block Device server. Available as
+          <link xlink:href="options.html#opt-services.nbd.server.enable">services.nbd</link>.
         </para>
       </listitem>
       <listitem>
@@ -278,6 +304,12 @@
           <link xlink:href="https://0xerr0r.github.io/blocky/">blocky</link>,
           fast and lightweight DNS proxy as ad-blocker for local network
           with many features.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <link xlink:href="https://clusterlabs.org/pacemaker/">pacemaker</link>
+          cluster resource manager
         </para>
       </listitem>
     </itemizedlist>
@@ -377,6 +409,24 @@
           <literal>systemd.enableUnifiedCgroupHierarchy = false</literal>
           in your configuration.
         </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>fonts.fonts</literal> no longer includes ancient
+          bitmap fonts when both
+          <literal>config.services.xserver.enable</literal> and
+          <literal>config.nixpkgs.config.allowUnfree</literal> are
+          enabled. If you still want these fonts, use:
+        </para>
+        <programlisting language="bash">
+{
+  fonts.fonts = [
+    pkgs.xorg.fontbhlucidatypewriter100dpi
+    pkgs.xorg.fontbhlucidatypewriter75dpi
+    pkgs.xorg.fontbh100dpi
+  ];
+}
+</programlisting>
       </listitem>
       <listitem>
         <para>
@@ -517,6 +567,25 @@
           The MoinMoin wiki engine
           (<literal>services.moinmoin</literal>) has been removed,
           because Python 2 is being retired from nixpkgs.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Services in the <literal>hadoop</literal> module previously
+          set <literal>openFirewall</literal> to true by default. This
+          has now been changed to false. Node definitions for multi-node
+          clusters would need <literal>openFirewall = true;</literal> to
+          be added to to hadoop services when upgrading from NixOS
+          21.11.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          <literal>services.hadoop.yarn.nodemanager</literal> now uses
+          cgroup-based CPU limit enforcement by default. Additionally,
+          the option <literal>useCGroups</literal> was added to
+          nodemanagers as an easy way to switch back to the old
+          behavior.
         </para>
       </listitem>
       <listitem>
@@ -813,6 +882,58 @@
       </listitem>
       <listitem>
         <para>
+          <literal>pkgs.epgstation</literal> has been upgraded from v1
+          to v2, resulting in incompatible changes in the database
+          scheme and configuration format.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Some top-level settings under
+          <link linkend="opt-services.epgstation.enable">services.epgstation</link>
+          is now deprecated because it was redudant due to the same
+          options being present in
+          <link linkend="opt-services.epgstation.settings">services.epgstation.settings</link>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The option <literal>services.epgstation.basicAuth</literal>
+          was removed because basic authentication support was dropped
+          by upstream.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The option
+          <link linkend="opt-services.epgstation.database.passwordFile">services.epgstation.database.passwordFile</link>
+          no longer has a default value. Make sure to set this option
+          explicitly before upgrading. Change the database password if
+          necessary.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The
+          <link linkend="opt-services.epgstation.settings">services.epgstation.settings</link>
+          option now expects options for <literal>config.yml</literal>
+          in EPGStation v2.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Existing data for the
+          <link linkend="opt-services.epgstation.enable">services.epgstation</link>
+          module would have to be backed up prior to the upgrade. To
+          back up exising data to
+          <literal>/tmp/epgstation.bak</literal>, run
+          <literal>sudo -u epgstation epgstation run backup /tmp/epgstation.bak</literal>.
+          To import that data after to the upgrade, run
+          <literal>sudo -u epgstation epgstation run v1migrate /tmp/epgstation.bak</literal>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
           <literal>switch-to-configuration</literal> (the script that is
           run when running <literal>nixos-rebuild switch</literal> for
           example) has been reworked
@@ -1073,6 +1194,33 @@
       </listitem>
       <listitem>
         <para>
+          Some improvements have been made to the
+          <literal>hadoop</literal> module:
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>
+              A <literal>gatewayRole</literal> option has been added,
+              for deploying hadoop cluster configuration files to a node
+              that does not have any active services
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Support for older versions of hadoop have been added to
+              the module
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Overriding and extending site XML files has been made
+              easier
+            </para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+      <listitem>
+        <para>
           If you are using Wayland you can choose to use the Ozone
           Wayland support in Chrome and several Electron apps by setting
           the environment variable <literal>NIXOS_OZONE_WL=1</literal>
@@ -1186,6 +1334,52 @@
       </listitem>
       <listitem>
         <para>
+          ORY Kratos was updated to version 0.8.3-alpha.1.pre.0, which
+          introduces some breaking changes:
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>
+              If you are relying on the SQLite images, update your
+              Docker Pull commands as follows:
+            </para>
+            <itemizedlist spacing="compact">
+              <listitem>
+                <para>
+                  <literal>docker pull oryd/kratos:{version}</literal>
+                </para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+          <listitem>
+            <para>
+              Additionally, all passwords now have to be at least 8
+              characters long.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              For more details, see:
+            </para>
+            <itemizedlist spacing="compact">
+              <listitem>
+                <para>
+                  <link xlink:href="https://github.com/ory/kratos/releases/tag/v0.8.1-alpha.1">Release
+                  Notes for v0.8.1-alpha-1</link>
+                </para>
+              </listitem>
+              <listitem>
+                <para>
+                  <link xlink:href="https://github.com/ory/kratos/releases/tag/v0.8.2-alpha.1">Release
+                  Notes for v0.8.2-alpha-1</link>
+                </para>
+              </listitem>
+            </itemizedlist>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+      <listitem>
+        <para>
           <literal>fetchFromSourcehut</literal> now allows fetching
           repositories recursively using <literal>fetchgit</literal> or
           <literal>fetchhg</literal> if the argument
@@ -1210,6 +1404,15 @@
           can be found in
           <literal>pkgs.theLoungePlugins.plugins</literal> and
           <literal>pkgs.theLoungePlugins.themes</literal>.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The option
+          <literal>services.xserver.videoDriver = [ &quot;nvidia&quot; ];</literal>
+          will now also install
+          <link xlink:href="https://github.com/elFarto/nvidia-vaapi-driver">nvidia
+          VA-API drivers</link> by default.
         </para>
       </listitem>
       <listitem>
@@ -1309,6 +1512,16 @@
       </listitem>
       <listitem>
         <para>
+          The <literal>pomerium-cli</literal> command has been moved out
+          of the <literal>pomerium</literal> package into the
+          <literal>pomerium-cli</literal> package, following upstream’s
+          repository split. If you are using the
+          <literal>pomerium-cli</literal> command, you should now
+          install the <literal>pomerium-cli</literal> package.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
           The option
           <link linkend="opt-networking.networkmanager.enableFccUnlock">services.networking.networkmanager.enableFccUnlock</link>
           was added to support FCC unlock procedures. Since release
@@ -1334,6 +1547,46 @@
           default. It will automatically be enabled through services and
           desktop environments as needed.
         </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <literal>hadoop</literal> package has added support for
+          <literal>aarch64-linux</literal> and
+          <literal>aarch64-darwin</literal> as of 3.3.1
+          (<link xlink:href="https://github.com/NixOS/nixpkgs/pull/158613">#158613</link>).
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <literal>R</literal> package now builds again on
+          <literal>aarch64-darwin</literal>
+          (<link xlink:href="https://github.com/NixOS/nixpkgs/pull/158992">#158992</link>).
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          The <literal>spark3</literal> package has been updated from
+          3.1.2 to 3.2.1
+          (<link xlink:href="https://github.com/NixOS/nixpkgs/pull/160075">#160075</link>):
+        </para>
+        <itemizedlist spacing="compact">
+          <listitem>
+            <para>
+              Testing has been enabled for
+              <literal>aarch64-linux</literal> in addition to
+              <literal>x86_64-linux</literal>.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The <literal>spark3</literal> package is now usable on
+              <literal>aarch64-darwin</literal> as a result of
+              <link xlink:href="https://github.com/NixOS/nixpkgs/pull/158613">#158613</link>
+              and
+              <link xlink:href="https://github.com/NixOS/nixpkgs/pull/158992">#158992</link>.
+            </para>
+          </listitem>
+        </itemizedlist>
       </listitem>
     </itemizedlist>
   </section>

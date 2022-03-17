@@ -135,16 +135,6 @@ in {
     venvShellHook
     wheelUnpackHook;
 
-  # Not all packages are compatible with the latest pytest yet.
-  # We need to override the hook to select an older pytest, however,
-  # it should not override the version of pytest that is used for say
-  # Python 2. This is an ugly hack that is needed now because the hook
-  # propagates the package.
-  pytestCheckHook_6_1 = if isPy3k then
-    self.pytestCheckHook.override { pytest = self.pytest_6_1; }
-  else
-    self.pytestCheckHook;
-
   # helpers
 
   # We use build packages because we are making a setup hook to be used as a
@@ -465,6 +455,8 @@ in {
   algebraic-data-types = callPackage ../development/python-modules/algebraic-data-types { };
 
   allpairspy = callPackage ../development/python-modules/allpairspy { };
+
+  allure-behave = callPackage ../development/python-modules/allure-behave { };
 
   allure-python-commons = callPackage ../development/python-modules/allure-python-commons { };
 
@@ -1615,6 +1607,8 @@ in {
 
   chispa = callPackage ../development/python-modules/chispa { };
 
+  chromaprint = callPackage ../development/python-modules/chromaprint { };
+
   ci-info = callPackage ../development/python-modules/ci-info { };
 
   ci-py = callPackage ../development/python-modules/ci-py { };
@@ -2222,7 +2216,7 @@ in {
 
   distutils_extra = callPackage ../development/python-modules/distutils_extra { };
 
-  django = self.django_2;
+  django = self.django_3;
 
   # Current LTS
   django_2 = callPackage ../development/python-modules/django/2.nix { };
@@ -2439,6 +2433,8 @@ in {
   docutils = callPackage ../development/python-modules/docutils { };
 
   docx2python = callPackage ../development/python-modules/docx2python { };
+
+  docx2txt = callPackage ../development/python-modules/docx2txt { };
 
   dodgy = callPackage ../development/python-modules/dodgy { };
 
@@ -4085,6 +4081,8 @@ in {
   intreehooks = callPackage ../development/python-modules/intreehooks { };
 
   invoke = callPackage ../development/python-modules/invoke { };
+
+  iodata = callPackage ../development/python-modules/iodata { };
 
   iocapture = callPackage ../development/python-modules/iocapture { };
 
@@ -7653,6 +7651,14 @@ in {
 
   pysideTools = callPackage ../development/python-modules/pyside/tools.nix { };
 
+  pysigma = callPackage ../development/python-modules/pysigma { };
+
+  pysigma-backend-splunk = callPackage ../development/python-modules/pysigma-backend-splunk { };
+
+  pysigma-pipeline-crowdstrike = callPackage ../development/python-modules/pysigma-pipeline-crowdstrike { };
+
+  pysigma-pipeline-sysmon = callPackage ../development/python-modules/pysigma-pipeline-sysmon { };
+
   pysignalclirestapi = callPackage ../development/python-modules/pysignalclirestapi { };
 
   pysigset = callPackage ../development/python-modules/pysigset { };
@@ -7781,28 +7787,12 @@ in {
 
   pytesseract = callPackage ../development/python-modules/pytesseract { };
 
-  pytest = self.pytest_6;
-
-  pytest_6 =
-    callPackage ../development/python-modules/pytest {
-      # hypothesis tests require pytest that causes dependency cycle
-      hypothesis = self.hypothesis.override {
-        doCheck = false;
-      };
+  pytest = callPackage ../development/python-modules/pytest {
+    # hypothesis tests require pytest that causes dependency cycle
+    hypothesis = self.hypothesis.override {
+      doCheck = false;
     };
-
-  pytest_6_1 = self.pytest_6.overridePythonAttrs (oldAttrs: rec {
-    version = "6.1.2";
-    src = oldAttrs.src.override {
-      inherit version;
-      sha256 = "c0a7e94a8cdbc5422a51ccdad8e6f1024795939cc89159a0ae7f0b316ad3823e";
-    };
-
-    postPatch = ''
-      substituteInPlace setup.cfg \
-        --replace "pluggy>=0.12,<1.0" "pluggy>=0.12,<2.0"
-    '';
-  });
+  };
 
   pytest-aio = callPackage ../development/python-modules/pytest-aio { };
 
@@ -8300,6 +8290,8 @@ in {
   pyeapi = callPackage ../development/python-modules/pyeapi { };
 
   pyeverlights = callPackage ../development/python-modules/pyeverlights { };
+
+  pyinfra = callPackage ../development/python-modules/pyinfra { };
 
   pytibber = callPackage ../development/python-modules/pytibber { };
 
