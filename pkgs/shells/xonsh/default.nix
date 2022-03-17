@@ -4,12 +4,17 @@
 , glibcLocales
 , coreutils
 , git
+, assh
+, direnv
+, exa
+, fasd
 , fd
 , fzf
-, fasd
-, direnv
-, zoxide
+, hub
+, mosh
+, sqlite
 , starship
+, zoxide
 }:
 
 python310Packages.buildPythonApplication rec {
