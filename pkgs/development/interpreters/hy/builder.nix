@@ -5,7 +5,7 @@
 , ...
 }:
 
-python39Applications.buildPythonApplication ((with python310Packages; import ./shared.nix pythonOlder fetchFromGitHub pytestCheckHook lib) // rec {
+python310Packages.buildPythonApplication ((with python310Packages; import ./shared.nix pythonOlder fetchFromGitHub pytestCheckHook lib) // rec {
   propagatedBuildInputs = with python310Packages; [
     appdirs
     clint
