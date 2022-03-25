@@ -26,8 +26,7 @@ buildPythonPackage rec {
   pythonImportsCheck = [ "bakery" ];
 
   postPatch = ''
-    substituteInPlace pyproject.toml \
-        --replace "oreo = { git = \"https://github.com/syvlorg/oreo.git\", branch = \"main\" }" ""
+    substituteInPlace pyproject.toml --replace "oreo = { git = \"https://github.com/syvlorg/oreo.git\", branch = \"main\" }" ""
   '';
 
   meta = with lib; {
