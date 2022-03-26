@@ -74,6 +74,8 @@ buildPythonPackage rec {
     "test_no_resolver"
     "test_simple"
     "test_url_rule"
+    "test_stream_response"
+    "test_redirect_response"
   ];
 
   pythonImportsCheck = [
