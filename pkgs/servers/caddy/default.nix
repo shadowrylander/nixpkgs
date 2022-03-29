@@ -14,9 +14,8 @@ let
 
 		import (
 			caddycmd "github.com/caddyserver/caddy/v2/cmd"
-
 			_ "github.com/caddyserver/caddy/v2/modules/standard"
-${imports}
+			${imports}
 		)
 
 		func main() {
@@ -28,26 +27,25 @@ ${imports}
 in buildGoModule rec {
 	pname = "caddy";
 	version = "2.4.6";
-  runVend = true;
+    runVend = true;
 	subPackages = [ "cmd/caddy" ];
 
-  src = fetchFromGitHub {
-    owner = "caddyserver";
-    repo = "caddy";
-    rev = "v${version}";
-    sha256 = "sha256-xNCxzoNpXkj8WF9+kYJfO18ux8/OhxygkGjA49+Q4vY=";
-  };
+	src = fetchFromGitHub {
+		owner = "caddyserver";
+		repo = "caddy";
+		rev = "v${version}";
+		sha256 = "sha256-xNCxzoNpXkj8WF9+kYJfO18ux8/OhxygkGjA49+Q4vY=";
+	};
 
-  vendorSha256 = "sha256-NomgHqIiugSISbEtvIbJDn5GRn6Dn72adLPkAvLbUQU=";
+	vendorSha256 = "sha256-NomgHqIiugSISbEtvIbJDn5GRn6Dn72adLPkAvLbUQU=";
 
 	overrideModAttrs = (_: {
 		preBuild    = "echo '${main}' > cmd/caddy/main.go";
-		postInstall = "cp go.sum go.mod $out/ && ls $out/";
+		postInstall = "cp go.sum go.mod $out/";
 	});
 
 	postPatch = ''
 		echo '${main}' > cmd/caddy/main.go
-		cat cmd/caddy/main.go
 	'';
 
 	postConfigure = ''
@@ -59,6 +57,6 @@ in buildGoModule rec {
 		homepage = https://caddyserver.com;
 		description = "Fast, cross-platform HTTP/2 web server with automatic HTTPS";
 		license = licenses.asl20;
-    maintainers = with maintainers; [ Br1ght0ne ];
+    	maintainers = with maintainers; [ Br1ght0ne ];
 	};
 }

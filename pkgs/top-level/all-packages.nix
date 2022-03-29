@@ -2536,6 +2536,8 @@ with pkgs;
 
   caddy = callPackage ../servers/caddy { };
 
+  soft = callPackage ../servers/soft { };
+
   traefik = callPackage ../servers/traefik { };
 
   traefik-certs-dumper = callPackage ../tools/misc/traefik-certs-dumper { };
