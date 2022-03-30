@@ -1,6 +1,6 @@
-{ lib, fetchFromGitHub, buildGo117Module, git }:
+{ lib, fetchFromGitHub, buildGo116Module, git }:
 
-with lib; buildGo117Module rec {
+with lib; buildGo116Module rec {
 	pname = "soft";
 	version = "0.2.3";
 	subPackages = [ "cmd/soft" ];
