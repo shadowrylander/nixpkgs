@@ -1,6 +1,6 @@
-{ lib, fetchFromGitHub, buildGo116Module, makeWrapper, git }:
+{ lib, fetchFromGitHub, buildGoModule, makeWrapper, git }:
 
-with lib; buildGo116Module rec {
+with lib; buildGoModule rec {
 	pname = "soft";
 	version = "0.2.3";
 	subPackages = [ "cmd/soft" ];
@@ -13,10 +13,10 @@ with lib; buildGo116Module rec {
     };
 
     # buildGoModule
-    # vendorSha256 = "sha256-Jg756VyXP7jsYznFkfIMNfp5+MPtmth1pibe3BgivmI=";
+    vendorSha256 = "sha256-Jg756VyXP7jsYznFkfIMNfp5+MPtmth1pibe3BgivmI=";
 
     # buildGo116Module
-    vendorSha256 = "sha256-szC2BwdH9hwoAgAsWRe2hbb8G1ILlRVzqvYtNLe0Svo=";
+    # vendorSha256 = "sha256-szC2BwdH9hwoAgAsWRe2hbb8G1ILlRVzqvYtNLe0Svo=";
 
     # buildGo117Module
     # vendorSha256 = "sha256-m5xwxs6XvmPffDX9dkkEG0/LdlDDm6Eq9CC0tVdauVI=";
