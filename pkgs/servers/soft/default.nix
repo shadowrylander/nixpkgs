@@ -1,6 +1,6 @@
-{ lib, fetchFromGitHub, buildGoModule, makeWrapper, git }:
+{ lib, fetchFromGitHub, buildGo117Module, makeWrapper, git }:
 
-with lib; buildGoModule rec {
+with lib; buildGo117Module rec {
 	pname = "soft";
 	version = "0.2.3";
 	subPackages = [ "cmd/soft" ];
@@ -13,20 +13,20 @@ with lib; buildGoModule rec {
     };
 
     # buildGoModule
-    vendorSha256 = "sha256-Jg756VyXP7jsYznFkfIMNfp5+MPtmth1pibe3BgivmI=";
+    # vendorSha256 = "sha256-Jg756VyXP7jsYznFkfIMNfp5+MPtmth1pibe3BgivmI=";
 
     # buildGo116Module
     # vendorSha256 = "sha256-szC2BwdH9hwoAgAsWRe2hbb8G1ILlRVzqvYtNLe0Svo=";
 
     # buildGo117Module
-    # vendorSha256 = "sha256-m5xwxs6XvmPffDX9dkkEG0/LdlDDm6Eq9CC0tVdauVI=";
+    vendorSha256 = "sha256-m5xwxs6XvmPffDX9dkkEG0/LdlDDm6Eq9CC0tVdauVI=";
 
-    buildInputs = [ makeWrapper ];
+    # buildInputs = [ makeWrapper ];
 
     # Adapted From: https://gist.github.com/CMCDragonkai/9b65cbb1989913555c203f4fa9c23374
-    postFixup = ''
-        wrapProgram $out/bin/soft --set PATH ${lib.makeBinPath [ git ]}
-    '';
+    # postFixup = ''
+    #     wrapProgram $out/bin/soft --set PATH ${lib.makeBinPath [ git ]}
+    # '';
 
 	meta = {
 		homepage = https://github.com/charmbracelet/soft-serve;
