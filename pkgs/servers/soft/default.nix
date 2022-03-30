@@ -12,10 +12,9 @@ with lib; buildGo116Module rec {
         sha256 = "sha256-IaSXkbOBuvC7BhM+rGGYMcvk6jjKVDHH+lSs3y2UM40=";
     };
 
-    # vendorSha256 = "sha256-Jg756VyXP7jsYznFkfIMNfp5+MPtmth1pibe3BgivmI=";
     vendorSha256 = "sha256-szC2BwdH9hwoAgAsWRe2hbb8G1ILlRVzqvYtNLe0Svo=";
 
-    buildInputs = [ git ];
+    propagatedBuildInputs = [ git ];
 
 	meta = {
 		homepage = https://github.com/charmbracelet/soft-serve;
