@@ -1,12 +1,12 @@
 { lib
-, python310Packages
+, python3Packages
 , hyDefinedPythonPackages /* Packages like with python.withPackages */
 , fetchFromGitHub
 , ...
 }:
 
-python310Packages.buildPythonApplication ((with python310Packages; import ./shared.nix pythonOlder fetchFromGitHub pytestCheckHook lib) // rec {
-  propagatedBuildInputs = with python310Packages; [
+python3Packages.buildPythonApplication ((with python3Packages; import ./shared.nix pythonOlder fetchFromGitHub pytestCheckHook lib) // rec {
+  propagatedBuildInputs = with python3Packages; [
     appdirs
     clint
     colorama
@@ -16,5 +16,5 @@ python310Packages.buildPythonApplication ((with python310Packages; import ./shar
     pygments
   ] ++ lib.optionals (pythonOlder "3.9") [
     astor
-  ] ++ (hyDefinedPythonPackages python310Packages);
+  ] ++ (hyDefinedPythonPackages python3Packages);
 })
