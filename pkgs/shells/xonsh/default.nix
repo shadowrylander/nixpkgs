@@ -1,6 +1,6 @@
 { lib
 , fetchFromGitHub
-, python310Packages
+, python3Packages
 , glibcLocales
 , coreutils
 , git
@@ -17,7 +17,7 @@
 , zoxide
 }:
 
-python310Packages.buildPythonApplication rec {
+python3Packages.buildPythonApplication rec {
   pname = "xonsh";
   version = "0.11.0";
 
@@ -42,12 +42,12 @@ python310Packages.buildPythonApplication rec {
     patchShebangs .
 
     substituteInPlace scripts/xon.sh \
-      --replace 'python' "${python310Packages.python}/bin/python"
+      --replace 'python' "${python3Packages.python}/bin/python"
 
   '';
 
   makeWrapperArgs = [
-    "--prefix PYTHONPATH : ${placeholder "out"}/lib/${python310Packages.python.libPrefix}/site-packages"
+    "--prefix PYTHONPATH : ${placeholder "out"}/lib/${python3Packages.python.libPrefix}/site-packages"
   ];
 
   postInstall = ''
@@ -84,7 +84,7 @@ python310Packages.buildPythonApplication rec {
   '';
 
   checkInputs = [ glibcLocales git ] ++
-    (with python310Packages; [ pyte pytestCheckHook pytest-mock pytest-subprocess ]);
+    (with python3Packages; [ pyte pytestCheckHook pytest-mock pytest-subprocess ]);
 
   buildInputs = [
     assh
@@ -102,7 +102,7 @@ python310Packages.buildPythonApplication rec {
 
   nativeBuildInputs = buildInputs;
 
-  propagatedBuildInputs = with python310Packages; [
+  propagatedBuildInputs = with python3Packages; [
     ply
     prompt-toolkit
     pygments

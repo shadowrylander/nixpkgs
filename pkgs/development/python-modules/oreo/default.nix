@@ -25,7 +25,7 @@ buildPythonPackage rec {
   src = fetchFromGitHub {
     owner = "syvlorg";
     repo = pname;
-    rev = "main";
+    rev = "51065aa8ecea1ee309f1dd54bdef2f14ec634b47";
     sha256 = "1s6lrzzfdadn4hx8qkzy1jh9vmlly5k01dwdg4yqk4yqbqlkqfbv";
   };
 
