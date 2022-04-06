@@ -982,6 +982,14 @@ let
 
     ocsigen-toolkit = callPackage ../development/ocaml-modules/ocsigen-toolkit { };
 
+    ocsipersist = callPackage ../development/ocaml-modules/ocsipersist {};
+
+    ocsipersist-lib = callPackage ../development/ocaml-modules/ocsipersist/lib.nix { };
+
+    ocsipersist-pgsql = callPackage ../development/ocaml-modules/ocsipersist/pgsql.nix { };
+
+    ocsipersist-sqlite = callPackage ../development/ocaml-modules/ocsipersist/sqlite.nix { };
+
     octavius = callPackage ../development/ocaml-modules/octavius { };
 
     odate = callPackage ../development/ocaml-modules/odate { };
@@ -1138,18 +1146,6 @@ let
       inherit (pkgs.python3Packages) pytorch;
     };
 
-    type_conv_108_08_00 = callPackage ../development/ocaml-modules/type_conv/108.08.00.nix { };
-    type_conv_109_60_01 = callPackage ../development/ocaml-modules/type_conv/109.60.01.nix { };
-    type_conv_112_01_01 = callPackage ../development/ocaml-modules/type_conv/112.01.01.nix { };
-    type_conv =
-      if lib.versionOlder "4.02" ocaml.version
-      then type_conv_112_01_01
-      else if lib.versionOlder "4.00" ocaml.version
-      then type_conv_109_60_01
-      else if lib.versionOlder "3.12" ocaml.version
-      then type_conv_108_08_00
-      else null;
-
     ocaml-protoc = callPackage ../development/ocaml-modules/ocaml-protoc { };
 
     ocaml_extlib = ocaml_extlib-1-7-8;
@@ -1297,8 +1293,6 @@ let
 
     spelll = callPackage ../development/ocaml-modules/spelll { };
 
-    sqlite3EZ = callPackage ../development/ocaml-modules/sqlite3EZ { };
-
     srt = callPackage ../development/ocaml-modules/srt {
       inherit (pkgs) srt;
     };
@@ -1405,6 +1399,8 @@ let
     sawja = callPackage ../development/ocaml-modules/sawja { };
 
     stdint = callPackage ../development/ocaml-modules/stdint { };
+
+    unionFind = callPackage ../development/ocaml-modules/unionFind { };
 
     unstrctrd = callPackage ../development/ocaml-modules/unstrctrd { };
 
@@ -1576,7 +1572,7 @@ in let inherit (pkgs) callPackage; in rec
 
   ocamlPackages_4_14 = mkOcamlPackages (callPackage ../development/compilers/ocaml/4.14.nix { });
 
-  ocamlPackages_latest = ocamlPackages_4_13;
+  ocamlPackages_latest = ocamlPackages_4_14;
 
   ocamlPackages = ocamlPackages_4_13;
 }

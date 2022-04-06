@@ -30,6 +30,7 @@ let
   defaultOverrides = [
     # Override the version of some packages pinned in Home Assistant's setup.py and requirements_all.txt
     (mkOverride "python-slugify" "4.0.1" "sha256-aaUXdm4AwSaOW7/A0BCgqFCN4LGNMK1aH/NX+K5yQnA=")
+    (mkOverride "voluptuous" "0.12.2" "sha256-TbGsUHnbkkmCDUnIkctGYKb4yuNQSRIQq850H6v1ZRM=")
 
     # pytest-aiohttp>0.3.0 breaks home-assistant tests
     (self: super: {
@@ -54,6 +55,18 @@ let
       });
       zwave-js-server-python = super.zwave-js-server-python.overridePythonAttrs (oldAttrs: {
         doCheck = false; # requires aiohttp>=1.0.0
+      });
+    })
+
+    (self: super: {
+      hatasmota = super.hatasmota.overridePythonAttrs (oldAttrs: {
+        version = "0.3.1";
+        src = fetchFromGitHub {
+          owner = "emontnemery";
+          repo = "hatasmota";
+          rev = "0.3.1";
+          sha256 = "sha256-/am6cRhAdiqMq0u7Ed4qhIA+Em2O0gIt7HfP19+2XHw=";
+        };
       });
     })
 
