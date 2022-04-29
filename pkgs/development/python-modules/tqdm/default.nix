@@ -10,6 +10,9 @@
 , pandas
 , rich
 , tkinter
+, dask
+# , keras
+# , tensorflow
 }:
 
 buildPythonPackage rec {
@@ -37,6 +40,14 @@ buildPythonPackage rec {
     # pandas is not supported on i686 or risc-v
     lib.optional (!stdenv.isi686 && !stdenv.hostPlatform.isRiscV) pandas;
 
+  propagatedBuildInputs = [
+    dask
+
+    # `gcc' kills tensorflow process
+    # keras
+    # tensorflow
+  ];
+
   pytestFlagsArray = [
     # pytest-asyncio 0.17.0 compat; https://github.com/tqdm/tqdm/issues/1289
     "--asyncio-mode=strict"
@@ -46,6 +57,9 @@ buildPythonPackage rec {
   # Too sensitive for on Hydra.
   disabledTests = [
     "perf"
+
+    # `gcc' kills tensorflow process
+    "keras"
   ];
 
   LC_ALL="en_US.UTF-8";

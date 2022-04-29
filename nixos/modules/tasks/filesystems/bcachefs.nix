@@ -45,7 +45,7 @@ in
       system.fsPackages = [ pkgs.bcachefs-tools ];
 
       # use kernel package with bcachefs support until it's in mainline
-      boot.kernelPackages = pkgs.linuxPackages_testing_bcachefs;
+      # boot.kernelPackages = pkgs.linuxPackages_testing_bcachefs;
     }
 
     (mkIf ((elem "bcachefs" config.boot.initrd.supportedFilesystems) || (bootFs != {})) {

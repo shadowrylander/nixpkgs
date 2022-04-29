@@ -24,9 +24,9 @@ with lib; buildGo117Module rec {
     buildInputs = [ makeWrapper ];
 
     # Adapted From: https://gist.github.com/CMCDragonkai/9b65cbb1989913555c203f4fa9c23374
-    postFixup = ''
-        wrapProgram $out/bin/soft --set PATH ${lib.makeBinPath [ git ]}
-    '';
+    # postFixup = ''
+    #     wrapProgram $out/bin/soft --set PATH ${lib.makeBinPath [ git ]}
+    # '';
 
 	meta = {
 		homepage = https://github.com/charmbracelet/soft-serve;
