@@ -4,8 +4,8 @@
 
     src = fetchgit {
         url = "https://github.com/sylvorg/settings.git";
-        rev = "19f6aac9dc3712ed64806cc0db591c1c68367e4b";
-    	sha256 = "0747x0xk8xdmzcpz43m6f578k1dpvxqlgrjxbj7n01kx6fism9p5";
+        rev = "ddbaa2b0a16fa0bed106ba323719e6c19bdf5d84";
+    	sha256 = "0il0a5a9k42sjkdf8yb5x920nqs7adafmycznjlqlnvaz975z93d";
     };
 
     phases = [ "installPhase" ];
