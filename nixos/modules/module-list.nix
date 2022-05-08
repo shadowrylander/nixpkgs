@@ -172,6 +172,7 @@
   ./programs/java.nix
   ./programs/k40-whisperer.nix
   ./programs/kclock.nix
+  ./programs/k3b.nix
   ./programs/kdeconnect.nix
   ./programs/kbdlight.nix
   ./programs/less.nix
@@ -195,7 +196,6 @@
   ./programs/partition-manager.nix
   ./programs/plotinus.nix
   ./programs/proxychains.nix
-  ./programs/phosh.nix
   ./programs/qt5ct.nix
   ./programs/screen.nix
   ./programs/sedutil.nix
@@ -205,7 +205,6 @@
   ./programs/spacefm.nix
   ./programs/singularity.nix
   ./programs/ssh.nix
-  ./programs/ssmtp.nix
   ./programs/sysdig.nix
   ./programs/systemtap.nix
   ./programs/starship.nix
@@ -411,6 +410,7 @@
   ./services/display-managers/greetd.nix
   ./services/editors/emacs.nix
   ./services/editors/infinoted.nix
+  ./services/editors/haste.nix
   ./services/finance/odoo.nix
   ./services/games/asf.nix
   ./services/games/crossfire-server.nix
@@ -460,6 +460,7 @@
   ./services/hardware/udisks2.nix
   ./services/hardware/upower.nix
   ./services/hardware/usbmuxd.nix
+  ./services/hardware/usbrelayd.nix
   ./services/hardware/thermald.nix
   ./services/hardware/undervolt.nix
   ./services/hardware/vdr.nix
@@ -598,7 +599,7 @@
   ./services/misc/osrm.nix
   ./services/misc/owncast.nix
   ./services/misc/packagekit.nix
-  ./services/misc/paperless-ng.nix
+  ./services/misc/paperless.nix
   ./services/misc/parsoid.nix
   ./services/misc/plex.nix
   ./services/misc/plikd.nix
@@ -662,6 +663,7 @@
   ./services/monitoring/longview.nix
   ./services/monitoring/mackerel-agent.nix
   ./services/monitoring/metricbeat.nix
+  ./services/monitoring/mimir.nix
   ./services/monitoring/monit.nix
   ./services/monitoring/munin.nix
   ./services/monitoring/nagios.nix
@@ -735,12 +737,14 @@
   ./services/networking/blocky.nix
   ./services/networking/charybdis.nix
   ./services/networking/cjdns.nix
+  ./services/networking/cloudflare-dyndns.nix
   ./services/networking/cntlm.nix
   ./services/networking/connman.nix
   ./services/networking/consul.nix
   ./services/networking/coredns.nix
   ./services/networking/corerad.nix
   ./services/networking/coturn.nix
+  ./services/networking/create_ap.nix
   ./services/networking/croc.nix
   ./services/networking/dante.nix
   ./services/networking/ddclient.nix
@@ -971,6 +975,7 @@
   ./services/security/hockeypuck.nix
   ./services/security/hologram-server.nix
   ./services/security/hologram-agent.nix
+  ./services/security/kanidm.nix
   ./services/security/munge.nix
   ./services/security/nginx-sso.nix
   ./services/security/oauth2_proxy.nix
@@ -1181,12 +1186,14 @@
   ./system/boot/stage-2.nix
   ./system/boot/systemd.nix
   ./system/boot/systemd/coredump.nix
+  ./system/boot/systemd/initrd-secrets.nix
+  ./system/boot/systemd/initrd.nix
   ./system/boot/systemd/journald.nix
   ./system/boot/systemd/logind.nix
   ./system/boot/systemd/nspawn.nix
+  ./system/boot/systemd/shutdown.nix
   ./system/boot/systemd/tmpfiles.nix
   ./system/boot/systemd/user.nix
-  ./system/boot/systemd/initrd.nix
   ./system/boot/timesyncd.nix
   ./system/boot/tmp.nix
   ./system/etc/etc-activation.nix
@@ -1240,6 +1247,7 @@
   ./virtualisation/amazon-options.nix
   ./virtualisation/hyperv-guest.nix
   ./virtualisation/kvmgt.nix
+  ./virtualisation/openstack-options.nix
   ./virtualisation/openvswitch.nix
   ./virtualisation/parallels-guest.nix
   ./virtualisation/podman/default.nix
@@ -1249,6 +1257,7 @@
   ./virtualisation/virtualbox-guest.nix
   ./virtualisation/virtualbox-host.nix
   ./virtualisation/vmware-guest.nix
+  ./virtualisation/vmware-host.nix
   ./virtualisation/waydroid.nix
   ./virtualisation/xen-dom0.nix
   ./virtualisation/xe-guest-utilities.nix

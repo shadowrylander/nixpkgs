@@ -4,8 +4,8 @@
 
     src = fetchgit {
         url = "https://github.com/sylvorg/settings.git";
-        rev = "ddbaa2b0a16fa0bed106ba323719e6c19bdf5d84";
-    	sha256 = "0il0a5a9k42sjkdf8yb5x920nqs7adafmycznjlqlnvaz975z93d";
+        rev = "b93d05bb7f6b9bdfea34473d55d96b730226435e";
+    	sha256 = "09kfmwbxxsjf1hg50wqf5lyv9cgpfl2cx6z0xw617zkaiiriix93";
     };
 
     phases = [ "installPhase" ];
@@ -13,6 +13,6 @@
     installPhase = ''
         mkdir --parents $out
         cp -r $src $out/bin
-        chmod +x $out/bin/*.sh
+        chmod +x $out/bin/*
     '';
 }

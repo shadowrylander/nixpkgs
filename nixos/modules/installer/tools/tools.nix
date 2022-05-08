@@ -177,6 +177,10 @@ in
         # users.users.jane = {
         #   isNormalUser = true;
         #   extraGroups = [ "wheel" ]; # Enable ‘sudo’ for the user.
+        #   packages = with pkgs; [
+        #     firefox
+        #     thunderbird
+        #   ];
         # };
 
         # List packages installed in system profile. To search, run:
@@ -184,7 +188,6 @@ in
         # environment.systemPackages = with pkgs; [
         #   vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
         #   wget
-        #   firefox
         # ];
 
         # Some programs need SUID wrappers, can be configured further or are
@@ -205,6 +208,11 @@ in
         # networking.firewall.allowedUDPPorts = [ ... ];
         # Or disable the firewall altogether.
         # networking.firewall.enable = false;
+
+        # Copy the NixOS configuration file and link it from the resulting system
+        # (/run/current-system/configuration.nix). This is useful in case you
+        # accidentally delete configuration.nix.
+        # system.copySystemConfiguration = true;
 
         # This value determines the NixOS release from which the default
         # settings for stateful data, like file locations and database versions

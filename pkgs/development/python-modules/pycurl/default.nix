@@ -50,16 +50,6 @@ buildPythonPackage rec {
   '';
 
   disabledTests = [
-    # libcurl stopped passing the reason phrase from the HTTP status line
-    # https://github.com/pycurl/pycurl/issues/679
-    "test_failonerror"
-    "test_failonerror_status_line_invalid_utf8_python3"
-    # bottle>=0.12.17 escapes utf8 properly, so these test don't work anymore
-    # https://github.com/pycurl/pycurl/issues/669
-    "test_getinfo_content_type_invalid_utf8_python3"
-    "test_getinfo_cookie_invalid_utf8_python3"
-    "test_getinfo_raw_content_type_invalid_utf8"
-    "test_getinfo_raw_cookie_invalid_utf8"
     # tests that require network access
     "test_keyfunction"
     "test_keyfunction_bogus_return"
@@ -71,11 +61,6 @@ buildPythonPackage rec {
     "test_libcurl_ssl_gnutls"
     # AssertionError: assert 'crypto' in ['curl']
     "test_ssl_in_static_libs"
-    # pycurl.error: (27, '')
-    "test_getinfo_raw_certinfo"
-    "test_request_with_certinfo"
-    "test_request_with_verifypeer"
-    "test_request_without_certinfo"
   ];
 
   meta = with lib; {

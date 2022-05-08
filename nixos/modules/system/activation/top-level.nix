@@ -59,7 +59,10 @@ let
       ${if config.boot.initrd.systemd.enable then ''
         cp ${config.system.build.bootStage2} $out/prepare-root
         substituteInPlace $out/prepare-root --subst-var-by systemConfig $out
-        ln -s "$systemd/lib/systemd/systemd" $out/init
+        # This must not be a symlink or the abs_path of the grub builder for the tests
+        # will resolve the symlink and we end up with a path that doesn't point to a
+        # system closure.
+        cp "$systemd/lib/systemd/systemd" $out/init
       '' else ''
         cp ${config.system.build.bootStage2} $out/init
         substituteInPlace $out/init --subst-var-by systemConfig $out
@@ -160,7 +163,7 @@ in
 
     specialisation = mkOption {
       default = {};
-      example = lib.literalExpression "{ fewJobsManyCores.configuration = { nix.settings = { core = 0; max-jobs = 1; }; }";
+      example = lib.literalExpression "{ fewJobsManyCores.configuration = { nix.settings = { core = 0; max-jobs = 1; }; }; }";
       description = ''
         Additional configurations to build. If
         <literal>inheritParentConfig</literal> is true, the system

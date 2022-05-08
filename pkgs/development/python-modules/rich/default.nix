@@ -3,7 +3,6 @@
 , fetchFromGitHub
 , pythonOlder
 , CommonMark
-, colorama
 , dataclasses
 , poetry-core
 , pygments
@@ -28,11 +27,11 @@ buildPythonPackage rec {
 
   propagatedBuildInputs = [
     CommonMark
-    colorama
     pygments
-    typing-extensions
   ] ++ lib.optional (pythonOlder "3.7") [
     dataclasses
+  ] ++ lib.optional (pythonOlder "3.9") [
+    typing-extensions
   ];
 
   checkInputs = [
