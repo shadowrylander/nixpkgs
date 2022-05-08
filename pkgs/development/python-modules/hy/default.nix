@@ -1,6 +1,7 @@
 { lib
-, pythonOlder
+, astor
 , buildPythonPackage
+, colorama
 , fetchFromGitHub
 , funcparserlib
 , hy
