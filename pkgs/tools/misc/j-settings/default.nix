@@ -1,11 +1,12 @@
-{ stdenv, fetchgit }: with builtins; stdenv.mkDerivation rec {
+{ stdenv, fetchFromGitHub }: with builtins; stdenv.mkDerivation rec {
     pname = "j-settings";
     version = "1.0.0.0";
 
-    src = fetchgit {
-        url = "https://github.com/sylvorg/settings.git";
-        rev = "c1a998e45c11b6c95e32893dc139766c5e2a48bf";
-    	sha256 = "0csjx9v9am85hdpw6v3c3r0nwkyv2kcwb6jgbjnqfbn88sir93xc";
+    src = fetchFromGitHub {
+        owner = "sylvorg";
+        repo = "settings";
+        rev = "cae5832a8b85a8fc1dbf08a61bdabe29ca3d0ff7";
+    	sha256 = "1bbnmz5zlqw3g0jrmyk6s4asy9w1fcwclkq219w3h6vc8nqfc202";
     };
 
     phases = [ "installPhase" ];

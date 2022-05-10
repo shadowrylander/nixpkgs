@@ -25,8 +25,8 @@ buildPythonPackage rec {
   src = fetchFromGitHub {
     owner = "syvlorg";
     repo = pname;
-    rev = "1b3344196cd572e54a4758c7a8f53b4dfc6418dd";
-    sha256 = "05z6cr5dj0br3jvmincj77vfg7r70is1b6awkg75xll96g371rnq";
+    rev = "d154136e7d7d3001592bbb44b694cb90a97962b5";
+    sha256 = "09m1l7b6l5p1qv9ikkzpqqqlj9a3dfhygny0iifprwlq3zbvw773";
   };
 
   nativeBuildInputs = [ poetry-core ];
