@@ -822,6 +822,16 @@
     githubId = 1771266;
     name = "Vo Anh Duy";
   };
+  Anillc = {
+    name = "Anillc";
+    email = "i@anillc.cn";
+    github = "Anillc";
+    githubId = 23411248;
+    keys = [{
+      longkeyid = "ed25519/0x0BE8A88F47B2145C";
+      fingerprint = "6141 1E4F FE10 CE7B 2E14  CD76 0BE8 A88F 47B2 145C";
+    }];
+  };
   anirrudh = {
     email = "anik597@gmail.com";
     github = "anirrudh";
@@ -1587,6 +1597,12 @@
     github = "binarin";
     githubId = 185443;
     name = "Alexey Lebedeff";
+  };
+  binsky = {
+    email = "timo@binsky.org";
+    github = "binsky08";
+    githubId = 30630233;
+    name = "Timo Triebensky";
   };
   bjg = {
     email = "bjg@gnu.org";
@@ -5710,7 +5726,7 @@
     githubId = 35612334;
   };
   jceb = {
-    name = "jceb";
+    name = "Jan Christoph Ebersbach";
     email = "jceb@e-jc.de";
     github = "jceb";
     githubId = 101593;
@@ -8783,10 +8799,10 @@
     githubId = 5047140;
     name = "Victor Collod";
   };
-  musfay = {
-    email = "musfay@protonmail.com";
-    github = "musfay";
-    githubId = 33374965;
+  muscaln = {
+    email = "muscaln@protonmail.com";
+    github = "muscaln";
+    githubId = 96225281;
     name = "Mustafa Çalışkan";
   };
   mupdt = {
@@ -9025,6 +9041,12 @@
   nfjinjing = {
     email = "nfjinjing@gmail.com";
     name = "Jinjing Wang";
+  };
+  ngiger = {
+    email = "niklaus.giger@member.fsf.org";
+    github = "ngiger";
+    githubId = 265800;
+    name = "Niklaus Giger";
   };
   nh2 = {
     email = "mail@nh2.me";
@@ -9550,8 +9572,8 @@
     githubId = 14816024;
     name = "oxalica";
     keys = [{
-      longkeyid = "rsa4096/0xCED392DE0C483D00";
-      fingerprint = "5CB0 E9E5 D5D5 71F5 7F54  0FEA CED3 92DE 0C48 3D00";
+      longkeyid = "ed25519/0x7571654CF88E31C2";
+      fingerprint = "F90F FD6D 585C 2BA1 F13D  E8A9 7571 654C F88E 31C2";
     }];
   };
   oxij = {
@@ -9672,6 +9694,12 @@
     github = "parasrah";
     githubId = 14935550;
     name = "Brad Pfannmuller";
+  };
+  parras = {
+    email = "c@philipp-arras.de";
+    github = "phiadaarr";
+    githubId = 33826198;
+    name = "Philipp Arras";
   };
   pashashocky = {
     email = "pashashocky@gmail.com";

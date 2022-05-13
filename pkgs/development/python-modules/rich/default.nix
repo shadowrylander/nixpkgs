@@ -12,15 +12,15 @@
 
 buildPythonPackage rec {
   pname = "rich";
-  version = "12.0.0";
+  version = "12.3.0";
   format = "pyproject";
   disabled = pythonOlder "3.6";
 
   src = fetchFromGitHub {
     owner = "syvlorg";
     repo = pname;
-    rev = "master";
-    sha256 = "1pag703gc0ga6mw9v033zg2xjk2i2v26q8rj1p2988p78lqibp3p";
+    rev = "a6c20ce10adc7b8cfacfd74e0b025e8c2c8c19eb";
+    sha256 = "1ld3ihvssfk56240wignmd6hv7gynid5wmcynl58ng8sbfywm3ly";
   };
 
   nativeBuildInputs = [ poetry-core ];
