@@ -5004,6 +5004,8 @@ in {
 
   losant-rest = callPackage ../development/python-modules/losant-rest { };
 
+  lrcalc-python = callPackage ../development/python-modules/lrcalc-python { };
+
   lru-dict = callPackage ../development/python-modules/lru-dict { };
 
   lsassy = callPackage ../development/python-modules/lsassy { };
@@ -5724,6 +5726,10 @@ in {
   nkdfu = callPackage ../development/python-modules/nkdfu { };
 
   nltk = callPackage ../development/python-modules/nltk { };
+
+  nnpdf = toPythonModule (pkgs.nnpdf.override {
+    python3 = python;
+  });
 
   nmapthon2 = callPackage ../development/python-modules/nmapthon2 { };
 
@@ -8988,6 +8994,8 @@ in {
 
   repocheck = callPackage ../development/python-modules/repocheck { };
 
+  reportengine = callPackage ../development/python-modules/reportengine { };
+
   reportlab = callPackage ../development/python-modules/reportlab { };
 
   repoze_lru = callPackage ../development/python-modules/repoze_lru { };
@@ -10197,6 +10205,8 @@ in {
 
   tern = callPackage ../development/python-modules/tern { };
 
+  tesla-powerwall = callPackage ../development/python-modules/tesla-powerwall { };
+
   tesla-wall-connector = callPackage ../development/python-modules/tesla-wall-connector { };
 
   teslajsonpy = callPackage ../development/python-modules/teslajsonpy { };
@@ -10775,6 +10785,10 @@ in {
   validictory = callPackage ../development/python-modules/validictory { };
 
   validobj = callPackage ../development/python-modules/validobj { };
+
+  validphys2 = callPackage ../development/python-modules/validphys2 { };
+
+  vallox-websocket-api = callPackage ../development/python-modules/vallox-websocket-api { };
 
   variants = callPackage ../development/python-modules/variants { };
 
