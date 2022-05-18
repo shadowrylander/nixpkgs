@@ -1,3 +1,5 @@
+# Adapted From: https://github.com/NixOS/nixpkgs/issues/14671#issuecomment-1016376290
+
 { lib, fetchFromGitHub, buildGoModule }:
 
 with lib;
