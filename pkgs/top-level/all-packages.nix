@@ -1437,7 +1437,6 @@ with pkgs;
   ares = callPackage ../applications/emulators/bsnes/ares { };
 
   bsnes-hd = callPackage ../applications/emulators/bsnes/bsnes-hd {
-    inherit (gnome2) gtksourceview;
     inherit (darwin.apple_sdk.frameworks) Cocoa OpenAL;
   };
 
@@ -2585,6 +2584,8 @@ with pkgs;
   bandwhich = callPackage ../tools/networking/bandwhich {
     inherit (darwin.apple_sdk.frameworks) Security;
   };
+
+  badrobot = callPackage ../tools/security/badrobot {};
 
   bao = callPackage ../tools/security/bao {};
 
@@ -7777,6 +7778,10 @@ with pkgs;
   moz-phab = python3Packages.callPackage ../applications/misc/moz-phab { };
 
   mtail = callPackage ../servers/monitoring/mtail { };
+
+  mujmap = callPackage ../applications/networking/mujmap {
+    inherit (darwin.apple_sdk.frameworks) Security;
+  };
 
   multitail = callPackage ../tools/misc/multitail { };
 
@@ -16894,7 +16899,7 @@ with pkgs;
 
   cpp-hocon = callPackage ../development/libraries/cpp-hocon { };
 
-  cpp-ipfs-api = callPackage ../development/libraries/cpp-ipfs-api { };
+  cpp-ipfs-http-client = callPackage ../development/libraries/cpp-ipfs-http-client { };
 
   cpp-netlib = callPackage ../development/libraries/cpp-netlib {
     boost = boost169; # fatal error: 'boost/asio/stream_socket_service.hpp' file not found
@@ -20303,6 +20308,8 @@ with pkgs;
 
   rinutils = callPackage ../development/libraries/rinutils { };
 
+  rtrlib = callPackage ../development/libraries/rtrlib { };
+
   kissfft = callPackage ../development/libraries/kissfft { };
 
   lambdabot = callPackage ../development/tools/haskell/lambdabot {
@@ -21597,6 +21604,8 @@ with pkgs;
   dig = bind.dnsutils;
 
   bird = callPackage ../servers/bird { };
+
+  bloat = callPackage ../servers/bloat { };
 
   bosun = callPackage ../servers/monitoring/bosun { };
 
@@ -23669,6 +23678,8 @@ with pkgs;
   rtsp-simple-server = callPackage ../servers/rtsp-simple-server { };
 
   rtkit = callPackage ../os-specific/linux/rtkit { };
+
+  rt-tests = callPackage ../os-specific/linux/rt-tests { };
 
   rt5677-firmware = callPackage ../os-specific/linux/firmware/rt5677 { };
 
@@ -25829,6 +25840,7 @@ with pkgs;
   drawing = callPackage ../applications/graphics/drawing { };
 
   drawio = callPackage ../applications/graphics/drawio {};
+  drawio-headless = callPackage ../applications/graphics/drawio/headless.nix { };
 
   drawpile = libsForQt5.callPackage ../applications/graphics/drawpile { };
   drawpile-server-headless = libsForQt5.callPackage ../applications/graphics/drawpile {
