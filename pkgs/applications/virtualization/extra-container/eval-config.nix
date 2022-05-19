@@ -11,6 +11,7 @@ let
     "${nixos}/modules/misc/nixpkgs.nix"
     "${nixos}/modules/system/activation/top-level.nix"
     "${nixos}/modules/system/etc/etc.nix"
+    "${nixos}/modules/system/var/var.nix"
     "${nixos}/modules/system/boot/systemd.nix"
     nixosContainerModule
     dummyOptions

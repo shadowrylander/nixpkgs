@@ -66,7 +66,7 @@ in {
       '';
     };
 
-    state = mkOption {
+    state.text = mkOption {
       type = types.nullOr types.lines;
       default = null;
       description = ''
@@ -77,7 +77,7 @@ in {
       '';
     };
 
-    stateFile = mkOption {
+    state.file = mkOption {
       example = "/private/tailscale/tailscaled.state";
       type = with types; nullOr nonEmptyStr;
       default = null;
@@ -86,8 +86,8 @@ in {
       '';
     };
 
-    stateDir = mkOption {
-      example = "/private/tailscale/tailscaled.state";
+    state.dir = mkOption {
+      example = "/private/tailscale";
       type = with types; nullOr nonEmptyStr;
       default = null;
       description = ''
@@ -95,27 +95,16 @@ in {
       '';
     };
 
-    magicDNS = mkOption {
-      type = types.attrs;
-      default = {  };
+    magicDNS.enable = mkEnableOption "MagicDNS";
+    magicDNS.searchDomains = mkOption {
+      type = types.nonEmptyListOf types.str;
+      default = [ ];
+      description = "MagicDNS search domains.";
     };
-
-    magicDNS = {
-      enable = mkOption {
-        type = types.bool;
-        default = false;
-        description = "Whether to enable MagicDNS.";
-      };
-      searchDomains = mkOption {
-        type = types.nonEmptyListOf types.str;
-        default = [ ];
-        description = "MagicDNS search domains.";
-      };
-      nameservers = mkOption {
-        type = types.nonEmptyListOf types.str;
-        default = [ ];
-        description = "MagicDNS nameservers.";
-      };
+    magicDNS.nameservers = mkOption {
+      type = types.nonEmptyListOf types.str;
+      default = [ ];
+      description = "MagicDNS nameservers.";
     };
 
     acceptDNS = mkOption {
@@ -135,6 +124,18 @@ in {
   config = mkIf cfg.enable {
     warnings = optional (firewallOn && rpfIsStrict) "Strict reverse path filtering breaks Tailscale exit node use and some subnet routing setups. Consider setting `networking.firewall.checkReversePath` = 'loose'";
     environment.systemPackages = [ cfg.package ]; # for the CLI
+    environment.var = let
+      nullText = cfg.state.text != null;
+      nullFile = cfg.state.file != null;
+      nullDir = cfg.state.dir != null;
+    in if ((count (state: state != null) (with cfg.state; [ text file dir ])) > 1)
+       then (throw "Sorry; only one of `config.services.tailscale.state.{text|file|dir}' may be set!")
+       else (optionalAttrs (nullText || nullFile || nullDir) {
+         "lib/tailscale/tailscaled.state" = mkIf (nullText || nullFile) {
+           "${if (nullText) then "text" else "source"}" = if (nullText) then cfg.state.text else cfg.state.file;
+         };
+         "lib/tailscale" = mkIf (nullDir) { source = cfg.state.dir; };
+    });
     networking = {
       nameservers = if cfg.magicDNS.enable then (flatten [ cfg.magicDNS.nameservers "100.100.100.100" ]) else [];
       search = if cfg.magicDNS.enable then cfg.magicDNS.searchDomains else [];
@@ -159,23 +160,6 @@ in {
           ] ++ (lib.optionals (cfg.permitCertUid != null) [
             "TS_PERMIT_CERT_UID=${cfg.permitCertUid}"
           ]);
-          ${if (cfg.state != null || cfg.stateFile != null || cfg.stateDir != null) then "ExecStartPre" else null} = let
-            varDir = "/var/lib/";
-            stateDir = "${varDir}/tailscale/";
-            stateFile = "${stateDir}/tailscaled.state";
-            command = if (cfg.state != null) then "mkdir -p ${stateDir}; echo '${cfg.state}' > ${stateFile}"
-                        else if (cfg.stateFile != null) then "mkdir -p ${stateDir}; ln -sf ${cfg.stateFile} ${stateFile}"
-                        else "mkdir -p ${varDir}; ln -sfn ${cfg.stateDir} ${stateDir}";
-          in ''
-              if [ -L ${stateDir} || -L ${stateFile} ]; then
-                :
-              else if [ -d ${stateDir} ]; then
-                mv ${stateDir} ${stateDir}.bak
-                ${command}
-              else
-                ${command}
-              fi
-          '';
         };
         # Restart tailscaled with a single `systemctl restart` at the
         # end of activation, rather than a `stop` followed by a later

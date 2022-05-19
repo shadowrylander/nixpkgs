@@ -86,20 +86,6 @@ python3Packages.buildPythonApplication rec {
   checkInputs = [ glibcLocales git ] ++
     (with python3Packages; [ pyte pytestCheckHook pytest-mock pytest-subprocess ]);
 
-  buildInputs = [
-    assh
-    direnv
-    exa
-    fasd
-    fd
-    fzf
-    hub
-    mosh
-    sqlite
-    starship
-    zoxide
-  ];
-
   nativeBuildInputs = buildInputs;
 
   propagatedBuildInputs = with python3Packages; [
