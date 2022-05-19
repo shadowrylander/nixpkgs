@@ -50,10 +50,10 @@ in {
       type = types.nullOr types.nonEmptyStr;
       default = null;
       description = ''
-      Authentication key.
+        Authentication key.
 
-      Warning: Consider using authfile instead if you do not
-      want to store the key in the world-readable Nix store.
+        Warning: Consider using authfile instead if you do not
+        want to store the key in the world-readable Nix store.
       '';
     };
 
@@ -64,6 +64,64 @@ in {
       description = ''
         File with authentication key.
       '';
+    };
+
+    state = mkOption {
+      type = types.nullOr types.lines;
+      default = null;
+      description = ''
+        The state of tailscale, written to /var/lib/tailscale/tailscaled.state
+
+        Warning: Consider using stateFile instead if you do not
+        want to store the state in the world-readable Nix store.
+      '';
+    };
+
+    stateFile = mkOption {
+      example = "/private/tailscale/tailscaled.state";
+      type = with types; nullOr nonEmptyStr;
+      default = null;
+      description = ''
+        File with the state of tailscale
+      '';
+    };
+
+    stateDir = mkOption {
+      example = "/private/tailscale/tailscaled.state";
+      type = with types; nullOr nonEmptyStr;
+      default = null;
+      description = ''
+        Directory with the state file (tailscaled.state) of tailscale
+      '';
+    };
+
+    magicDNS = mkOption {
+      type = types.attrs;
+      default = {  };
+    };
+
+    magicDNS = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Whether to enable MagicDNS.";
+      };
+      searchDomains = mkOption {
+        type = types.nonEmptyListOf types.str;
+        default = [ ];
+        description = "MagicDNS search domains.";
+      };
+      nameservers = mkOption {
+        type = types.nonEmptyListOf types.str;
+        default = [ ];
+        description = "MagicDNS nameservers.";
+      };
+    };
+
+    acceptDNS = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Whether this tailscale instance will use the preconfigured DNS servers at .";
     };
 
     package = mkOption {
@@ -77,9 +135,13 @@ in {
   config = mkIf cfg.enable {
     warnings = optional (firewallOn && rpfIsStrict) "Strict reverse path filtering breaks Tailscale exit node use and some subnet routing setups. Consider setting `networking.firewall.checkReversePath` = 'loose'";
     environment.systemPackages = [ cfg.package ]; # for the CLI
-    networking.firewall = {
-      trustedInterfaces = if cfg.trustInterface then [ cfg.interfaceName ] else [];
-      allowedUDPPorts = if cfg.openFirewall then [ cfg.port ] else [];
+    networking = {
+      nameservers = if cfg.magicDNS.enable then (flatten [ cfg.magicDNS.nameservers "100.100.100.100" ]) else [];
+      search = if cfg.magicDNS.enable then cfg.magicDNS.searchDomains else [];
+      firewall = {
+        trustedInterfaces = if cfg.trustInterface then [ cfg.interfaceName ] else [];
+        allowedUDPPorts = if cfg.openFirewall then [ cfg.port ] else [];
+      };
     };
     systemd.packages = [ cfg.package ];
     systemd.services = {
@@ -90,12 +152,31 @@ in {
           pkgs.procps     # for collecting running services (opt-in feature)
           pkgs.glibc      # for `getent` to look up user shells
         ];
-        serviceConfig.Environment = [
-          "PORT=${toString cfg.port}"
-          ''"FLAGS=--tun ${lib.escapeShellArg cfg.interfaceName}"''
-        ] ++ (lib.optionals (cfg.permitCertUid != null) [
-          "TS_PERMIT_CERT_UID=${cfg.permitCertUid}"
-        ]);
+        serviceConfig = {
+          Environment = [
+            "PORT=${toString cfg.port}"
+            ''"FLAGS=--tun ${lib.escapeShellArg cfg.interfaceName}"''
+          ] ++ (lib.optionals (cfg.permitCertUid != null) [
+            "TS_PERMIT_CERT_UID=${cfg.permitCertUid}"
+          ]);
+          ${if (cfg.state != null || cfg.stateFile != null || cfg.stateDir != null) then "ExecStartPre" else null} = let
+            varDir = "/var/lib/";
+            stateDir = "${varDir}/tailscale/";
+            stateFile = "${stateDir}/tailscaled.state";
+            command = if (cfg.state != null) then "mkdir -p ${stateDir}; echo '${cfg.state}' > ${stateFile}"
+                        else if (cfg.stateFile != null) then "mkdir -p ${stateDir}; ln -sf ${cfg.stateFile} ${stateFile}"
+                        else "mkdir -p ${varDir}; ln -sfn ${cfg.stateDir} ${stateDir}";
+          in ''
+              if [ -L ${stateDir} || -L ${stateFile} ]; then
+                :
+              else if [ -d ${stateDir} ]; then
+                mv ${stateDir} ${stateDir}.bak
+                ${command}
+              else
+                ${command}
+              fi
+          '';
+        };
         # Restart tailscaled with a single `systemctl restart` at the
         # end of activation, rather than a `stop` followed by a later
         # `start`. Activation over Tailscale can hang for tens of
@@ -109,7 +190,7 @@ in {
         # linux distros.
         stopIfChanged = false;
       };
-      tailscale-autoconnect = mkIf (cfg.authkey != null || cfg.authfile != null) {
+      tailscale-autoconnect = {
         description = "Automatic connection to Tailscale";
 
         # make sure tailscale is running before trying to connect to tailscale
@@ -134,8 +215,10 @@ in {
 
             # otherwise authenticate with tailscale
             echo "Authenticating with Tailscale ..."
-            ${cfg.package}/bin/tailscale up -authkey \
-              ${(if (cfg.authkey != null) then cfg.authkey else (readFile cfg.authfile))}
+            ${cfg.package}/bin/tailscale up \
+              --accept-dns ${if cfg.acceptDNS then "true" else "false"}
+              ${optionalString (cfg.authkey != null || cfg.authfile != null)
+                (if (cfg.authkey != null) then "--authkey ${cfg.authkey}" else "--authkey ${readFile cfg.authfile}")}
           '';
         };
       };
