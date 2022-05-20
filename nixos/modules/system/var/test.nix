@@ -12,10 +12,10 @@
 let
   node = evalMinimalConfig ({ config, ... }: {
     imports = [ pkgsModule ../var/var.nix ];
-    environment.var."passwd" = {
+    environment.vard."passwd" = {
       text = passwdText;
     };
-    environment.var."hosts" = {
+    environment.vard."hosts" = {
       text = hostsText;
       mode = "0751";
     };

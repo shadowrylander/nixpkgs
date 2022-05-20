@@ -6,7 +6,7 @@ in {
   imports = [ ./var.nix ];
 
   config = {
-    system.activationScripts.var =
+    system.activationScripts.vard =
       stringAfter [ "users" "groups" ] config.system.build.varActivationCommands;
   };
 }

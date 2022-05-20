@@ -6,7 +6,7 @@ with lib;
 
 let
 
-  var' = filter (f: f.enable) (attrValues config.environment.var);
+  var' = filter (f: f.enable) (attrValues config.environment.vard);
 
   var = pkgs.runCommandLocal "var" {
     # This is needed for the systemd module
@@ -72,7 +72,7 @@ in
 
   options = {
 
-    environment.var = mkOption {
+    environment.vard = mkOption {
       default = {};
       example = literalExpression ''
         { example-configuration-file =

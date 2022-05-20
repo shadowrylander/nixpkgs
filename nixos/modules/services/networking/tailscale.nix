@@ -40,6 +40,12 @@ in {
       description = "Whether to automatically trust the specified interface in the firewall.";
     };
 
+    strictReversePathFiltering = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Whether to enable strict reverse path filtering.";
+    };
+
     permitCertUid = mkOption {
       type = types.nullOr types.nonEmptyStr;
       default = null;
@@ -122,24 +128,24 @@ in {
   };
 
   config = mkIf cfg.enable {
+    assertions = optional ((count (state: state != null) (with cfg.state; [ text file dir ])) > 1) "Sorry; only one of `config.services.tailscale.state.{text|file|dir}' may be set!";
     warnings = optional (firewallOn && rpfIsStrict) "Strict reverse path filtering breaks Tailscale exit node use and some subnet routing setups. Consider setting `networking.firewall.checkReversePath` = 'loose'";
     environment.systemPackages = [ cfg.package ]; # for the CLI
-    environment.var = let
+    environment.vard = let
       nullText = cfg.state.text != null;
       nullFile = cfg.state.file != null;
       nullDir = cfg.state.dir != null;
-    in if ((count (state: state != null) (with cfg.state; [ text file dir ])) > 1)
-       then (throw "Sorry; only one of `config.services.tailscale.state.{text|file|dir}' may be set!")
-       else (optionalAttrs (nullText || nullFile || nullDir) {
-         "lib/tailscale/tailscaled.state" = mkIf (nullText || nullFile) {
-           "${if (nullText) then "text" else "source"}" = if (nullText) then cfg.state.text else cfg.state.file;
-         };
-         "lib/tailscale" = mkIf (nullDir) { source = cfg.state.dir; };
-    });
+    in optionalAttrs (nullText || nullFile || nullDir) {
+      "lib/tailscale/tailscaled.state" = mkIf (nullText || nullFile) {
+        ${if nullText then "text" else "source"} = if (nullText) then cfg.state.text else cfg.state.file;
+      };
+      "lib/tailscale" = mkIf nullDir { source = cfg.state.dir; };
+    };
     networking = {
       nameservers = if cfg.magicDNS.enable then (flatten [ cfg.magicDNS.nameservers "100.100.100.100" ]) else [];
       search = if cfg.magicDNS.enable then cfg.magicDNS.searchDomains else [];
       firewall = {
+        ${if cfg.strictReversePathFiltering then null else "checkReversePath"} = "loose";
         trustedInterfaces = if cfg.trustInterface then [ cfg.interfaceName ] else [];
         allowedUDPPorts = if cfg.openFirewall then [ cfg.port ] else [];
       };

@@ -9,13 +9,7 @@ let
 in
 {
   options.programs.mosh = {
-    enable = mkOption {
-      description = ''
-        Whether to enable mosh. Note, this will open ports in your firewall!
-      '';
-      default = false;
-      type = lib.types.bool;
-    };
+    enable = mkEnableOption "mosh";
     withUtempter = mkOption {
       description = ''
         Whether to enable libutempter for mosh.
@@ -25,11 +19,16 @@ in
       default = true;
       type = lib.types.bool;
     };
+    openFirewall = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Whether to automatically open the specified port in the firewall.";
+    };
   };
 
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [ mosh ];
-    networking.firewall.allowedUDPPortRanges = [ { from = 60000; to = 61000; } ];
+    networking.firewall.allowedUDPPortRanges = if cfg.openFirewall then [ { from = 60000; to = 61000; } ] else [];
     security.wrappers = mkIf cfg.withUtempter {
       utempter = {
         source = "${pkgs.libutempter}/lib/utempter/utempter";
