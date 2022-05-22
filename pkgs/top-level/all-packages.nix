@@ -34652,6 +34652,8 @@ with pkgs;
 
   prow = callPackage ../applications/networking/cluster/prow { };
 
+  tailapi = callPackage ../tools/misc/tailapi { };
+
   tagref = callPackage ../tools/misc/tagref { };
 
   tellico = libsForQt5.callPackage ../applications/misc/tellico { };

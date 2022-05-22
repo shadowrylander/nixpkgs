@@ -72,6 +72,46 @@ in {
       '';
     };
 
+    api.key = mkOption {
+      type = types.nullOr types.nonEmptyStr;
+      default = null;
+      description = ''
+        API key.
+
+        Warning: Consider using api.file instead if you do not
+        want to store the key in the world-readable Nix store.
+      '';
+    };
+    api.file = mkOption {
+      example = "/private/tailscale_api_key";
+      type = with types; nullOr str;
+      default = null;
+      description = ''
+        File with API key.
+      '';
+    };
+    api.tags = mkOption {
+      example = [ "relay" "server" ];
+      type = types.listOf types.nonEmptyStr;
+      default = [ ];
+      description = "Tags to be used when creating new auth keys.";
+    };
+    api.reusable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Create a reusable auth key.";
+    };
+    api.ephemeral = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Create an ephemeral auth key.";
+    };
+    api.preauthorized = mkOption {
+      type = types.bool;
+      default = true;
+      description = "Create a pre-authorized auth key.";
+    };
+
     state.text = mkOption {
       type = types.nullOr types.lines;
       default = null;
@@ -103,12 +143,12 @@ in {
 
     magicDNS.enable = mkEnableOption "MagicDNS";
     magicDNS.searchDomains = mkOption {
-      type = types.nonEmptyListOf types.str;
+      type = types.listOf types.nonEmptyStr;
       default = [ ];
       description = "MagicDNS search domains.";
     };
     magicDNS.nameservers = mkOption {
-      type = types.nonEmptyListOf types.str;
+      type = types.listOf types.nonEmptyStr;
       default = [ ];
       description = "MagicDNS nameservers.";
     };
@@ -128,7 +168,10 @@ in {
   };
 
   config = mkIf cfg.enable {
-    assertions = optional ((count (state: state != null) (with cfg.state; [ text file dir ])) > 1) "Sorry; only one of `config.services.tailscale.state.{text|file|dir}' may be set!";
+    assertions = flatten [
+      (optional ((count (state: state != null) (with cfg.state; [ text file dir ])) > 1) "Sorry; only one of `config.services.tailscale.state.{text|file|dir}' may be set!")
+      (optional ((count (auth: auth != null) [ authkey authfile api.key api.file ]) > 1) "Sorry; only one of `config.services.tailscale.{authkey|authfile|api.key|api.file}' may be set!")
+    ];
     warnings = optional (firewallOn && rpfIsStrict) "Strict reverse path filtering breaks Tailscale exit node use and some subnet routing setups. Consider setting `networking.firewall.checkReversePath` = 'loose'";
     environment.systemPackages = [ cfg.package ]; # for the CLI
     environment.vard = let
@@ -206,9 +249,13 @@ in {
             # otherwise authenticate with tailscale
             echo "Authenticating with Tailscale ..."
             ${cfg.package}/bin/tailscale up \
-              --accept-dns ${if cfg.acceptDNS then "true" else "false"}
-              ${optionalString (cfg.authkey != null || cfg.authfile != null)
-                (if (cfg.authkey != null) then "--authkey ${cfg.authkey}" else "--authkey ${readFile cfg.authfile}")}
+              ${optionalString cfg.acceptDNS "--accept-dns"} \
+              ${if (cfg.authkey != null) then "--authkey ${cfg.authkey}"
+                else if (cfg.authfile != null) then "--authkey ${readFile cfg.authfile}"
+                else if ((cfg.api.key != null) || (cfg.api.file != null)) then ''
+                  --authkey $()
+                ''
+                else ""}
           '';
         };
       };

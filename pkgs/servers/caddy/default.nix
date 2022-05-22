@@ -28,7 +28,7 @@ let
 
 in buildGoModule rec {
 	pname = "caddy";
-	version = "2.4.6";
+	version = "2.5.1";
     runVend = true;
 	subPackages = [ "cmd/caddy" ];
 
@@ -36,10 +36,10 @@ in buildGoModule rec {
 		owner = "caddyserver";
 		repo = "caddy";
 		rev = "v${version}";
-		sha256 = "sha256-xNCxzoNpXkj8WF9+kYJfO18ux8/OhxygkGjA49+Q4vY=";
+		sha256 = "sha256-Y4GAx/8XcW7+6eXCQ6k4e/3WZ/6MkTr5za1AXp6El9o=";
 	};
 
-	vendorSha256 = "sha256-NomgHqIiugSISbEtvIbJDn5GRn6Dn72adLPkAvLbUQU=";
+	vendorSha256 = "sha256-xu3klc9yb4Ws8fvXRV286IDhi/zQVN1PKCiFKb8VJBo=";
 
 	overrideModAttrs = (_: {
 		preBuild    = "echo '${main}' > cmd/caddy/main.go";
