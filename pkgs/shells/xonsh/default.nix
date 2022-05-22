@@ -3,6 +3,7 @@
 , python3Packages
 , glibcLocales
 , coreutils
+, git
 }:
 
 python3Packages.buildPythonApplication rec {
