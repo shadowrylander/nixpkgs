@@ -302,6 +302,8 @@ with pkgs;
 
   catatonit = callPackage ../applications/virtualization/catatonit { };
 
+  catppuccin-gtk = callPackage ../data/themes/catppuccin-gtk { };
+
   btdu = callPackage ../tools/misc/btdu { };
 
   cereal = callPackage ../development/libraries/cereal { };
@@ -2481,9 +2483,7 @@ with pkgs;
 
   xcodeenv = callPackage ../development/mobile/xcodeenv { };
 
-  gomobile = callPackage ../development/mobile/gomobile {
-    buildGoModule = buildGo116Module;
-  };
+  gomobile = callPackage ../development/mobile/gomobile { };
 
   ssh-agents = callPackage ../tools/networking/ssh-agents { };
 
@@ -2805,7 +2805,7 @@ with pkgs;
 
   brutespray = callPackage ../tools/security/brutespray { };
 
-  breakpointHook = assert stdenv.isLinux;
+  breakpointHook = assert stdenv.buildPlatform.isLinux;
     makeSetupHook { } ../build-support/setup-hooks/breakpoint-hook.sh;
 
   btrfs-progs = callPackage ../tools/filesystems/btrfs-progs { };
@@ -3672,9 +3672,7 @@ with pkgs;
 
   gorilla-bin = callPackage ../tools/security/gorilla-bin { };
 
-  godu = callPackage ../tools/misc/godu {
-    buildGoModule = buildGo116Module;
-  };
+  godu = callPackage ../tools/misc/godu { };
 
   goss = callPackage ../tools/misc/goss { };
 
@@ -4155,6 +4153,8 @@ with pkgs;
   profetch = callPackage ../tools/misc/profetch { };
 
   psrecord = python3Packages.callPackage ../tools/misc/psrecord {};
+
+  r53-ddns = callPackage ../applications/networking/r53-ddns { };
 
   rare = python3Packages.callPackage ../games/rare { };
 
@@ -5499,9 +5499,7 @@ with pkgs;
 
   vowpal-wabbit = callPackage ../applications/science/machine-learning/vowpal-wabbit { };
 
-  utahfs = callPackage ../applications/networking/utahfs {
-    buildGoPackage = buildGo116Package;
-  };
+  utahfs = callPackage ../applications/networking/utahfs { };
 
   wakeonlan = callPackage ../tools/networking/wakeonlan { };
 
@@ -6525,9 +6523,7 @@ with pkgs;
 
   go-mtpfs = callPackage ../tools/filesystems/go-mtpfs { };
 
-  goofys = callPackage ../tools/filesystems/goofys {
-    buildGoModule = buildGo116Module;
-  };
+  goofys = callPackage ../tools/filesystems/goofys { };
 
   go-sct = callPackage ../tools/X11/go-sct { };
 
@@ -7173,14 +7169,10 @@ with pkgs;
 
   ipfetch = callPackage ../tools/networking/ipfetch { };
 
-  ipfs = callPackage ../applications/networking/ipfs {
-    buildGoModule = buildGo116Module;
-  };
+  ipfs = callPackage ../applications/networking/ipfs { };
   ipfs-cluster = callPackage ../applications/networking/ipfs-cluster { };
 
-  ipfs-migrator-all-fs-repo-migrations = callPackage ../applications/networking/ipfs-migrator/all-migrations.nix {
-    buildGoModule = buildGo116Module;
-  };
+  ipfs-migrator-all-fs-repo-migrations = callPackage ../applications/networking/ipfs-migrator/all-migrations.nix { };
   ipfs-migrator-unwrapped = callPackage ../applications/networking/ipfs-migrator/unwrapped.nix { };
   ipfs-migrator = callPackage ../applications/networking/ipfs-migrator { };
 
@@ -7777,7 +7769,7 @@ with pkgs;
 
   mmv-go = callPackage ../tools/misc/mmv-go { };
 
-  mob = callPackage ../applications/misc/mob { };
+  mob = callPackage ../applications/misc/mob {};
 
   most = callPackage ../tools/misc/most { };
 
@@ -8480,6 +8472,8 @@ with pkgs;
 
   mutagen = callPackage ../tools/misc/mutagen { };
 
+  mutagen-compose = callPackage ../tools/misc/mutagen-compose { };
+
   mycli = callPackage ../tools/admin/mycli { };
 
   mycrypto = callPackage ../applications/blockchains/mycrypto { };
@@ -8628,7 +8622,7 @@ with pkgs;
   grocy = callPackage ../servers/grocy { };
 
   inherit (callPackage ../servers/nextcloud {})
-    nextcloud21 nextcloud22 nextcloud23 nextcloud24;
+    nextcloud22 nextcloud23 nextcloud24;
 
   nextcloud-client = libsForQt5.callPackage ../applications/networking/nextcloud-client { };
 
@@ -8663,11 +8657,6 @@ with pkgs;
   # with different versions we pin Go for all versions.
   # Upstream partially documents used Go versions here
   # https://github.com/hashicorp/nomad/blob/master/contributing/golang.md
-  nomad_1_1 = callPackage ../applications/networking/cluster/nomad/1.1.nix {
-    buildGoModule = buildGo116Module;
-    inherit (linuxPackages) nvidia_x11;
-    nvidiaGpuSupport = config.cudaSupport or false;
-  };
   nomad_1_2 = callPackage ../applications/networking/cluster/nomad/1.2.nix {
     buildGoModule = buildGo117Module;
     inherit (linuxPackages) nvidia_x11;
@@ -8879,9 +8868,7 @@ with pkgs;
 
   obexd = callPackage ../tools/bluetooth/obexd { };
 
-  obfs4 = callPackage ../tools/networking/obfs4 {
-    buildGoModule = buildGo116Module;
-  };
+  obfs4 = callPackage ../tools/networking/obfs4 { };
 
   ocproxy = callPackage ../tools/networking/ocproxy { };
 
@@ -11486,9 +11473,7 @@ with pkgs;
 
   testdisk-qt = testdisk.override { enableQt = true; };
 
-  textql = callPackage ../development/tools/textql {
-    buildGoPackage = buildGo116Package;
-  };
+  textql = callPackage ../development/tools/textql { };
 
   html2text = callPackage ../tools/text/html2text { };
 
@@ -11759,7 +11744,9 @@ with pkgs;
 
   wipe = callPackage ../tools/security/wipe { };
 
-  wireguard-go = callPackage ../tools/networking/wireguard-go { };
+  wireguard-go = callPackage ../tools/networking/wireguard-go {
+    buildGoModule = buildGo118Module;
+  };
 
   wkhtmltopdf = libsForQt514.callPackage ../tools/graphics/wkhtmltopdf { };
 
@@ -11892,9 +11879,7 @@ with pkgs;
 
   yafaray-core = callPackage ../tools/graphics/yafaray-core { };
 
-  yajsv = callPackage ../tools/misc/yajsv {
-    buildGoModule = buildGo116Module;
-  };
+  yajsv = callPackage ../tools/misc/yajsv { };
 
   yallback = callPackage ../development/tools/analysis/yallback { };
 
@@ -13106,7 +13091,9 @@ with pkgs;
 
   hop = callPackage ../development/compilers/hop { };
 
-  falcon = callPackage ../development/interpreters/falcon { };
+  falcon = callPackage ../development/interpreters/falcon {
+    stdenv = gcc10Stdenv;
+  };
 
   fsharp = callPackage ../development/compilers/fsharp { };
 
@@ -13115,13 +13102,6 @@ with pkgs;
   dotnetPackages = recurseIntoAttrs (callPackage ./dotnet-packages.nix {});
 
   glslang = callPackage ../development/compilers/glslang { };
-
-  go_1_16 = callPackage ../development/compilers/go/1.16.nix ({
-    inherit (darwin.apple_sdk.frameworks) Security Foundation;
-  } // lib.optionalAttrs (stdenv.cc.isGNU && stdenv.isAarch64) {
-    stdenv = gcc8Stdenv;
-    buildPackages = buildPackages // { stdenv = buildPackages.gcc8Stdenv; };
-  });
 
   go_1_17 = callPackage ../development/compilers/go/1.17.nix ({
     inherit (darwin.apple_sdk.frameworks) Security Foundation;
@@ -15190,7 +15170,9 @@ with pkgs;
 
   cloud-nuke = callPackage ../development/tools/cloud-nuke { };
 
-  cloudcompare = libsForQt5.callPackage ../applications/graphics/cloudcompare {};
+  cloudcompare = libsForQt5.callPackage ../applications/graphics/cloudcompare {
+    pdal = pdal_2_3;
+  };
 
   cloudflare-warp = callPackage ../tools/networking/cloudflare-warp { };
 
@@ -17885,7 +17867,7 @@ with pkgs;
 
   hwloc = callPackage ../development/libraries/hwloc {};
 
-  hydra_unstable = callPackage ../development/tools/misc/hydra/unstable.nix { nix = nixVersions.nix_2_6; };
+  hydra_unstable = callPackage ../development/tools/misc/hydra/unstable.nix { nix = nixVersions.nix_2_8; };
 
   hydra-cli = callPackage ../development/tools/misc/hydra-cli { };
 
@@ -20043,6 +20025,8 @@ with pkgs;
 
   pdal = callPackage ../development/libraries/pdal { } ;
 
+  pdal_2_3 = callPackage ../development/libraries/pdal/2_3.nix { } ;
+
   pdf2xml = callPackage ../development/libraries/pdf2xml {} ;
 
   pe-parse = callPackage ../development/libraries/pe-parse { };
@@ -21375,9 +21359,6 @@ with pkgs;
 
   ### DEVELOPMENT / GO MODULES
 
-  buildGo116Package = callPackage ../development/go-packages/generic {
-    go = buildPackages.go_1_16;
-  };
   buildGo117Package = callPackage ../development/go-packages/generic {
     go = buildPackages.go_1_17;
   };
@@ -21387,9 +21368,6 @@ with pkgs;
 
   buildGoPackage = buildGo117Package;
 
-  buildGo116Module = callPackage ../development/go-modules/generic {
-    go = buildPackages.go_1_16;
-  };
   buildGo117Module = callPackage ../development/go-modules/generic {
     go = buildPackages.go_1_17;
   };
@@ -21485,7 +21463,6 @@ with pkgs;
     withRecommendedPackages = false;
     inherit (darwin.apple_sdk.frameworks) Cocoa Foundation;
     inherit (darwin) libobjc;
-    jdk = jdk8; # TODO: remove override https://github.com/NixOS/nixpkgs/pull/89731
   };
 
   rWrapper = callPackage ../development/r-modules/wrapper.nix {
@@ -21900,11 +21877,11 @@ with pkgs;
 
   mackerel-agent = callPackage ../servers/monitoring/mackerel-agent { };
 
-  mailman = callPackage ../servers/mail/mailman/wrapped.nix { };
+  mailmanPackages = callPackage ../servers/mail/mailman { };
+  inherit (mailmanPackages) mailman mailman-hyperkitty;
+  mailman-web = mailmanPackages.web;
 
   mailman-rss = callPackage ../tools/misc/mailman-rss { };
-
-  mailman-web = with python3.pkgs; toPythonApplication mailman-web;
 
   listadmin = callPackage ../applications/networking/listadmin {};
 
@@ -21981,7 +21958,7 @@ with pkgs;
   mullvad-vpn = callPackage ../applications/networking/mullvad-vpn { };
 
   mycorrhiza = callPackage ../servers/mycorrhiza {
-    buildGoModule = buildGo116Module;
+    buildGoModule = buildGo118Module;
   };
 
   napalm = with python3Packages; toPythonApplication (
@@ -22005,9 +21982,7 @@ with pkgs;
 
   unit = callPackage ../servers/http/unit { };
 
-  ncdns = callPackage ../servers/dns/ncdns {
-    buildGoModule = buildGo116Module;
-  };
+  ncdns = callPackage ../servers/dns/ncdns { };
 
   nginx = nginxStable;
 
@@ -22545,9 +22520,7 @@ with pkgs;
 
   sambaFull = samba4Full;
 
-  sampler = callPackage ../applications/misc/sampler {
-    buildGoModule = buildGo116Module;
-  };
+  sampler = callPackage ../applications/misc/sampler { };
 
   shairplay = callPackage ../servers/shairplay { avahi = avahi-compat; };
 
@@ -22671,9 +22644,7 @@ with pkgs;
 
   uxplay = callPackage ../servers/uxplay { };
 
-  vouch-proxy = callPackage ../servers/vouch-proxy {
-    buildGoModule = buildGo116Module;
-  };
+  vouch-proxy = callPackage ../servers/vouch-proxy { };
 
   victoriametrics = callPackage ../servers/nosql/victoriametrics { };
 
@@ -24825,6 +24796,11 @@ with pkgs;
 
   poppler_data = callPackage ../data/misc/poppler-data { };
 
+  inherit (callPackages ../data/fonts/pretendard { })
+    pretendard
+    pretendard-jp
+    pretendard-std;
+
   quattrocento = callPackage ../data/fonts/quattrocento {};
 
   quattrocento-sans = callPackage ../data/fonts/quattrocento-sans {};
@@ -26915,9 +26891,7 @@ with pkgs;
 
   gv = callPackage ../applications/misc/gv { };
 
-  gvisor = callPackage ../applications/virtualization/gvisor {
-    go = go_1_16;
-  };
+  gvisor = callPackage ../applications/virtualization/gvisor { };
 
   gvisor-containerd-shim = callPackage ../applications/virtualization/gvisor/containerd-shim.nix { };
 
@@ -28657,6 +28631,8 @@ with pkgs;
 
   nomacs = libsForQt5.callPackage ../applications/graphics/nomacs { };
 
+  notepad-next = libsForQt5.callPackage ../applications/editors/notepad-next { };
+
   notepadqq = libsForQt514.callPackage ../applications/editors/notepadqq { };
 
   notmuch = callPackage ../applications/networking/mailreaders/notmuch {
@@ -30163,6 +30139,8 @@ with pkgs;
     channel = "ungoogled-chromium";
   });
 
+  uni = callPackage ../applications/misc/uni { };
+
   unigine-valley = callPackage ../applications/graphics/unigine-valley { };
 
   unigine-heaven = callPackage ../applications/graphics/unigine-heaven { };
@@ -30272,6 +30250,7 @@ with pkgs;
   wrapNeovimUnstable = callPackage ../applications/editors/neovim/wrapper.nix { };
   wrapNeovim = neovim-unwrapped: lib.makeOverridable (neovimUtils.legacyWrapper neovim-unwrapped);
   neovim-unwrapped = callPackage ../applications/editors/neovim {
+    CoreServices =  darwin.apple_sdk.frameworks.CoreServices;
     lua = luajit;
   };
 
@@ -30956,6 +30935,8 @@ with pkgs;
   zeroc-ice-cpp11 = zeroc-ice.override { cpp11 = true; };
 
   zeronet = callPackage ../applications/networking/p2p/zeronet { };
+
+  zeronet-conservancy = callPackage ../applications/networking/p2p/zeronet-conservancy { };
 
   zexy = callPackage ../applications/audio/pd-plugins/zexy {
     autoconf = buildPackages.autoconf269;
@@ -33399,6 +33380,8 @@ with pkgs;
     stdenv = gcc49Stdenv;
   };
   z3-tptp = callPackage ../applications/science/logic/z3/tptp.nix {};
+
+  zchaff = callPackage ../applications/science/logic/zchaff { };
 
   tlaplus = callPackage ../applications/science/logic/tlaplus {
     jre = jre8; # TODO: remove override https://github.com/NixOS/nixpkgs/pull/89731

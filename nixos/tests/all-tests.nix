@@ -62,6 +62,7 @@ in
   breitbandmessung = handleTest ./breitbandmessung.nix {};
   brscan5 = handleTest ./brscan5.nix {};
   btrbk = handleTest ./btrbk.nix {};
+  btrbk-no-timer = handleTest ./btrbk-no-timer.nix {};
   buildbot = handleTest ./buildbot.nix {};
   buildkite-agents = handleTest ./buildkite-agents.nix {};
   caddy = handleTest ./caddy.nix {};
@@ -365,6 +366,7 @@ in
   nginx = handleTest ./nginx.nix {};
   nginx-auth = handleTest ./nginx-auth.nix {};
   nginx-etag = handleTest ./nginx-etag.nix {};
+  nginx-http3 = handleTest ./nginx-http3.nix {};
   nginx-modsecurity = handleTest ./nginx-modsecurity.nix {};
   nginx-pubhtml = handleTest ./nginx-pubhtml.nix {};
   nginx-sandbox = handleTestOn ["x86_64-linux"] ./nginx-sandbox.nix {};
