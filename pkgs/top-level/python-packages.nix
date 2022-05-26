@@ -2335,7 +2335,7 @@ in {
 
   django-gravatar2 = callPackage ../development/python-modules/django-gravatar2 { };
 
-  django_guardian = callPackage ../development/python-modules/django_guardian { };
+  django-guardian = callPackage ../development/python-modules/django-guardian { };
 
   django-haystack = callPackage ../development/python-modules/django-haystack { };
 
@@ -2372,7 +2372,7 @@ in {
 
   django-picklefield = callPackage ../development/python-modules/django-picklefield { };
 
-  django_polymorphic = callPackage ../development/python-modules/django-polymorphic { };
+  django-polymorphic = callPackage ../development/python-modules/django-polymorphic { };
 
   django-postgresql-netfields = callPackage ../development/python-modules/django-postgresql-netfields { };
 
@@ -2390,11 +2390,17 @@ in {
 
   django-rest-auth = callPackage ../development/python-modules/django-rest-auth { };
 
+  django-rest-polymorphic = callPackage ../development/python-modules/django-rest-polymorphic { };
+
   django-rq = callPackage ../development/python-modules/django-rq { };
 
   djangorestframework = callPackage ../development/python-modules/djangorestframework { };
 
   djangorestframework-dataclasses = callPackage ../development/python-modules/djangorestframework-dataclasses { };
+
+  djangorestframework-camel-case = callPackage ../development/python-modules/djangorestframework-camel-case { };
+
+  djangorestframework-recursive = callPackage ../development/python-modules/djangorestframework-recursive { };
 
   djangorestframework-simplejwt = callPackage ../development/python-modules/djangorestframework-simplejwt { };
 
@@ -2439,6 +2445,8 @@ in {
   dj-email-url = callPackage ../development/python-modules/dj-email-url { };
 
   djmail = callPackage ../development/python-modules/djmail { };
+
+  dj-rest-auth = callPackage ../development/python-modules/dj-rest-auth { };
 
   dj-search-url = callPackage ../development/python-modules/dj-search-url { };
 
@@ -3128,7 +3136,7 @@ in {
 
   flask-versioned = callPackage ../development/python-modules/flask-versioned { };
 
-  flask_wtf = callPackage ../development/python-modules/flask-wtf { };
+  flask-wtf = callPackage ../development/python-modules/flask-wtf { };
 
   flatbuffers = callPackage ../development/python-modules/flatbuffers {
     inherit (pkgs) flatbuffers;
@@ -3705,6 +3713,8 @@ in {
   greeclimate = callPackage ../development/python-modules/greeclimate { };
 
   green = callPackage ../development/python-modules/green { };
+
+  greeneye-monitor = callPackage ../development/python-modules/greeneye-monitor { };
 
   greenlet = callPackage ../development/python-modules/greenlet { };
 
@@ -5342,6 +5352,7 @@ in {
 
   mkdocs = callPackage ../development/python-modules/mkdocs { };
   mkdocs-drawio-exporter = callPackage ../development/python-modules/mkdocs-drawio-exporter { };
+  mkdocs-macros = callPackage ../development/python-modules/mkdocs-macros { };
   mkdocs-material = callPackage ../development/python-modules/mkdocs-material { };
   mkdocs-material-extensions = callPackage ../development/python-modules/mkdocs-material/mkdocs-material-extensions.nix { };
   mkdocs-minify = callPackage ../development/python-modules/mkdocs-minify { };
@@ -5871,6 +5882,8 @@ in {
 
   nvchecker = callPackage ../development/python-modules/nvchecker { };
 
+  nxt-python = callPackage ../development/python-modules/nxt-python { };
+
   python-nvd3 = callPackage ../development/python-modules/python-nvd3 { };
 
   py-deprecate = callPackage ../development/python-modules/py-deprecate { };
@@ -6119,6 +6132,8 @@ in {
 
   panacotta = callPackage ../development/python-modules/panacotta { };
 
+  panasonic-viera = callPackage ../development/python-modules/panasonic-viera { };
+
   pandas = callPackage ../development/python-modules/pandas { };
 
   pandas-datareader = callPackage ../development/python-modules/pandas-datareader { };
@@ -6249,7 +6264,7 @@ in {
 
   pdfkit = callPackage ../development/python-modules/pdfkit { };
 
-  pdfminer = callPackage ../development/python-modules/pdfminer_six { };
+  pdfminer-six = callPackage ../development/python-modules/pdfminer-six { };
 
   pdfposter = callPackage ../development/python-modules/pdfposter { };
 
@@ -7807,8 +7822,6 @@ in {
   pyramid_mako = callPackage ../development/python-modules/pyramid_mako { };
 
   pyramid_multiauth = callPackage ../development/python-modules/pyramid_multiauth { };
-
-  pyreadability = callPackage ../development/python-modules/pyreadability { };
 
   pyrealsense2 = toPythonModule (pkgs.librealsense.override {
     enablePython = true;
@@ -9565,6 +9578,8 @@ in {
 
   signify = callPackage ../development/python-modules/signify { };
 
+  siobrultech-protocols = callPackage ../development/python-modules/siobrultech-protocols { };
+
   siosocks = callPackage ../development/python-modules/siosocks { };
 
   sip = callPackage ../development/python-modules/sip { };
@@ -10378,7 +10393,9 @@ in {
 
   token-bucket = callPackage ../development/python-modules/token-bucket { };
 
-  tokenizers = toPythonModule (callPackage ../development/python-modules/tokenizers { });
+  tokenizers = callPackage ../development/python-modules/tokenizers {
+    inherit (pkgs.darwin.apple_sdk.frameworks) Security;
+  };
 
   tokenize-rt = toPythonModule (callPackage ../development/python-modules/tokenize-rt { });
 
@@ -10607,6 +10624,8 @@ in {
   types-protobuf = callPackage ../development/python-modules/types-protobuf { };
 
   types-pytz = callPackage ../development/python-modules/types-pytz { };
+
+  types-redis = callPackage ../development/python-modules/types-redis { };
 
   types-requests = callPackage ../development/python-modules/types-requests { };
 
