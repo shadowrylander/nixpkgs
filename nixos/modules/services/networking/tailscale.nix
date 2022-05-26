@@ -29,7 +29,7 @@ in {
     };
 
     interfaceName = mkOption {
-      type = types.str;
+      type = types.nonEmptyStr;
       default = "tailscale0";
       description = ''The interface name for tunnel traffic. Use "userspace-networking" (beta) to not use TUN.'';
     };
@@ -65,7 +65,7 @@ in {
 
     authfile = mkOption {
       example = "/private/tailscale_auth_key";
-      type = with types; nullOr str;
+      type = with types; nullOr nonEmptyStr;
       default = null;
       description = ''
         File with authentication key.
@@ -84,7 +84,7 @@ in {
     };
     api.file = mkOption {
       example = "/private/tailscale_api_key";
-      type = with types; nullOr str;
+      type = with types; nullOr nonEmptyStr;
       default = null;
       description = ''
         File with API key.
@@ -110,6 +110,11 @@ in {
       type = types.bool;
       default = true;
       description = "Create a pre-authorized auth key.";
+    };
+    api.domain = mkOption {
+      type = with types; nullOr nonEmptyStr;
+      default = null;
+      description = "Your tailscale domain.";
     };
 
     state.text = mkOption {
@@ -156,7 +161,14 @@ in {
     acceptDNS = mkOption {
       type = types.bool;
       default = true;
-      description = "Whether this tailscale instance will use the preconfigured DNS servers at .";
+      description = "Whether this tailscale instance will use the preconfigured DNS servers on the tailscale admin page.";
+    };
+
+    authenticationConfirmationFile = mkOption {
+      types = types.nonEmptyStr;
+      example = "/private/tailscale/tailscaled.authenticated";
+      default = "/var/lib/tailscale/tailscale.authenticated";
+      description = "Path to the `tailscale.authenticated' file.";
     };
 
     package = mkOption {
@@ -171,8 +183,12 @@ in {
     assertions = flatten [
       (optional ((count (state: state != null) (with cfg.state; [ text file dir ])) > 1) "Sorry; only one of `config.services.tailscale.state.{text|file|dir}' may be set!")
       (optional ((count (auth: auth != null) [ authkey authfile api.key api.file ]) > 1) "Sorry; only one of `config.services.tailscale.{authkey|authfile|api.key|api.file}' may be set!")
+      (optional ((cfg.api.domain == null) && ((cfg.api.key != null) || (cfg.api.file != null))) "Sorry; `api.domain' must be set when using `api.{key|file}'!")
     ];
-    warnings = optional (firewallOn && rpfIsStrict) "Strict reverse path filtering breaks Tailscale exit node use and some subnet routing setups. Consider setting `networking.firewall.checkReversePath` = 'loose'";
+    warnings = flatten [
+      (optional ((cfg.api.key != null) || (cfg.api.file != null)) "To users who wipe their root directories: persist your `config.services.tailscale.authenticationConfirmationFile'!")
+      (optional (firewallOn && rpfIsStrict) "Strict reverse path filtering breaks Tailscale exit node use and some subnet routing setups. Consider setting `networking.firewall.checkReversePath` = 'loose'")
+    ];
     environment.systemPackages = [ cfg.package ]; # for the CLI
     environment.vard = let
       nullText = cfg.state.text != null;
@@ -231,6 +247,10 @@ in {
         wants = [ "network-pre.target" "tailscale.service" ];
         wantedBy = [ "multi-user.target" ];
 
+        environment = {
+          ${if (cfg.api.key != null || cfg.api.file != null) then "TAILSCALE_APIKEY" else null} = if (cfg.api.key != null) then cfg.api.key else (readFile cfg.api.file);
+        };
+
         # set this service as a oneshot job
         serviceConfig = {
           Type = "oneshot";
@@ -252,10 +272,19 @@ in {
               ${optionalString cfg.acceptDNS "--accept-dns"} \
               ${if (cfg.authkey != null) then "--authkey ${cfg.authkey}"
                 else if (cfg.authfile != null) then "--authkey ${readFile cfg.authfile}"
-                else if ((cfg.api.key != null) || (cfg.api.file != null)) then ''
-                  --authkey $()
+                else if (((cfg.api.key != null) || (cfg.api.file != null)) && (! pathExists cfg.authenticationConfirmationFile)) then ''
+                  --authkey $(${pkgs.tailapi}/bin/tailapi --domain ${cfg.api.domain} \
+                                                          --recreate-response \
+                                                          create \
+                                                          ${optionalString (cfg.api.reusable) "--reusable"} \
+                                                          ${optionalString (cfg.api.ephemeral) "--ephemeral"} \
+                                                          ${optionalString (cfg.api.reusable) "--preauthorized"} \
+                                                          ${optionalString (cfg.api.tags != null) (concatStringsSep " " cfg.api.tags)} \
+                                                          --just-key)
                 ''
                 else ""}
+
+            touch ${cfg.authenticationConfirmationFile}
           '';
         };
       };
