@@ -190,7 +190,7 @@ in {
       (optional (firewallOn && rpfIsStrict) "Strict reverse path filtering breaks Tailscale exit node use and some subnet routing setups. Consider setting `networking.firewall.checkReversePath` = 'loose'")
     ];
     environment.systemPackages = [ cfg.package ]; # for the CLI
-    environment.vard = let
+    environment.vars = let
       nullText = cfg.state.text != null;
       nullFile = cfg.state.file != null;
       nullDir = cfg.state.dir != null;
