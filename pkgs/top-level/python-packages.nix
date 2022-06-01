@@ -1331,6 +1331,8 @@ in {
 
   bond-api = callPackage ../development/python-modules/bond-api { };
 
+  bond-async = callPackage ../development/python-modules/bond-async { };
+
   booleanoperations = callPackage ../development/python-modules/booleanoperations { };
 
   boolean-py = callPackage ../development/python-modules/boolean-py { };
@@ -6399,6 +6401,8 @@ in {
 
   micloud = callPackage ../development/python-modules/micloud { };
 
+  msgraph-core = callPackage ../development/python-modules/msgraph-core { };
+
   netmap = callPackage ../development/python-modules/netmap { };
 
   openai = callPackage ../development/python-modules/openai { };
@@ -7417,6 +7421,8 @@ in {
   pyi2cflash = callPackage ../development/python-modules/pyi2cflash { };
 
   pyialarm = callPackage ../development/python-modules/pyialarm { };
+
+  pyialarmxr = callPackage ../development/python-modules/pyialarmxr { };
 
   pyicloud = callPackage ../development/python-modules/pyicloud { };
 
@@ -8458,6 +8464,8 @@ in {
 
   python-hglib = callPackage ../development/python-modules/python-hglib { };
 
+  python-homewizard-energy = callPackage ../development/python-modules/python-homewizard-energy { };
+
   python-hosts = callPackage ../development/python-modules/python-hosts { };
 
   python-hpilo = callPackage ../development/python-modules/python-hpilo { };
@@ -8848,6 +8856,8 @@ in {
   pywizlight = callPackage ../development/python-modules/pywizlight { };
 
   pywlroots = callPackage ../development/python-modules/pywlroots { };
+
+  pyws66i = callPackage ../development/python-modules/pyws66i { };
 
   pyxattr = callPackage ../development/python-modules/pyxattr { };
 
@@ -11379,6 +11389,8 @@ in {
   yfinance = callPackage ../development/python-modules/yfinance { };
 
   yoda = toPythonModule (pkgs.yoda.override { inherit python; });
+
+  yolink-api = callPackage ../development/python-modules/yolink-api { };
 
   youless-api = callPackage ../development/python-modules/youless-api { };
 
