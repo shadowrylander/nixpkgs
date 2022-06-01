@@ -1263,6 +1263,8 @@ in {
 
   bitcoinrpc = callPackage ../development/python-modules/bitcoinrpc { };
 
+  bite-parser = callPackage ../development/python-modules/bite-parser { };
+
   bitlist = callPackage ../development/python-modules/bitlist { };
 
   bitmath = callPackage ../development/python-modules/bitmath { };
@@ -2093,6 +2095,8 @@ in {
 
   dataclasses-json = callPackage ../development/python-modules/dataclasses-json { };
 
+  dataclasses-serialization = callPackage ../development/python-modules/dataclasses-serialization { };
+
   datadiff = callPackage ../development/python-modules/datadiff { };
 
   datadog = callPackage ../development/python-modules/datadog { };
@@ -2491,6 +2495,8 @@ in {
   dnspythonchia = callPackage ../development/python-modules/dnspythonchia { };
 
   doc8 = callPackage ../development/python-modules/doc8 { };
+
+  docformatter = callPackage ../development/python-modules/docformatter { };
 
   docker = callPackage ../development/python-modules/docker { };
 
@@ -4049,6 +4055,8 @@ in {
 
   hupper = callPackage ../development/python-modules/hupper { };
 
+  huum = callPackage ../development/python-modules/huum { };
+
   hvac = callPackage ../development/python-modules/hvac { };
 
   hvplot = callPackage ../development/python-modules/hvplot { };
@@ -5458,6 +5466,8 @@ in {
 
   more-itertools = callPackage ../development/python-modules/more-itertools { };
 
+  more-properties = callPackage ../development/python-modules/more-properties { };
+
   moretools = callPackage ../development/python-modules/moretools { };
 
   morphys = callPackage ../development/python-modules/morphys { };
@@ -6727,8 +6737,6 @@ in {
   portpicker = callPackage ../development/python-modules/portpicker { };
 
   posix_ipc = callPackage ../development/python-modules/posix_ipc { };
-
-  poster3 = callPackage ../development/python-modules/poster3 { };
 
   pot = callPackage ../development/python-modules/pot { };
 
@@ -11051,8 +11059,6 @@ in {
 
   webargs = callPackage ../development/python-modules/webargs { };
 
-  webapp2 = callPackage ../development/python-modules/webapp2 { };
-
   webassets = callPackage ../development/python-modules/webassets { };
 
   webauthn = callPackage ../development/python-modules/webauthn { };
@@ -11288,6 +11294,8 @@ in {
   xpath-expressions = callPackage ../development/python-modules/xpath-expressions { };
 
   xpybutil = callPackage ../development/python-modules/xpybutil { };
+
+  xsdata = callPackage ../development/python-modules/xsdata { };
 
   xstatic-bootbox = callPackage ../development/python-modules/xstatic-bootbox { };
 
