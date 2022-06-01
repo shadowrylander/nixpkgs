@@ -196,12 +196,16 @@ in {
       description = "Whether this tailscale instance will used as an exit node.";
     };
 
-    exitNode.device = mkOption {
+    exitNode.ip = mkOption {
       type = with types; nullOr nonEmptyStr;
       default = null;
-      description = ''
-        The exit node, as an ip address, to be used with this device;
-        if an api key is provided via `config.services.tailscale.api.{key|file}', a device's hostname can be used as well.'';
+      description = "The exit node, as an ip address, to be used with this device.";
+    };
+
+    exitNode.hostName = mkOption {
+      type = with types; nullOr nonEmptyStr;
+      default = null;
+      description = "The exit node, as a hostname, to be used with this device; requires an api key provided via `config.services.tailscale.api.{key|file}'.";
     };
 
     exitNode.allowLANAccess = mkOption {
@@ -234,6 +238,8 @@ in {
   config = mkIf cfg.enable {
     assertions = flatten [
       (optional ((count (state: state != null) (with cfg.state; [ text file dir ])) > 1) "Sorry; only one of `config.services.tailscale.state.{text|file|dir}' may be set!")
+      (optional ((cfg.exitNode.ip != null) && (cfg.exitNode.hostName != null)) "Sorry; only one of `config.services.tailscale.exitNode.{ip|hostName}' may be set!")
+      (optional ((cfg.exitNode.hostName != null) && (cfg.api.key == null) && (cfg.api.file == null)) "Sorry; `config.services.tailscale.api.{key|file}' must be set when using `config.services.tailscale.exitNode.hostName'!")
       (optional ((count (auth: auth != null) [ authkey authfile api.key api.file ]) > 1) "Sorry; only one of `config.services.tailscale.{authkey|authfile|api.key|api.file}' may be set!")
       (optional ((cfg.api.domain == null) && ((cfg.api.key != null) || (cfg.api.file != null))) "Sorry; `config.services.tailscale.api.domain' must be set when using `config.services.tailscale.api.{key|file}'!")
     ];
@@ -292,9 +298,7 @@ in {
         stopIfChanged = false;
       };
       tailscale-autoconnect = let
-        extraConfig = mapAttrsToList (opt: val: let
-          value = optionalString (! isBool val) " ${val}";
-        in (if ((stringLength opt) == 1) then "-" else "--") + opt + value) cfg.extraConfig;
+        api_and_no_authConFile = ((cfg.api.key != null) || (cfg.api.file != null)) && (! pathExists cfg.authenticationConfirmationFile);
       in mkIf cfg.autoconnect {
         description = "Automatic connection to Tailscale";
 
@@ -303,7 +307,7 @@ in {
         wants = [ "network-pre.target" "tailscale.service" ];
         wantedBy = [ "multi-user.target" ];
 
-        environment = mkIf (cfg.api.key != null || cfg.api.file != null) {
+        environment = mkIf api_and_no_authConFile {
           TAILSCALE_APIKEY = if (cfg.api.key != null) then cfg.api.key else (readFile cfg.api.file);
         };
 
@@ -311,7 +315,9 @@ in {
         serviceConfig = {
           Type = "oneshot";
           ExecStart = let
-            api_and_no_authConFile = ((cfg.api.key != null) || (cfg.api.file != null)) && (! pathExists cfg.authenticationConfirmationFile);
+            extraConfig = mapAttrsToList (opt: val: let
+              value = optionalString (! isBool val) " ${toString val}";
+            in (if ((stringLength opt) == 1) then "-" else "--") + opt + value) cfg.extraConfig;
           in ''
             # wait for tailscaled to settle
             sleep 2
@@ -341,12 +347,18 @@ in {
               --hostname ${if cfg.useUUID then "$(${pkgs.util-linux}/bin/uuidgen)" else cfg.hostName} \
               ${optionalString cfg.acceptDNS "--accept-dns"} \
               ${optionalString cfg.exitNode.advertise "--advertise-exit-node"} \
-              ${optionalString (cfg.exitNode.device != null) "--exit-node ${cfg.exitNode.device}"} \
-              ${optionalString ((cfg.exitNode.device != null) && cfg.exitNode.allowLANAccess) "--exit-node-allow-lan-access"} \
+              ${optionalString (cfg.exitNode.ip != null) "--exit-node ${cfg.exitNode.ip}"} \
+              ${optionalString (cfg.exitNode.hostName != null) ''
+                  --exit-node $(${pkgs.tailapi}/bin/tailapi --domain ${cfg.api.domain} \
+                                                            --recreate-response \
+                                                            --devices ${cfg.exitNode.hostName} \
+                                                            ip -f4) \
+                ''} \
+              ${optionalString (((cfg.exitNode.ip != null) || (cfg.exitNode.hostName != null)) && cfg.exitNode.allowLANAccess) "--exit-node-allow-lan-access"} \
               ${concatStringsSep " " extraConfig} \
-              ${if (cfg.authkey != null) then "--authkey ${cfg.authkey}"
-                else if (cfg.authfile != null) then "--authkey ${readFile cfg.authfile}"
-                else if api_and_no_authConFile then ''
+              ${optionalString (cfg.authkey != null) "--authkey ${cfg.authkey}"} \
+              ${optionalString (cfg.authfile != null) "--authkey ${readFile cfg.authfile}"} \
+              ${optionalString api_and_no_authConFile ''
                   --authkey $(${pkgs.tailapi}/bin/tailapi --domain ${cfg.api.domain} \
                                                           --recreate-response \
                                                           create \
@@ -355,8 +367,7 @@ in {
                                                           ${optionalString cfg.api.reusable "--preauthorized"} \
                                                           ${optionalString (cfg.api.tags != null) (concatStringsSep " " cfg.api.tags)} \
                                                           --just-key)
-                ''
-                else ""}
+                ''}
 
             ${optionalString ((cfg.state.file != null) && (! pathExists cfg.state.file)) "cp /var/lib/tailscale/tailscaled.state ${cfg.state.file}"}
             ${optionalString ((cfg.state.dir != null) &&
