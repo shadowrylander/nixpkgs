@@ -10,8 +10,8 @@ python310.pkgs.buildPythonApplication rec {
   src = fetchFromGitHub {
     owner = "syvlorg";
     repo = pname;
-    rev = "09256a9645d7f02d0b4c6b526c42cae2d4b177fd";
-    sha256 = "18fgfqhrcs6yyqrm67y6wlj413sgkslizkk8q4cjchahzdy8ihhb";
+    rev = "ada101b9c2919cfbe365c7d5fe71710d95425ca3";
+    sha256 = "0bywlkbwxsnf11i1kv36ls2yax0pp30qmgcyfq3gcmzzhcgk2q3k";
   };
 
   propagatedBuildInputs = with python310.pkgs; [
@@ -22,10 +22,10 @@ python310.pkgs.buildPythonApplication rec {
   dontBuild = true;
 
   installPhase = ''
-    mkdir -p $out/bin
-    chmod +x tailapi.py
-    patchShebangs tailapi.py
-    cp tailapi.py $out/bin/tailapi
+    mkdir --parents $out/bin
+    cp $src/tailapi.py $out/bin/tailapi
+    chmod +x $out/bin/tailapi
+    patchShebangs $out/bin/tailapi
   '';
 
   postInstall = ''

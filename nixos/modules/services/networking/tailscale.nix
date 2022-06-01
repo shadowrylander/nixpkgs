@@ -16,6 +16,12 @@ in {
   options.services.tailscale = {
     enable = mkEnableOption "Tailscale client daemon";
 
+    autoconnect = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Automatically run `tailscale up' on boot.";
+    };
+
     port = mkOption {
       type = types.port;
       default = 41641;
@@ -184,10 +190,30 @@ in {
       description = "Whether this tailscale instance will use the preconfigured DNS servers on the tailscale admin page.";
     };
 
-    advertiseExitNode = mkOption {
+    exitNode.advertise = mkOption {
       type = types.bool;
       default = false;
       description = "Whether this tailscale instance will used as an exit node.";
+    };
+
+    exitNode.device = mkOption {
+      type = with types; nullOr nonEmptyStr;
+      default = null;
+      description = ''
+        The exit node, as an ip address, to be used with this device;
+        if an api key is provided via `config.services.tailscale.api.{key|file}', a device's hostname can be used as well.'';
+    };
+
+    exitNode.allowLANAccess = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Allow direct access to your local network when traffic is routed via an exit node.";
+    };
+
+    extraConfig = mkOption {
+      type = types.attrs;
+      default = { };
+      description = "An attribute set of options and values; if an option is a single character, a single dash will be prepended, otherwise two.";
     };
 
     authenticationConfirmationFile = mkOption {
@@ -209,7 +235,7 @@ in {
     assertions = flatten [
       (optional ((count (state: state != null) (with cfg.state; [ text file dir ])) > 1) "Sorry; only one of `config.services.tailscale.state.{text|file|dir}' may be set!")
       (optional ((count (auth: auth != null) [ authkey authfile api.key api.file ]) > 1) "Sorry; only one of `config.services.tailscale.{authkey|authfile|api.key|api.file}' may be set!")
-      (optional ((cfg.api.domain == null) && ((cfg.api.key != null) || (cfg.api.file != null))) "Sorry; `api.domain' must be set when using `api.{key|file}'!")
+      (optional ((cfg.api.domain == null) && ((cfg.api.key != null) || (cfg.api.file != null))) "Sorry; `config.services.tailscale.api.domain' must be set when using `config.services.tailscale.api.{key|file}'!")
     ];
     warnings = flatten [
       (optional ((cfg.api.key != null) || (cfg.api.file != null)) "To users who wipe their root directories: persist your `config.services.tailscale.authenticationConfirmationFile'!")
@@ -265,7 +291,11 @@ in {
         # linux distros.
         stopIfChanged = false;
       };
-      tailscale-autoconnect = {
+      tailscale-autoconnect = let
+        extraConfig = mapAttrsToList (opt: val: let
+          value = optionalString (! isBool val) " ${val}";
+        in (if ((stringLength opt) == 1) then "-" else "--") + opt + value) cfg.extraConfig;
+      in mkIf cfg.autoconnect {
         description = "Automatic connection to Tailscale";
 
         # make sure tailscale is running before trying to connect to tailscale
@@ -273,8 +303,8 @@ in {
         wants = [ "network-pre.target" "tailscale.service" ];
         wantedBy = [ "multi-user.target" ];
 
-        environment = {
-          ${if (cfg.api.key != null || cfg.api.file != null) then "TAILSCALE_APIKEY" else null} = if (cfg.api.key != null) then cfg.api.key else (readFile cfg.api.file);
+        environment = mkIf (cfg.api.key != null || cfg.api.file != null) {
+          TAILSCALE_APIKEY = if (cfg.api.key != null) then cfg.api.key else (readFile cfg.api.file);
         };
 
         # set this service as a oneshot job
@@ -310,7 +340,10 @@ in {
             ${cfg.package}/bin/tailscale up \
               --hostname ${if cfg.useUUID then "$(${pkgs.util-linux}/bin/uuidgen)" else cfg.hostName} \
               ${optionalString cfg.acceptDNS "--accept-dns"} \
-              ${optionalString cfg.advertiseExitNode "--advertise-exit-node"} \
+              ${optionalString cfg.exitNode.advertise "--advertise-exit-node"} \
+              ${optionalString (cfg.exitNode.device != null) "--exit-node ${cfg.exitNode.device}"} \
+              ${optionalString ((cfg.exitNode.device != null) && cfg.exitNode.allowLANAccess) "--exit-node-allow-lan-access"} \
+              ${concatStringsSep " " extraConfig} \
               ${if (cfg.authkey != null) then "--authkey ${cfg.authkey}"
                 else if (cfg.authfile != null) then "--authkey ${readFile cfg.authfile}"
                 else if api_and_no_authConFile then ''
