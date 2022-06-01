@@ -10,8 +10,8 @@ python310.pkgs.buildPythonApplication rec {
   src = fetchFromGitHub {
     owner = "syvlorg";
     repo = pname;
-    rev = "c5f43527bbd685418a4f971bfa05127f4fc5d6b1";
-    sha256 = "13k4r2ywfl84ygr58y3v022hgky5g344f0pkjvvxq9xg6wfb93dq";
+    rev = "09256a9645d7f02d0b4c6b526c42cae2d4b177fd";
+    sha256 = "18fgfqhrcs6yyqrm67y6wlj413sgkslizkk8q4cjchahzdy8ihhb";
   };
 
   propagatedBuildInputs = with python310.pkgs; [

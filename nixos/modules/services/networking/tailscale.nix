@@ -40,6 +40,26 @@ in {
       description = "Whether to automatically trust the specified interface in the firewall.";
     };
 
+    hostName = mkOption {
+      type = types.nonEmptyStr;
+      default = config.networking.hostName;
+      description = "The hostname for this device; defaults to `config.networking.hostName'.";
+    };
+
+    useUUID = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Use a new UUID as the hostname on every boot; enables `config.services.tailscale.api.ephemeral' by default.";
+    };
+
+    deleteHostBeforeAuth = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Delete the hostname from the tailnet before authentication, if it exists.
+        Does nothing if already authenticated, as determined by the existence of the path from `config.services.tailscale.authenticationConfirmationFile'.'';
+    };
+
     strictReversePathFiltering = mkOption {
       type = types.bool;
       default = true;
@@ -103,8 +123,8 @@ in {
     };
     api.ephemeral = mkOption {
       type = types.bool;
-      default = false;
-      description = "Create an ephemeral auth key.";
+      default = config.services.tailscale.useUUID;
+      description = "Create an ephemeral auth key; is enabled by default by `config.services.tailscale.useUUID'.";
     };
     api.preauthorized = mkOption {
       type = types.bool;
@@ -123,7 +143,7 @@ in {
       description = ''
         The state of tailscale, written to /var/lib/tailscale/tailscaled.state
 
-        Warning: Consider using stateFile instead if you do not
+        Warning: Consider using state.{file|dir} instead if you do not
         want to store the state in the world-readable Nix store.
       '';
     };
@@ -254,7 +274,9 @@ in {
         # set this service as a oneshot job
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = ''
+          ExecStart = let
+            api_and_no_authConFile = ((cfg.api.key != null) || (cfg.api.file != null)) && (! pathExists cfg.authenticationConfirmationFile);
+          in ''
             # wait for tailscaled to settle
             sleep 2
 
@@ -266,23 +288,40 @@ in {
               exit 0
             fi
 
+            # Delete host from tailnet if:
+            # * `config.services.tailscale.deleteHostBeforeAuth' is enabled
+            # * `config.services.tailscale.api.{key|file}' is not null
+            # * path at `config.services.tailscale.authenticationConfirmationFile` does not exist
+            ${optionalString (cfg.deleteHostBeforeAuth && api_and_no_authConFile)
+                             ''${pkgs.tailapi}/bin/tailapi --domain ${cfg.api.domain} \
+                                                           --recreate-response
+                                                           --devices ${cfg.hostName}
+                                                           delete
+                                                           --do-not-prompt'' }
+
             # otherwise authenticate with tailscale
             echo "Authenticating with Tailscale ..."
             ${cfg.package}/bin/tailscale up \
+              --hostname ${if cfg.useUUID then "$(${pkgs.util-linux}/bin/uuidgen)" else cfg.hostName} \
               ${optionalString cfg.acceptDNS "--accept-dns"} \
               ${if (cfg.authkey != null) then "--authkey ${cfg.authkey}"
                 else if (cfg.authfile != null) then "--authkey ${readFile cfg.authfile}"
-                else if (((cfg.api.key != null) || (cfg.api.file != null)) && (! pathExists cfg.authenticationConfirmationFile)) then ''
+                else if api_and_no_authConFile then ''
                   --authkey $(${pkgs.tailapi}/bin/tailapi --domain ${cfg.api.domain} \
                                                           --recreate-response \
                                                           create \
-                                                          ${optionalString (cfg.api.reusable) "--reusable"} \
-                                                          ${optionalString (cfg.api.ephemeral) "--ephemeral"} \
-                                                          ${optionalString (cfg.api.reusable) "--preauthorized"} \
+                                                          ${optionalString cfg.api.reusable "--reusable"} \
+                                                          ${optionalString cfg.api.ephemeral "--ephemeral"} \
+                                                          ${optionalString cfg.api.reusable "--preauthorized"} \
                                                           ${optionalString (cfg.api.tags != null) (concatStringsSep " " cfg.api.tags)} \
                                                           --just-key)
                 ''
                 else ""}
+
+            ${optionalString ((cfg.state.file != null) && (! pathExists cfg.state.file)) "cp /var/lib/tailscale/tailscaled.state ${cfg.state.file}"}
+            ${optionalString ((cfg.state.dir != null) &&
+                              ((! pathExists cfg.state.dir) ||
+                               ((length (attrNames (readDir cfg.state.dir))) == 0))) "${pkgs.rsync}/bin/rsync -avvczz /var/lib/tailscale/ ${cfg.state.dir}/"}
 
             touch ${cfg.authenticationConfirmationFile}
           '';
