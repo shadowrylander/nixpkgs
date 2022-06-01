@@ -184,6 +184,12 @@ in {
       description = "Whether this tailscale instance will use the preconfigured DNS servers on the tailscale admin page.";
     };
 
+    advertiseExitNode = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Whether this tailscale instance will used as an exit node.";
+    };
+
     authenticationConfirmationFile = mkOption {
       types = types.nonEmptyStr;
       example = "/private/tailscale/tailscaled.authenticated";
@@ -304,6 +310,7 @@ in {
             ${cfg.package}/bin/tailscale up \
               --hostname ${if cfg.useUUID then "$(${pkgs.util-linux}/bin/uuidgen)" else cfg.hostName} \
               ${optionalString cfg.acceptDNS "--accept-dns"} \
+              ${optionalString cfg.advertiseExitNode "--advertise-exit-node"} \
               ${if (cfg.authkey != null) then "--authkey ${cfg.authkey}"
                 else if (cfg.authfile != null) then "--authkey ${readFile cfg.authfile}"
                 else if api_and_no_authConFile then ''
