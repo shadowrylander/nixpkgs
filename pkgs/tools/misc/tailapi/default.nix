@@ -32,6 +32,11 @@ python310.pkgs.buildPythonApplication rec {
     wrapProgram $out/bin/tailapi $makeWrapperArgs
   '';
 
+  # Adapted From: https://gist.github.com/CMCDragonkai/9b65cbb1989913555c203f4fa9c23374
+  # postFixup = ''
+  #     wrapProgram $out/bin/soft --set PATH ${lib.makeBinPath [ git ]}
+  # '';
+
   makeWrapperArgs = [
     # "--prefix" "PATH" ":" (lib.makeBinPath [ dbus signal-cli xclip ])
     "--prefix PYTHONPATH : ${placeholder "out"}/lib/${python310.pkgs.python.libPrefix}/site-packages"
