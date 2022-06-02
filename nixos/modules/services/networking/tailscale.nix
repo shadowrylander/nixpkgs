@@ -186,7 +186,7 @@ in {
 
     acceptDNS = mkOption {
       type = types.bool;
-      default = ! config.services.tailscale.advertiseExitNode;
+      default = ! cfg.advertiseExitNode;
       description = "Whether this tailscale instance will use the preconfigured DNS servers on the tailscale admin page.";
     };
 
