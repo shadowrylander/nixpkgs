@@ -240,7 +240,7 @@ in {
       (optional ((count (state: state != null) (with cfg.state; [ text file dir ])) > 1) "Sorry; only one of `config.services.tailscale.state.{text|file|dir}' may be set!")
       (optional ((cfg.exitNode.ip != null) && (cfg.exitNode.hostName != null)) "Sorry; only one of `config.services.tailscale.exitNode.{ip|hostName}' may be set!")
       (optional ((cfg.exitNode.hostName != null) && (cfg.api.key == null) && (cfg.api.file == null)) "Sorry; `config.services.tailscale.api.{key|file}' must be set when using `config.services.tailscale.exitNode.hostName'!")
-      (optional ((count (auth: auth != null) [ authkey authfile api.key api.file ]) > 1) "Sorry; only one of `config.services.tailscale.{authkey|authfile|api.key|api.file}' may be set!")
+      (optional ((count (auth: auth != null) (with cfg; [ authkey authfile api.key api.file ])) > 1) "Sorry; only one of `config.services.tailscale.{authkey|authfile|api.key|api.file}' may be set!")
       (optional ((cfg.api.domain == null) && ((cfg.api.key != null) || (cfg.api.file != null))) "Sorry; `config.services.tailscale.api.domain' must be set when using `config.services.tailscale.api.{key|file}'!")
     ];
     warnings = flatten [

@@ -270,7 +270,9 @@ with pkgs;
 
   breakpad = callPackage ../development/misc/breakpad { };
 
-  buf = callPackage ../development/tools/buf { };
+  buf = callPackage ../development/tools/buf {
+    buildGoModule = buildGo118Module;
+  };
 
   cfn-nag = callPackage ../development/tools/cfn-nag { };
 
@@ -340,8 +342,6 @@ with pkgs;
   };
 
   conftest = callPackage ../development/tools/conftest { };
-
-  corgi = callPackage ../development/tools/corgi { };
 
   colmena = callPackage ../tools/admin/colmena { };
 
@@ -418,6 +418,8 @@ with pkgs;
   };
 
   pridecat = callPackage ../tools/misc/pridecat { };
+
+  pridefetch = callPackage ../tools/misc/pridefetch { };
 
   proto-contrib = callPackage ../development/tools/proto-contrib { };
 
@@ -919,8 +921,6 @@ with pkgs;
 
   useOldCXXAbi = makeSetupHook { } ../build-support/setup-hooks/use-old-cxx-abi.sh;
 
-  ical2org = callPackage ../tools/misc/ical2org {};
-
   iconConvTools = callPackage ../build-support/icon-conv-tools {};
 
   validatePkgConfig = makeSetupHook
@@ -1080,6 +1080,8 @@ with pkgs;
 
   airfield = callPackage ../tools/networking/airfield { };
 
+  airgeddon = callPackage ../tools/networking/airgeddon { };
+
   apache-airflow = with python3.pkgs; toPythonApplication apache-airflow;
 
   airsonic = callPackage ../servers/misc/airsonic { };
@@ -1144,6 +1146,8 @@ with pkgs;
   gh-cal = callPackage ../tools/misc/gh-cal {
     inherit (darwin.apple_sdk.frameworks) Security;
   };
+
+  gh-eco = callPackage ../tools/misc/gh-eco { };
 
   glooctl = callPackage ../applications/networking/cluster/glooctl { };
 
@@ -5042,8 +5046,6 @@ with pkgs;
 
   curlWithGnuTls = curl.override { gnutlsSupport = true; opensslSupport = false; };
 
-  curl_unix_socket = callPackage ../tools/networking/curl-unix-socket { };
-
   curlie = callPackage ../tools/networking/curlie { };
 
   cunit = callPackage ../tools/misc/cunit { };
@@ -6143,8 +6145,6 @@ with pkgs;
 
   gawkInteractive = gawk.override { interactive = true; };
 
-  gawp = callPackage ../tools/misc/gawp { };
-
   gbdfed = callPackage ../tools/misc/gbdfed {
     gtk = gtk2-x11;
   };
@@ -6226,8 +6226,6 @@ with pkgs;
   git-annex-metadata-gui = libsForQt5.callPackage ../applications/version-management/git-and-tools/git-annex-metadata-gui {
     inherit (python3Packages) buildPythonApplication pyqt5 git-annex-adapter;
   };
-
-  git-annex-remote-b2 = callPackage ../applications/version-management/git-and-tools/git-annex-remote-b2 { };
 
   git-annex-remote-dbx = callPackage ../applications/version-management/git-and-tools/git-annex-remote-dbx {
     inherit (python3Packages)
@@ -6316,8 +6314,6 @@ with pkgs;
   };
 
   git-lfs = lowPrio (callPackage ../applications/version-management/git-lfs { });
-
-  git-lfs1 = callPackage ../applications/version-management/git-lfs/1.nix { };
 
   git-ftp = callPackage ../development/tools/git-ftp { };
 
@@ -6545,8 +6541,6 @@ with pkgs;
   godot-headless = callPackage ../development/tools/godot/headless.nix { };
 
   godot-server = callPackage ../development/tools/godot/server.nix { };
-
-  goklp = callPackage ../tools/networking/goklp {};
 
   go-mtpfs = callPackage ../tools/filesystems/go-mtpfs { };
 
@@ -13149,8 +13143,6 @@ with pkgs;
 
   go = go_1_17;
 
-  go-repo-root = callPackage ../development/tools/go-repo-root { };
-
   go-junit-report = callPackage ../development/tools/go-junit-report { };
 
   gobang = callPackage ../development/tools/database/gobang {
@@ -13611,10 +13603,8 @@ with pkgs;
 
   inherit (callPackage ../development/tools/ocaml/ocamlformat { })
     ocamlformat # latest version
-    ocamlformat_0_11_0 ocamlformat_0_12 ocamlformat_0_13_0 ocamlformat_0_14_0
-    ocamlformat_0_14_1 ocamlformat_0_14_2 ocamlformat_0_14_3 ocamlformat_0_15_0
-    ocamlformat_0_15_1 ocamlformat_0_16_0 ocamlformat_0_17_0 ocamlformat_0_18_0
-    ocamlformat_0_19_0 ocamlformat_0_20_0 ocamlformat_0_20_1 ocamlformat_0_21_0;
+    ocamlformat_0_19_0 ocamlformat_0_20_0 ocamlformat_0_20_1 ocamlformat_0_21_0
+    ocamlformat_0_22_4;
 
   orc = callPackage ../development/compilers/orc { };
 
@@ -13704,18 +13694,18 @@ with pkgs;
     inherit (darwin) apple_sdk;
   };
 
-  rust_1_60 = callPackage ../development/compilers/rust/1_60.nix {
+  rust_1_61 = callPackage ../development/compilers/rust/1_61.nix {
     inherit (darwin.apple_sdk.frameworks) CoreFoundation Security SystemConfiguration;
     llvm_14 = llvmPackages_14.libllvm;
   };
-  rust = rust_1_60;
+  rust = rust_1_61;
 
   mrustc = callPackage ../development/compilers/mrustc { };
   mrustc-minicargo = callPackage ../development/compilers/mrustc/minicargo.nix { };
   mrustc-bootstrap = callPackage ../development/compilers/mrustc/bootstrap.nix { stdenv = gcc10StdenvCompat; };
 
-  rustPackages_1_60 = rust_1_60.packages.stable;
-  rustPackages = rustPackages_1_60;
+  rustPackages_1_61 = rust_1_61.packages.stable;
+  rustPackages = rustPackages_1_61;
 
   inherit (rustPackages) cargo clippy rustc rustPlatform;
 
@@ -18870,7 +18860,7 @@ with pkgs;
   glibcIconv = libc: let
     inherit (libc) pname version;
     libcDev = lib.getDev libc;
-  in runCommand "${pname}-iconv-${version}" {} ''
+  in runCommand "${pname}-iconv-${version}" { strictDeps = true; } ''
     mkdir -p $out/include
     ln -sv ${libcDev}/include/iconv.h $out/include
   '';
@@ -23108,10 +23098,6 @@ with pkgs;
     stdenv = gcc11Stdenv;
   };
 
-  new-lg4ff = callPackage ../os-specific/linux/new-lg4ff {
-    inherit (linuxPackages) kernel;
-  };
-
   nmon = callPackage ../os-specific/linux/nmon { };
 
   hwdata = callPackage ../os-specific/linux/hwdata { };
@@ -27261,8 +27247,6 @@ with pkgs;
 
   i3blocks-gaps = callPackage ../applications/window-managers/i3/blocks-gaps.nix { };
 
-  i3cat = callPackage ../tools/misc/i3cat { };
-
   i3ipc-glib = callPackage ../applications/window-managers/i3/i3ipc-glib.nix { };
 
   i3lock = callPackage ../applications/window-managers/i3/lock.nix {
@@ -29101,8 +29085,6 @@ with pkgs;
     electron = electron_9;
   };
 
-  pond = callPackage ../applications/networking/instant-messengers/pond { };
-
   ponymix = callPackage ../applications/audio/ponymix { };
 
   portfolio-filemanager = callPackage ../applications/misc/portfolio-filemanager { };
@@ -30890,8 +30872,6 @@ with pkgs;
   };
 
   xmountains = callPackage ../applications/graphics/xmountains { };
-
-  xmpp-client = callPackage ../applications/networking/instant-messengers/xmpp-client { };
 
   libxpdf = callPackage ../applications/misc/xpdf/libxpdf.nix { };
 
