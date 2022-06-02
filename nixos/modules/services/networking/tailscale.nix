@@ -221,7 +221,7 @@ in {
     };
 
     authenticationConfirmationFile = mkOption {
-      types = types.nonEmptyStr;
+      type = types.nonEmptyStr;
       example = "/private/tailscale/tailscaled.authenticated";
       default = "/var/lib/tailscale/tailscale.authenticated";
       description = "Path to the `tailscale.authenticated' file.";
