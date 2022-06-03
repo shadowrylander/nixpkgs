@@ -47,8 +47,8 @@ in {
     };
 
     hostName = mkOption {
-      type = types.nonEmptyStr;
-      default = config.networking.hostName;
+      type = with types; nullOr nonEmptyStr;
+      default = null;
       description = "The hostname for this device; defaults to `config.networking.hostName'.";
     };
 
@@ -128,8 +128,8 @@ in {
       description = "Create a reusable auth key.";
     };
     api.ephemeral = mkOption {
-      type = types.bool;
-      default = config.services.tailscale.useUUID;
+      type = with types; nullOr bool;
+      default = null;
       description = "Create an ephemeral auth key; is enabled by default by `config.services.tailscale.useUUID'.";
     };
     api.preauthorized = mkOption {
@@ -248,6 +248,10 @@ in {
       (optional (firewallOn && rpfIsStrict) "Strict reverse path filtering breaks Tailscale exit node use and some subnet routing setups. Consider setting `networking.firewall.checkReversePath` = 'loose'")
       (optional (cfg.exitNode.advertise && cfg.acceptDNS) "Advertising this device as an exit node and accepting the preconfigured DNS servers on the tailscale admin page at the same time may result in this device attempting to use itself as a DNS server.")
     ];
+    services.tailscale = {
+      api.ephemeral = if (cfg.api.ephemeral == null) then config.services.tailscale.useUUID else cfg.api.ephemeral;
+      hostName = if (cfg.hostName == null) then config.networking.hostName else cfg.hostName;
+    };
     environment.systemPackages = [ cfg.package ]; # for the CLI
     environment.vars = let
       nullText = cfg.state.text != null;
