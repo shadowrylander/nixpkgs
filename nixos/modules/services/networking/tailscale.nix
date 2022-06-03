@@ -186,7 +186,7 @@ in {
 
     acceptDNS = mkOption {
       type = types.bool;
-      default = ! cfg.advertiseExitNode;
+      default = true;
       description = "Whether this tailscale instance will use the preconfigured DNS servers on the tailscale admin page.";
     };
 
@@ -246,6 +246,7 @@ in {
     warnings = flatten [
       (optional ((cfg.api.key != null) || (cfg.api.file != null)) "To users who wipe their root directories: persist your `config.services.tailscale.authenticationConfirmationFile'!")
       (optional (firewallOn && rpfIsStrict) "Strict reverse path filtering breaks Tailscale exit node use and some subnet routing setups. Consider setting `networking.firewall.checkReversePath` = 'loose'")
+      (optional (cfg.exitNode.advertise && cfg.acceptDNS) "Advertising this device as an exit node and accepting the preconfigured DNS servers on the tailscale admin page at the same time may result in this device attempting to use itself as a DNS server.")
     ];
     environment.systemPackages = [ cfg.package ]; # for the CLI
     environment.vars = let
