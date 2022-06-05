@@ -27,6 +27,7 @@ buildPythonPackage rec {
 
   postPatch = ''
     substituteInPlace pyproject.toml --replace "oreo = { git = \"https://github.com/syvlorg/oreo.git\", branch = \"main\" }" ""
+    substituteInPlace setup.py --replace "'oreo @ git+https://github.com/syvlorg/oreo.git@main'" ""
   '';
 
   meta = with lib; {
