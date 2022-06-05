@@ -79,8 +79,6 @@ python3Packages.buildPythonApplication rec {
     ply
     prompt-toolkit
     pygments
-    oreo
-    bakery
     xontrib-sh
     xontrib-readable-traceback
     xontrib-pipeliner
