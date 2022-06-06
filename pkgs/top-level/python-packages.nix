@@ -6740,6 +6740,8 @@ in {
 
   poetry2conda = callPackage ../development/python-modules/poetry2conda { };
 
+  poetry2setup = callPackage ../development/python-modules/poetry2setup { };
+
   poezio = callPackage ../applications/networking/instant-messengers/poezio { };
 
   polars = callPackage ../development/python-modules/polars { };

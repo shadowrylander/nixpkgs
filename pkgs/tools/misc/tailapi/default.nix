@@ -19,32 +19,22 @@ python310.pkgs.buildPythonApplication rec {
     requests
   ];
 
-  dontBuild = true;
-
   installPhase = ''
     mkdir --parents $out/bin
-    cp $src/tailapi.py $out/bin/tailapi
-    chmod +x $out/bin/tailapi
-    patchShebangs $out/bin/tailapi
+    cp $src/${pname}.py $out/bin/${pname}
+    chmod +x $out/bin/${pname}
   '';
 
-  postInstall = ''
-    wrapProgram $out/bin/tailapi $makeWrapperArgs
-  '';
-
-  # Adapted From: https://gist.github.com/CMCDragonkai/9b65cbb1989913555c203f4fa9c23374
-  # postFixup = ''
-  #     wrapProgram $out/bin/soft --set PATH ${lib.makeBinPath [ git ]}
-  # '';
+  postFixup = "wrapProgram $out/bin/${pname} $makeWrapperArgs";
 
   makeWrapperArgs = [
-    # "--prefix" "PATH" ":" (lib.makeBinPath [ dbus signal-cli xclip ])
+    # "--prefix" "PATH" ":" (lib.makeBinPath [ git ])
     "--prefix PYTHONPATH : ${placeholder "out"}/lib/${python310.pkgs.python.libPrefix}/site-packages"
   ];
 
   meta = with lib; {
     # description = "";
-    homepage = "https://github.com/syvlorg/tailapi";
+    homepage = "https://github.com/syvlorg/${pname}";
     license = licenses.oreo;
     maintainers = with maintainers; [ syvlorg ];
   };
