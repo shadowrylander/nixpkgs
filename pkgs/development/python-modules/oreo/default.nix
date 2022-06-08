@@ -47,6 +47,8 @@ buildPythonPackage rec {
 
   pythonImportsCheck = [ "oreo" ];
 
+  # doCheck = false;
+
   postPatch = ''
     substituteInPlace pyproject.toml --replace "rich = { git = \"https://github.com/syvlorg/rich.git\", branch = \"master\" }" ""
     substituteInPlace setup.py --replace "'rich @ git+https://github.com/syvlorg/rich.git@master'," ""
