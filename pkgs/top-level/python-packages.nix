@@ -405,6 +405,8 @@ in {
 
   aioshutil = callPackage ../development/python-modules/aioshutil { };
 
+  aioskybell = callPackage ../development/python-modules/aioskybell { };
+
   aiosignal = callPackage ../development/python-modules/aiosignal { };
 
   aioslimproto = callPackage ../development/python-modules/aioslimproto { };
@@ -1608,6 +1610,8 @@ in {
   cfn-flip = callPackage ../development/python-modules/cfn-flip { };
 
   cfn-lint = callPackage ../development/python-modules/cfn-lint { };
+
+  cfscrape = callPackage ../development/python-modules/cfscrape { };
 
   cftime = callPackage ../development/python-modules/cftime { };
 
@@ -7454,7 +7458,7 @@ in {
 
   pyialarm = callPackage ../development/python-modules/pyialarm { };
 
-  pyialarmxr = callPackage ../development/python-modules/pyialarmxr { };
+  pyialarmxr-homeassistant = callPackage ../development/python-modules/pyialarmxr-homeassistant { };
 
   pyicloud = callPackage ../development/python-modules/pyicloud { };
 
@@ -8089,6 +8093,8 @@ in {
   pysmart = callPackage ../development/python-modules/pysmart { };
 
   pysmartapp = callPackage ../development/python-modules/pysmartapp { };
+
+  pySmartDL = callPackage ../development/python-modules/pySmartDL { };
 
   pysmartthings = callPackage ../development/python-modules/pysmartthings { };
 
