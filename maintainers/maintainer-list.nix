@@ -5960,6 +5960,12 @@
     githubId = 1667473;
     name = "Jethro Kuan";
   };
+  jevy = {
+    email = "jevin@quickjack.ca";
+    github = "jevy";
+    githubId = 110620;
+    name = "Jevin Maltais";
+  };
   jfb = {
     email = "james@yamtime.com";
     github = "tftio";
@@ -7055,13 +7061,6 @@
     github = "kuznero";
     githubId = 449813;
     name = "Roman Kuznetsov";
-  };
-  kvark = {
-    name = "Dzmitry Malyshau";
-    email = "kvark@fastmail.com";
-    matrix = "@kvark:matrix.org";
-    github = "kvark";
-    githubId = 107301;
   };
   kwohlfahrt = {
     email = "kai.wohlfahrt@gmail.com";
