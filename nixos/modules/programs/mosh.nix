@@ -28,7 +28,7 @@ in
 
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [ mosh ];
-    networking.firewall.allowedUDPPortRanges = if cfg.openFirewall then [ { from = 60000; to = 61000; } ] else [];
+    networking.firewall.allowedUDPPortRanges = optional cfg.openFirewall { from = 60000; to = 61000; };
     security.wrappers = mkIf cfg.withUtempter {
       utempter = {
         source = "${pkgs.libutempter}/lib/utempter/utempter";

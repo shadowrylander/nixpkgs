@@ -264,12 +264,12 @@ in {
       "lib/tailscale" = mkIf nullDir { source = cfg.state.dir; };
     };
     networking = {
-      nameservers = if cfg.magicDNS.enable then (flatten [ cfg.magicDNS.nameservers "100.100.100.100" ]) else [];
-      search = if cfg.magicDNS.enable then cfg.magicDNS.searchDomains else [];
+      nameservers = optionals cfg.magicDNS.enable (flatten [ cfg.magicDNS.nameservers "100.100.100.100" ]);
+      search = optionals cfg.magicDNS.enable cfg.magicDNS.searchDomains;
       firewall = {
         ${if cfg.strictReversePathFiltering then null else "checkReversePath"} = "loose";
-        trustedInterfaces = if cfg.trustInterface then [ cfg.interfaceName ] else [];
-        allowedUDPPorts = if cfg.openFirewall then [ cfg.port ] else [];
+        trustedInterfaces = optional cfg.trustInterface cfg.interfaceName;
+        allowedUDPPorts = optional cfg.openFirewall cfg.port;
       };
     };
     systemd.packages = [ cfg.package ];
