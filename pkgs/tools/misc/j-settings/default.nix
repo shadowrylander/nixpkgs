@@ -5,8 +5,8 @@
     src = fetchFromGitHub {
         owner = "sylvorg";
         repo = "settings";
-        rev = "9279f22acd8efd42f3b781b8dd69b396c6f26b1a";
-    	sha256 = "08g3p4xvi0rb0da5s3q790ikw3xgqxgichln0q7innb72xgjr7zk";
+        rev = "db8e416c08adcae488a73bd05f2a7ff91657211a";
+    	sha256 = "10dhbihm3dd4f5j9ddbkn91ps2pxnq4nas9qs7x8mdk1hiqwpyhq";
     };
 
     phases = [ "installPhase" ];
