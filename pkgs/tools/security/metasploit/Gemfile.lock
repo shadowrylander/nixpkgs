@@ -1,9 +1,9 @@
 GIT
   remote: https://github.com/rapid7/metasploit-framework
-  revision: 1bfa54f5d72a9c088ee4a65443753e1d10b05504
-  ref: refs/tags/6.2.2
+  revision: ed772a23efa7e2a7d7ae6417939e900c66950fd9
+  ref: refs/tags/6.2.4
   specs:
-    metasploit-framework (6.2.2)
+    metasploit-framework (6.2.4)
       actionpack (~> 6.0)
       activerecord (~> 6.0)
       activesupport (~> 6.0)
@@ -32,7 +32,7 @@ GIT
       metasploit-concern
       metasploit-credential
       metasploit-model
-      metasploit-payloads (= 2.0.93)
+      metasploit-payloads (= 2.0.94)
       metasploit_data_models
       metasploit_payloads-mettle (= 1.0.18)
       mqtt
@@ -130,13 +130,13 @@ GEM
     arel-helpers (2.14.0)
       activerecord (>= 3.1.0, < 8)
     aws-eventstream (1.2.0)
-    aws-partitions (1.598.0)
-    aws-sdk-core (3.131.1)
+    aws-partitions (1.601.0)
+    aws-sdk-core (3.131.2)
       aws-eventstream (~> 1, >= 1.0.2)
       aws-partitions (~> 1, >= 1.525.0)
       aws-sigv4 (~> 1.1)
       jmespath (~> 1, >= 1.6.1)
-    aws-sdk-ec2 (1.317.0)
+    aws-sdk-ec2 (1.319.0)
       aws-sdk-core (~> 3, >= 3.127.0)
       aws-sigv4 (~> 1.1)
     aws-sdk-iam (1.69.0)
@@ -182,7 +182,8 @@ GEM
       faraday-net_http (~> 2.0)
       ruby2_keywords (>= 0.0.4)
     faraday-net_http (2.0.3)
-    faraday-retry (1.0.3)
+    faraday-retry (2.0.0)
+      faraday (~> 2.0)
     faye-websocket (0.11.1)
       eventmachine (>= 0.12.0)
       websocket-driver (>= 0.5.1)
@@ -233,11 +234,11 @@ GEM
       rex-socket
       rubyntlm
       rubyzip
-    metasploit-model (4.0.4)
+    metasploit-model (4.0.5)
       activemodel (~> 6.0)
       activesupport (~> 6.0)
       railties (~> 6.0)
-    metasploit-payloads (2.0.93)
+    metasploit-payloads (2.0.94)
     metasploit_data_models (5.0.5)
       activerecord (~> 6.0)
       activesupport (~> 6.0)
@@ -251,7 +252,7 @@ GEM
     metasploit_payloads-mettle (1.0.18)
     method_source (1.0.0)
     mini_portile2 (2.8.0)
-    minitest (5.15.0)
+    minitest (5.16.1)
     mqtt (0.5.0)
     msgpack (1.5.2)
     multi_json (1.15.0)
@@ -273,7 +274,7 @@ GEM
       mini_portile2 (~> 2.8.0)
       racc (~> 1.4)
     nori (2.6.0)
-    octokit (4.24.0)
+    octokit (4.25.0)
       faraday (>= 1, < 3)
       sawyer (~> 0.9)
     openssl-ccm (1.2.2)
@@ -289,7 +290,7 @@ GEM
       hashery (~> 2.0)
       ruby-rc4
       ttfunk
-    pg (1.3.5)
+    pg (1.4.1)
     public_suffix (4.0.7)
     puma (5.6.4)
       nio4r (~> 2.0)
@@ -297,8 +298,8 @@ GEM
     rack (2.2.3.1)
     rack-protection (2.2.0)
       rack
-    rack-test (1.1.0)
-      rack (>= 1.0, < 3)
+    rack-test (2.0.0)
+      rack (>= 1.3)
     rails-dom-testing (2.0.3)
       activesupport (>= 4.2.0)
       nokogiri (>= 1.6)
@@ -355,7 +356,7 @@ GEM
       metasm
       rex-core
       rex-text
-    rex-socket (0.1.39)
+    rex-socket (0.1.40)
       rex-core
     rex-sslscan (0.1.7)
       rex-core
@@ -370,7 +371,7 @@ GEM
     ruby-macho (3.0.0)
     ruby-rc4 (0.1.5)
     ruby2_keywords (0.0.5)
-    ruby_smb (3.1.3)
+    ruby_smb (3.1.4)
       bindata
       openssl-ccm
       openssl-cmac
@@ -388,7 +389,7 @@ GEM
       rack (~> 2.2)
       rack-protection (= 2.2.0)
       tilt (~> 2.0)
-    sqlite3 (1.4.2)
+    sqlite3 (1.4.4)
     sshkey (2.0.0)
     swagger-blocks (3.0.0)
     thin (1.8.1)
@@ -429,7 +430,7 @@ GEM
       activesupport (>= 4.2, < 8.0)
     xmlrpc (0.3.2)
       webrick
-    zeitwerk (2.5.4)
+    zeitwerk (2.6.0)
 
 PLATFORMS
   ruby

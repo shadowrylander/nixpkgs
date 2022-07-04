@@ -5,17 +5,17 @@ then throw "fmt is not available for OCaml ${ocaml.version}"
 else
 
 stdenv.mkDerivation rec {
-  version = "0.8.9";
+  version = "0.9.0";
   pname = "ocaml${ocaml.version}-fmt";
 
   src = fetchurl {
     url = "https://erratique.ch/software/fmt/releases/fmt-${version}.tbz";
-    sha256 = "0gkkkj4x678vxdda4xaw2dd44qjacavsvn5nx8gydfwah6pjbkxk";
+    sha256 = "sha256-8fsggFoi3XWhN9cnBKNw53ic9r32OUjmgX0cImwUEmE=";
   };
 
   nativeBuildInputs = [ ocaml findlib ocamlbuild topkg ];
-  buildInputs = [ topkg ];
-  propagatedBuildInputs = [ cmdliner seq stdlib-shims ];
+  buildInputs = [ cmdliner topkg ];
+  propagatedBuildInputs = [ seq stdlib-shims ];
 
   strictDeps = true;
 

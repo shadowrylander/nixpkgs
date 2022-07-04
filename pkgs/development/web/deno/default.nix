@@ -16,20 +16,20 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "deno";
-  version = "1.22.3";
+  version = "1.23.2";
 
   src = fetchFromGitHub {
     owner = "denoland";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-Ode/kbf2aHgSh+k7ZK0aoVqUTPzfLtWkSF2saP/DG0k=";
+    sha256 = "sha256-rygBiDIZ8W51GIu36+g6zFOnIvmGe+HLGZg7x/pRFJ0=";
   };
-  cargoSha256 = "sha256-YNJbT+88YDWDv/ydz9sZQ/QddjB+ggK57/6LzKN+zNE=";
+  cargoSha256 = "sha256-q7yZZXws58QuEfC0J+fZo8QyYUWx6sOKfphmIurxVkU=";
 
   postPatch = ''
     # upstream uses lld on aarch64-darwin for faster builds
     # within nix lld looks for CoreFoundation rather than CoreFoundation.tbd and fails
-    substituteInPlace .cargo/config --replace '"-C", "link-arg=-fuse-ld=lld"' ""
+    substituteInPlace .cargo/config.toml --replace '"-C", "link-arg=-fuse-ld=lld"' ""
   '';
 
   # Install completions post-install
