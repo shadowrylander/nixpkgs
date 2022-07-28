@@ -6,14 +6,14 @@
 
 buildPythonPackage rec {
   pname = "peaqevcore";
-  version = "3.0.6";
+  version = "3.3.0";
   format = "setuptools";
 
   disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-/wiVyIiyNl7pqujjROgWdrQH253Li6QZzFZisUm5jlM=";
+    hash = "sha256-0Smw0WyGWgGR+NunWT06y2OpKmMA84cxrn01CvE655A=";
   };
 
   postPatch = ''

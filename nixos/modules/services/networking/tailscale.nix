@@ -278,7 +278,7 @@ in {
       tailscaled = {
         wantedBy = [ "multi-user.target" ];
         path = [
-          pkgs.openresolv # for configuring DNS in some configs
+          config.networking.resolvconf.package # for configuring DNS in some configs
           pkgs.procps     # for collecting running services (opt-in feature)
           pkgs.glibc      # for `getent` to look up user shells
         ];

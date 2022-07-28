@@ -1,4 +1,5 @@
 { lib
+, stdenv
 , buildPythonPackage
 , fetchFromGitHub
 , pythonOlder
@@ -38,12 +39,21 @@ buildPythonPackage rec {
     pytestCheckHook
   ];
 
+  disabledTests = lib.optionals stdenv.isDarwin [
+    # darwin console duplicates 3 of 4 lines
+    "test_rich_console_ex"
+  ];
+
   pythonImportsCheck = [ "rich" ];
 
   meta = with lib; {
     description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal";
     homepage = "https://github.com/syvlorg/rich";
     license = licenses.mit;
+<<<<<<< HEAD
     maintainers = with maintainers; [ syvlorg ];
+=======
+    maintainers = with maintainers; [ ris jyooru ];
+>>>>>>> upstream/master
   };
 }
