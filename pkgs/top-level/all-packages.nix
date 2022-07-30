@@ -300,6 +300,8 @@ with pkgs;
 
   buf = callPackage ../development/tools/buf { };
 
+  cbfmt = callPackage ../development/tools/cbfmt { };
+
   cfn-nag = callPackage ../development/tools/cfn-nag { };
 
   cxx-rs = callPackage ../development/libraries/cxx-rs { };
@@ -1244,6 +1246,8 @@ with pkgs;
   httm = callPackage ../tools/filesystems/httm { };
 
   kanata = callPackage ../tools/system/kanata { };
+
+  kanata-with-cmd = callPackage ../tools/system/kanata { withCmd = true; };
 
   ksnip = libsForQt5.callPackage ../tools/misc/ksnip { };
 
@@ -5724,7 +5728,7 @@ with pkgs;
 
   mcrcon = callPackage ../tools/networking/mcrcon {};
 
-  mozillavpn = libsForQt5.callPackage ../tools/networking/mozillavpn { };
+  mozillavpn = qt6Packages.callPackage ../tools/networking/mozillavpn { };
 
   mozwire = callPackage ../tools/networking/mozwire {
     inherit (darwin.apple_sdk.frameworks) Security;
@@ -6019,6 +6023,8 @@ with pkgs;
   extundelete = callPackage ../tools/filesystems/extundelete { };
 
   expect = callPackage ../tools/misc/expect { };
+
+  exportarr = callPackage ../servers/monitoring/exportarr { };
 
   expliot = callPackage ../tools/security/expliot { };
 
@@ -10870,6 +10876,8 @@ with pkgs;
 
   sourceHighlight = callPackage ../tools/text/source-highlight { };
 
+  somebar = callPackage ../applications/misc/somebar { };
+
   spacebar = callPackage ../os-specific/darwin/spacebar {
     inherit (darwin.apple_sdk.frameworks)
       Carbon Cocoa ScriptingBridge SkyLight;
@@ -10886,8 +10894,6 @@ with pkgs;
   squashfs-tools-ng = callPackage ../tools/filesystems/squashfs-tools-ng { };
 
   squashfuse = callPackage ../tools/filesystems/squashfuse { };
-
-  srcml = callPackage ../applications/version-management/srcml { };
 
   srt-live-server = callPackage ../applications/video/srt-live-server { };
 
@@ -13690,8 +13696,6 @@ with pkgs;
 
   oraclejdk11 = callPackage ../development/compilers/oraclejdk/jdk11-linux.nix { };
 
-  oraclejdk14 = callPackage ../development/compilers/oraclejdk/jdk14-linux.nix { };
-
   jasmin = callPackage ../development/compilers/jasmin { };
 
   java-service-wrapper = callPackage ../tools/system/java-service-wrapper {
@@ -15257,6 +15261,8 @@ with pkgs;
   ameba = callPackage ../development/tools/ameba { };
 
   anybadge = with python3Packages; toPythonApplication anybadge;
+
+  apkg = callPackage ../tools/package-management/apkg { };
 
   augeas = callPackage ../tools/system/augeas { };
 
@@ -20475,6 +20481,10 @@ with pkgs;
   openjpeg = callPackage ../development/libraries/openjpeg { };
 
   openpa = callPackage ../development/libraries/openpa { };
+
+  openpgp-card-tools = callPackage ../tools/security/openpgp-card-tools {
+    inherit (darwin.apple_sdk.frameworks) PCSC;
+  };
 
   opensaml-cpp = callPackage ../development/libraries/opensaml-cpp { };
 
@@ -26945,7 +26955,9 @@ with pkgs;
     inherit (darwin.apple_sdk.frameworks) CoreAudio CoreMIDI CoreServices Cocoa;
   };
 
-  fvwm = callPackage ../applications/window-managers/fvwm { };
+  fvwm = fvwm2;
+  fvwm2 = callPackage ../applications/window-managers/fvwm/2.6.nix { };
+  fvwm3 = callPackage ../applications/window-managers/fvwm/3.nix { };
 
   ganttproject-bin = callPackage ../applications/misc/ganttproject-bin { };
 
@@ -27435,6 +27447,8 @@ with pkgs;
   gtkterm = callPackage ../tools/misc/gtkterm { };
 
   gtk-pipe-viewer = perlPackages.callPackage ../applications/video/pipe-viewer { withGtk3 = true; };
+
+  gum = callPackage ../applications/misc/gum { };
 
   hydrus = python3Packages.callPackage ../applications/graphics/hydrus {
     inherit miniupnpc_2 swftools;
@@ -29307,6 +29321,8 @@ with pkgs;
   taxi = callPackage ../applications/networking/ftp/taxi { };
 
   taxi-cli = with python3Packages; toPythonApplication taxi;
+
+  tcping-go = callPackage ../applications/networking/tcping-go { };
 
   librep = callPackage ../development/libraries/librep { };
 
@@ -33318,9 +33334,7 @@ with pkgs;
   cinnamon = recurseIntoAttrs (callPackage ../desktops/cinnamon { });
   inherit (cinnamon) mint-x-icons mint-y-icons;
 
-  enlightenment = recurseIntoAttrs (callPackage ../desktops/enlightenment {
-    callPackage = newScope enlightenment;
-  });
+  enlightenment = recurseIntoAttrs (callPackage ../desktops/enlightenment { });
 
   gnome2 = recurseIntoAttrs (callPackage ../desktops/gnome-2 { });
 
