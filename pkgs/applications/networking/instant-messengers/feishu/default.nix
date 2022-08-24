@@ -42,7 +42,7 @@
 , libxkbcommon
 , libxkbfile
 , libxshmfence
-, makeShellWrapper
+, makefileWrapper
 , mesa
 , nspr
 , nss
@@ -72,7 +72,7 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = [
     autoPatchelfHook
-    makeShellWrapper
+    makefileWrapper
     dpkg
   ];
 

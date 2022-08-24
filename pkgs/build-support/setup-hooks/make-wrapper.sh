@@ -33,8 +33,8 @@ assertExecutable() {
 # --prefix-contents ENV SEP FILES : like --suffix-each, but contents of FILES
 #                                   are read first and used as VALS
 # --suffix-contents
-makeWrapper() { makeShellWrapper "$@"; }
-makeShellWrapper() {
+makeWrapper() { makefileWrapper "$@"; }
+makefileWrapper() {
     local original="$1"
     local wrapper="$2"
     local params varName value command separator n fileNames

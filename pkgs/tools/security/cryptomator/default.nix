@@ -1,7 +1,7 @@
 { lib, stdenv, fetchFromGitHub
 , autoPatchelfHook
 , fuse, jffi
-, maven, jdk, jre, makeShellWrapper, glib, wrapGAppsHook
+, maven, jdk, jre, makefileWrapper, glib, wrapGAppsHook
 }:
 
 let
@@ -65,7 +65,7 @@ in stdenv.mkDerivation rec {
     rm $out/share/cryptomator/libs/jff*.jar
     cp -f ${jffi}/share/java/jffi-complete.jar $out/share/cryptomator/libs/
 
-    makeShellWrapper ${jre}/bin/java $out/bin/cryptomator \
+    makefileWrapper ${jre}/bin/java $out/bin/cryptomator \
       --add-flags "--class-path '$out/share/cryptomator/libs/*'" \
       --add-flags "--module-path '$out/share/cryptomator/mods'" \
       --add-flags "-Dcryptomator.logDir='~/.local/share/Cryptomator/logs'" \
@@ -101,7 +101,7 @@ in stdenv.mkDerivation rec {
   nativeBuildInputs = [
     autoPatchelfHook
     maven
-    makeShellWrapper
+    makefileWrapper
     wrapGAppsHook
     jdk
   ];
